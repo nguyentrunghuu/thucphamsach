@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Một mục "Tìm kiếm gần đây" -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/relative_item_story"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="100dp"
+    app:cardElevation="0dp"
+    app:rippleColor="#1A2E7D32"
+    app:strokeColor="#DDE3DD"
+    app:strokeWidth="1dp">
+
+    <TextView
+        android:id="@+id/tv_lichsu_search"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawableStart="@drawable/ic_history_small"
+        android:drawablePadding="6dp"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="8dp"
+        android:text="đã tìm kiếm"
+        android:textColor="#3A433A"
+        android:textSize="13sp" />
+</com.google.android.material.card.MaterialCardView>

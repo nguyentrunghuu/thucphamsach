@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.UngDung.ThucPhamXanh">
+    <!--
+         The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
+         Google Maps Android API v2, but you must specify either coarse or fine
+         location permissions for the "MyLocation" functionality.
+    -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        android:minSdkVersion="30" />
+    <!-- Android 13+ (API 33+) permission for reading images -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <application
+        android:name="com.UngDung.ThucPhamXanh.BotAI.MyApplication"
+        android:allowBackup="true"
+        android:icon="@drawable/logo_new"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/logo_new"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.DoAn_TMDT"
+        android:usesCleartextTraffic="true"
+        tools:replace="android:theme">
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.BotAI.ChatBotActivity"
+            android:exported="false" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.CartActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.OrderSuccessActivity" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.ChatActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity="" />
+        <activity 
+            android:name="com.UngDung.ThucPhamXanh.View.MessageActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.DanhGiaActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.FavoriteActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.CommentActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.DetailSPActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminUsersActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminPromotionActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminShipperActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminLoaiSPActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Shipper.ShipperHomeActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Shipper.ShipperUpdateOrderActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.SearchActivity" />
+        
+        <!-- VNPay Payment Activity với deep link -->
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.VNPayPaymentActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="vnpay" />
+            </intent-filter>
+        </activity>
+        <!-- OpenStreetMap không cần API key -->
+
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminCTHDActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminAddLoaiSPActivity"
+            android:exported="true">
+
+        </activity>
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminAddSPActivity"
+            android:exported="true">
+
+        </activity>
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminProductActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminChartBillActivity" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminBillMainActivity"
+            android:exported="true" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminHomeActivity"
+            android:exported="true" >
+
+        </activity>
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.CTHDActivity"
+            android:exported="true" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.CategoryActivity"
+            android:exported="true" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.ProductListActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.ForgotPasswordActivity"
+            android:exported="true" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.SignUpActivity"
+            android:exported="true" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.SplashActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.MainActivity"
+            android:exported="true" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.SignInActivity"
+            android:exported="true" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.CaptureAct"
+            android:screenOrientation="portrait"
+            android:stateNotNeeded="true"
+            android:theme="@style/zxing_CaptureTheme" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.MapLocationActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.MapTestActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.MapLocationOSMActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.UngDung.ThucPhamXanh.View.MapTestOSMActivity"
+            android:exported="false" />
+
+        <receiver
+            android:name="com.UngDung.ThucPhamXanh.ultil.MyReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+                <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+        
+        <!-- Facebook Login -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="@string/facebook_client_token" />
+        <activity
+            android:name="com.facebook.CustomTabActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="@string/fb_login_protocol_scheme" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+    </application>
+
+</manifest>

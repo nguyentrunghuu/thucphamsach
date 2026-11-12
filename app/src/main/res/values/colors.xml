@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Premium Fresh Green Color Scheme (Primary) -->
+    <color name="primary_green">#1B5E20</color>
+    <color name="primary_green_light">#4CAF50</color>
+    <color name="primary_green_lighter">#C8E6C9</color>
+    <color name="primary_green_lightest">#E8F5E9</color>
+    <color name="primary_green_dark">#0D3D10</color>
+
+    <!-- Accent Sunset Orange -->
+    <color name="accent_orange">#FF6D00</color>
+    <color name="accent_orange_light">#FFF3E0</color>
+    <color name="Orange">#FF6D00</color>
+
+    <!-- Basic Colors -->
+    <color name="black">#FF1A1A1A</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="colorGray">#F1F1F1</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#1A1A1A</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_hint">#BDBDBD</color>
+    <color name="text_white">#FFFFFF</color>
+
+    <!-- Background Colors -->
+    <color name="background_light">#F8F9FA</color>
+    <color name="background_white">#FFFFFF</color>
+    <color name="background_gradient_start">#E8F5E9</color>
+    <color name="background_gradient_end">#F8F9FA</color>
+    
+    <!-- Divider & Border Colors -->
+    <color name="divider">#EEEEEE</color>
+    <color name="border_light">#E0E0E0</color>
+    <color name="border_focused">#1B5E20</color>
+    
+    <!-- Bottom Navigation Colors -->
+    <color name="bottom_nav_active_green">#1B5E20</color>
+    <color name="bottom_nav_inactive">#9E9E9E</color>
+    <color name="bottom_nav_transparent_bg">#E0FFFFFF</color>
+
+    <!-- Legacy & Compatibility (Mapped to new theme to prevent build errors) -->
+    <color name="primary_blue">#1B5E20</color>
+    <color name="primary_blue_light">#4CAF50</color>
+    <color name="primary_blue_lighter">#C8E6C9</color>
+    <color name="primary_blue_lightest">#E8F5E9</color>
+    <color name="primary_blue_dark">#0D3D10</color>
+    <color name="primary_blue_darker">#0A2E0C</color>
+    <color name="accent_blue">#4CAF50</color>
+    <color name="blue">#1B5E20</color>
+    <color name="purple_200">#C8E6C9</color>
+    <color name="purple_500">#1B5E20</color>
+    <color name="purple_700">#0D3D10</color>
+    <color name="teal_200">#81C784</color>
+    <color name="teal_700">#2E7D32</color>
+
+    <!-- Status Colors -->
+    <color name="error_red">#D32F2F</color>
+    <color name="success_green">#388E3C</color>
+    <color name="warning_orange">#F57C00</color>
+
+</resources>

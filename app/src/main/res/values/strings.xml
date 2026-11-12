@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">ThucPhamXanh</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="forgotpassword"><u>Quên mật khẩu?</u></string>
+    <string name="admin">Đăng nhập dành cho quản trị viên</string>
+    <string name="xinchao"><u>bạn!</u></string>
+
+    <string name="channel_name">Channel 1</string>
+    <string name="channel_description">This is channel 1</string>
+
+    <!-- ===== Đăng nhập mạng xã hội ===== -->
+    <!-- Google: Firebase Console > Authentication > Sign-in method > Google > Web SDK configuration > Web client ID.
+         (Nếu tải lại google-services.json sau khi bật Google + thêm SHA-1 thì không cần sửa dòng này) -->
+    <string name="google_web_client_id" translatable="false">465388708652-9pl5uvu2pdaf4m1jtgnbgjtdi1dcesun.apps.googleusercontent.com</string>
+    <!-- Facebook: developers.facebook.com > App của bạn > Settings > Basic / Advanced -->
+    <string name="facebook_app_id" translatable="false">000000000000000</string>
+    <string name="facebook_client_token" translatable="false">YOUR_FACEBOOK_CLIENT_TOKEN</string>
+    <!-- = "fb" + facebook_app_id -->
+    <string name="fb_login_protocol_scheme" translatable="false">fb000000000000000</string>
+
+</resources>

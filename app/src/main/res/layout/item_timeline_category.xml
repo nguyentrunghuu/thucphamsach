@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Một nhóm sản phẩm theo danh mục trên trang chủ -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:orientation="vertical"
+    android:paddingHorizontal="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="6dp">
+
+        <View
+            android:id="@+id/view_indicator"
+            android:layout_width="4dp"
+            android:layout_height="18dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/bg_btn_add_round" />
+
+        <TextView
+            android:id="@+id/tv_category_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:fontFamily="@font/be_vietnam_pro" android:textStyle="bold"
+            android:maxLines="1"
+            android:text="Sản phẩm nổi bật"
+            android:textColor="#1A1A1A"
+            android:textSize="17sp" />
+
+        <TextView
+            android:id="@+id/tv_view_all_category"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_pill_green_light"
+            android:clickable="true"
+            android:focusable="true"
+            android:fontFamily="@font/be_vietnam_pro" android:textFontWeight="600"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="5dp"
+            android:text="Xem tất cả  ›"
+            android:textColor="#2E7D32"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rcv_category_products"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:nestedScrollingEnabled="false" />
+</LinearLayout>

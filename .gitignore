@@ -1,0 +1,37 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Build output
+build/
+app/build/
+
+# Bí mật / cấu hình riêng từng máy (không đưa lên git)
+app/google-services.json
+app/google-services.json.bak*
+app/debug.keystore
+*.jks
+*.keystore
+
+# File thử nghiệm và log crash của JVM
+/VnpayTest*.java
+/scratch.java
+/testHash.java
+*.class
+hs_err_pid*.log
+replay_pid*.log
+
+# Cấu hình riêng của Android Studio
+.idea/

@@ -1,0 +1,4 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Giao diện app được thiết kế cho nền sáng: chế độ tối dùng chung theme với chế độ sáng
+         (định nghĩa ở values/themes.xml) để màu sắc luôn đồng nhất. -->
+</resources>

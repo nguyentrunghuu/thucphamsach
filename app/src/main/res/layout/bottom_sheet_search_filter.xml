@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hộp "Bộ lọc" của màn tìm kiếm -->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottom_sheet_top">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingBottom="16dp">
+
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/drag_handle_background"
+            android:backgroundTint="#D5DBD5" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:fontFamily="@font/be_vietnam_pro"
+            android:text="Bộ lọc"
+            android:textColor="#1A1A1A"
+            android:textSize="19sp"
+            android:textStyle="bold" />
+
+        <!-- Danh mục -->
+        <TextView style="@style/DialogSectionTitle" android:text="Danh mục" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chip_group_category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:chipSpacingHorizontal="8dp"
+            app:selectionRequired="true"
+            app:singleSelection="true" />
+
+        <!-- Khoảng giá -->
+        <TextView style="@style/DialogSectionTitle" android:text="Khoảng giá" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chip_group_price"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:chipSpacingHorizontal="8dp"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip android:id="@+id/chip_price_all" style="@style/SearchChip" android:text="Tất cả" />
+            <com.google.android.material.chip.Chip android:id="@+id/chip_price_1" style="@style/SearchChip" android:text="Dưới 20.000đ" />
+            <com.google.android.material.chip.Chip android:id="@+id/chip_price_2" style="@style/SearchChip" android:text="20.000 – 50.000đ" />
+            <com.google.android.material.chip.Chip android:id="@+id/chip_price_3" style="@style/SearchChip" android:text="50.000 – 100.000đ" />
+            <com.google.android.material.chip.Chip android:id="@+id/chip_price_4" style="@style/SearchChip" android:text="Trên 100.000đ" />
+            <com.google.android.material.chip.Chip android:id="@+id/chip_price_custom" style="@style/SearchChip" android:text="Tự nhập" />
+        </com.google.android.material.chip.ChipGroup>
+
+        <LinearLayout
+            android:id="@+id/layout_price_custom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/edt_price_min"
+                style="@style/DialogInput"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:hint="Từ (đ)"
+                android:inputType="number" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="10dp"
+                android:text="–"
+                android:textColor="#7A847A" />
+
+            <EditText
+                android:id="@+id/edt_price_max"
+                style="@style/DialogInput"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:hint="Đến (đ)"
+                android:inputType="number" />
+        </LinearLayout>
+
+        <!-- Còn hàng -->
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_in_stock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Chỉ hiện sản phẩm còn hàng"
+            android:textColor="#1A1A1A"
+            android:textSize="14sp"
+            app:thumbTint="@color/switch_thumb"
+            app:trackTint="@color/switch_track" />
+
+        <!-- Nút -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_filter_reset"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_outline_button"
+                android:fontFamily="@font/be_vietnam_pro"
+                android:letterSpacing="0"
+                android:stateListAnimator="@null"
+                android:text="Đặt lại"
+                android:textAllCaps="false"
+                android:textColor="#2E7D32"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null" />
+
+            <Button
+                android:id="@+id/btn_filter_apply"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1.6"
+                android:background="@drawable/bg_primary_button"
+                android:fontFamily="@font/be_vietnam_pro"
+                android:letterSpacing="0"
+                android:stateListAnimator="@null"
+                android:text="Áp dụng"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

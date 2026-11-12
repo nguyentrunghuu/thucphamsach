@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F6F8F5">
+
+    <!-- THANH TÌM KIẾM + BỘ LỌC -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#F6F8F5"
+        app:elevation="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingTop="12dp">
+
+            <ImageView
+                android:id="@+id/img_back_search"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/bg_fav_circle"
+                android:contentDescription="Quay lại"
+                android:elevation="2dp"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                android:padding="10dp"
+                android:src="@drawable/ic_ui_back"
+                app:tint="#1A1A1A" />
+
+            <!-- Ô tìm kiếm -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_search_box"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingEnd="4dp">
+
+                <androidx.appcompat.widget.SearchView
+                    android:id="@+id/search_view"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    app:iconifiedByDefault="false"
+                    app:queryBackground="@null"
+                    app:queryHint="Tìm rau, thịt, trái cây..."
+                    app:searchIcon="@drawable/ic_search" />
+
+                <ImageView
+                    android:id="@+id/img_mic"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Tìm bằng giọng nói"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_mic"
+                    app:tint="#2E7D32" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/img_qrcode"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_fav_circle"
+                android:contentDescription="Quét mã QR"
+                android:elevation="2dp"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                android:padding="10dp"
+                android:src="@drawable/ic_qr"
+                app:tint="#2E7D32" />
+        </LinearLayout>
+
+        <!-- Sắp xếp / Bộ lọc / số kết quả -->
+        <LinearLayout
+            android:id="@+id/layout_search_tools"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/btn_sort_search"
+                style="@style/SearchToolButton"
+                android:drawableEnd="@drawable/ic_sort_arrow"
+                android:text="Phù hợp nhất" />
+
+            <TextView
+                android:id="@+id/btn_filter_search"
+                style="@style/SearchToolButton"
+                android:layout_marginStart="8dp"
+                android:drawableStart="@drawable/ic_tune"
+                android:text="Bộ lọc" />
+
+            <TextView
+                android:id="@+id/tv_result_count"
+                android:maxLines="1"
+                android:layout_marginStart="8dp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:text=""
+                android:textColor="#7A847A"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Sắp xếp nhanh -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:paddingHorizontal="12dp"
+            android:paddingBottom="8dp"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_group_quick_sort"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:chipSpacingHorizontal="8dp"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_sort_relevant"
+                    style="@style/SearchChip"
+                    android:checked="true"
+                    android:text="Phù hợp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_sort_bestseller"
+                    style="@style/SearchChip"
+                    android:text="🔥 Bán chạy" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_sort_price_asc"
+                    style="@style/SearchChip"
+                    android:text="Giá thấp → cao" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_sort_price_desc"
+                    style="@style/SearchChip"
+                    android:text="Giá cao → thấp" />
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_search"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:fillViewport="true"
+            android:paddingBottom="24dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp">
+
+                <!-- LỊCH SỬ TÌM KIẾM (hiện khi chưa tìm/lọc gì) -->
+                <LinearLayout
+                    android:id="@+id/layout_history_search"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:fontFamily="@font/be_vietnam_pro"
+                        android:text="Tìm kiếm gần đây"
+                        android:textColor="#1A1A1A"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rcv_lichsu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false" />
+                </LinearLayout>
+
+                <!-- KẾT QUẢ -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rcv_search_monan"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+
+                <!-- KHÔNG CÓ KẾT QUẢ -->
+                <LinearLayout
+                    android:id="@+id/layout_search_empty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingTop="60dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="96dp"
+                        android:layout_height="96dp"
+                        android:background="@drawable/bg_empty_circle"
+                        android:gravity="center"
+                        android:text="🔍"
+                        android:textColor="#FF000000"
+                        android:textSize="40sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:fontFamily="@font/be_vietnam_pro"
+                        android:text="Không tìm thấy sản phẩm phù hợp"
+                        android:textColor="#1A1A1A"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/btn_clear_filter_empty"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_pill_green_light"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        android:text="Xóa bộ lọc"
+                        android:textColor="#2E7D32"
+                        android:textFontWeight="600"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

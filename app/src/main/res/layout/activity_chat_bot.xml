@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F6F8F5">
+
+    <!-- THANH TIÊU ĐỀ -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_chat_header"
+        app:elevation="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:minHeight="68dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="10dp">
+
+            <ImageView
+                android:id="@+id/img_back_chat_bot"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_circle_translucent"
+                android:contentDescription="Quay lại"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                android:padding="9dp"
+                android:src="@drawable/ic_ui_back"
+                app:tint="#FFFFFF" />
+
+            <FrameLayout
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_marginStart="12dp">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/profile_image_chat_bot"
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:src="@drawable/logo_new"
+                    app:civ_border_color="#FFFFFF"
+                    app:civ_border_width="2dp"
+                    app:civ_circle_background_color="#FFFFFF" />
+
+                <!-- Chấm xanh "đang hoạt động" -->
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_gravity="bottom|end"
+                    android:background="@drawable/bg_online_dot" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_chat_bot_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/be_vietnam_pro"
+                    android:text="Trợ lý ảo"
+                    android:textColor="#FFFFFF"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Luôn sẵn sàng tư vấn 24/7"
+                    android:textColor="#D7F0D9"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- TIN NHẮN -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_chat_bot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingStart="4dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="4dp"
+        android:paddingBottom="150dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <ProgressBar
+        android:id="@+id/progress_bar_chat_bot"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:indeterminateTint="#2E7D32"
+        android:visibility="gone" />
+
+    <!-- KHU VỰC NHẬP -->
+    <LinearLayout
+        android:id="@+id/bottom_chat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@drawable/bg_bottom_bar"
+        android:elevation="12dp"
+        android:orientation="vertical"
+        android:paddingTop="10dp"
+        android:paddingBottom="12dp">
+
+        <!-- Gợi ý nhanh -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:paddingHorizontal="12dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/layout_quick_suggestions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView style="@style/ChatSuggestion" android:text="🥗 Gợi ý bữa tối" />
+                <TextView style="@style/ChatSuggestion" android:text="🔥 Khuyến mãi hôm nay" />
+                <TextView style="@style/ChatSuggestion" android:text="📦 Tra cứu đơn hàng" />
+                <TextView style="@style/ChatSuggestion" android:text="🥬 Rau củ tươi" />
+                <TextView style="@style/ChatSuggestion" android:text="🚚 Phí giao hàng" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp">
+
+            <EditText
+                android:id="@+id/edt_message_chat_bot"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/bg_chat_input"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:gravity="center_vertical|start"
+                android:hint="Nhập câu hỏi..."
+                android:imeOptions="actionSend"
+                android:importantForAutofill="no"
+                android:inputType="textCapSentences|textMultiLine"
+                android:maxLines="5"
+                android:minHeight="48dp"
+                android:paddingHorizontal="18dp"
+                android:paddingVertical="12dp"
+                android:textColor="#1A1A1A"
+                android:textColorHint="#9AA39A"
+                android:textSize="15sp" />
+
+            <ImageButton
+                android:id="@+id/btn_send_chat_bot"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_btn_add_round"
+                android:contentDescription="Gửi"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                android:padding="13dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_ui_send"
+                app:tint="#FFFFFF" />
+        </LinearLayout>
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="160dp"
+    android:layout_margin="8dp"
+    android:layout_height="wrap_content"
+    android:id="@+id/layout_product"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="8dp"
+    app:cardBackgroundColor="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <!-- Image Container with Badge -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Product Image -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_image"
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#F5F5F5">
+
+                <ImageView
+                    android:id="@+id/img_product"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/dashboard2" />
+            </androidx.cardview.widget.CardView>
+
+            <!-- Discount Badge -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginEnd="4dp"
+                android:layout_marginTop="4dp"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#FF9800">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_discount"
+                    android:scaleType="centerInside"
+                    android:padding="4dp" />
+            </androidx.cardview.widget.CardView>
+        </RelativeLayout>
+
+        <!-- Product Name -->
+        <TextView
+            android:id="@+id/tv_ten_product"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:text="PC 2021 Asus"
+            android:textColor="#2196F3"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:lineSpacingMultiplier="1.2" />
+
+        <!-- Category -->
+        <TextView
+            android:id="@+id/tv_loaisp_product"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:text="Rau củ"
+            android:textColor="#757575"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:background="#F5F5F5"
+            android:padding="4dp"
+            android:visibility="gone" />
+
+        <!-- Price Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="#E3F2FD"
+            android:padding="8dp">
+
+            <TextView
+                android:id="@+id/tv_giatien_product"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="255.555"
+                android:textColor="#2196F3"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textView14"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" VNĐ"
+                android:textColor="#2196F3"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginStart="2dp" />
+        </LinearLayout>
+
+        <!-- Rating -->
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="24dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/rating"
+            android:scaleType="fitCenter"
+            app:tint="#FF9800" />
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

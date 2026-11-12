@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="340dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="16dp"
+    app:cardBackgroundColor="#FFFFFF"
+    android:layout_centerInParent="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#2196F3">
+
+            <TextView
+                android:id="@+id/tv_dialog_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Thêm shipper mới"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:gravity="center"
+                android:padding="16dp" />
+        </androidx.cardview.widget.CardView>
+
+        <!-- Form Content -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Username Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:boxCornerRadiusBottomStart="16dp"
+                app:boxCornerRadiusBottomEnd="16dp"
+                app:boxCornerRadiusTopStart="16dp"
+                app:boxCornerRadiusTopEnd="16dp"
+                app:boxStrokeWidth="0dp"
+                app:boxStrokeWidthFocused="0dp"
+                app:hintEnabled="false"
+                android:background="@drawable/auth_input_background"
+                android:padding="4dp"
+                android:layout_marginBottom="16dp">
+
+                <EditText
+                    android:id="@+id/edt_shipper_username"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:hint="Username"
+                    android:inputType="text"
+                    android:singleLine="true"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:textSize="15sp"
+                    android:textColorHint="#9E9E9E"
+                    android:drawableStart="@drawable/ic_profile"
+                    android:drawablePadding="12dp"
+                    android:background="@android:color/transparent" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Password Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:boxCornerRadiusBottomStart="16dp"
+                app:boxCornerRadiusBottomEnd="16dp"
+                app:boxCornerRadiusTopStart="16dp"
+                app:boxCornerRadiusTopEnd="16dp"
+                app:boxStrokeWidth="0dp"
+                app:boxStrokeWidthFocused="0dp"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="#2196F3"
+                app:hintEnabled="false"
+                android:background="@drawable/auth_input_background"
+                android:padding="4dp"
+                android:layout_marginBottom="16dp">
+
+                <EditText
+                    android:id="@+id/edt_shipper_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:hint="Mật khẩu"
+                    android:inputType="textPassword"
+                    android:singleLine="true"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:textSize="15sp"
+                    android:textColorHint="#9E9E9E"
+                    android:background="@android:color/transparent" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Name Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:boxCornerRadiusBottomStart="16dp"
+                app:boxCornerRadiusBottomEnd="16dp"
+                app:boxCornerRadiusTopStart="16dp"
+                app:boxCornerRadiusTopEnd="16dp"
+                app:boxStrokeWidth="0dp"
+                app:boxStrokeWidthFocused="0dp"
+                app:hintEnabled="false"
+                android:background="@drawable/auth_input_background"
+                android:padding="4dp"
+                android:layout_marginBottom="16dp">
+
+                <EditText
+                    android:id="@+id/edt_shipper_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:hint="Tên shipper"
+                    android:inputType="text"
+                    android:singleLine="true"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:textSize="15sp"
+                    android:textColorHint="#9E9E9E"
+                    android:drawableStart="@drawable/ic_profile"
+                    android:drawablePadding="12dp"
+                    android:background="@android:color/transparent" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Phone Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:boxCornerRadiusBottomStart="16dp"
+                app:boxCornerRadiusBottomEnd="16dp"
+                app:boxCornerRadiusTopStart="16dp"
+                app:boxCornerRadiusTopEnd="16dp"
+                app:boxStrokeWidth="0dp"
+                app:boxStrokeWidthFocused="0dp"
+                app:hintEnabled="false"
+                android:background="@drawable/auth_input_background"
+                android:padding="4dp"
+                android:layout_marginBottom="24dp">
+
+                <EditText
+                    android:id="@+id/edt_shipper_phone"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:hint="Số điện thoại"
+                    android:inputType="phone"
+                    android:singleLine="true"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:textSize="15sp"
+                    android:textColorHint="#9E9E9E"
+                    android:drawableStart="@drawable/icons8_iphone_se_30"
+                    android:drawablePadding="12dp"
+                    android:background="@android:color/transparent" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Action Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <Button
+                    android:id="@+id/btn_cancel_shipper"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="Hủy"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#757575"
+                    android:background="@drawable/search_bar_background"
+                    android:elevation="2dp" />
+
+                <Button
+                    android:id="@+id/btn_save_shipper"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="Thêm"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/button_blue_gradient"
+                    android:elevation="4dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
+
