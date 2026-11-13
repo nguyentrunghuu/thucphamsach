@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Một sản phẩm trong danh sách admin — AdminProductAdapter -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/admin_space_s"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="@dimen/admin_radius_field">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="@dimen/admin_space_m">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/img_admin_product"
+            android:layout_width="@dimen/admin_thumb"
+            android:layout_height="@dimen/admin_thumb"
+            android:background="@color/admin_beige"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop"
+            app:shapeAppearanceOverlay="@style/Admin.Shape.Rounded" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/admin_space_m"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_admin_product_name"
+                style="@style/Admin.Text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="Đậu phộng" />
+
+            <TextView
+                android:id="@+id/tv_admin_product_sub"
+                style="@style/Admin.Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                tools:text="Đồ khô · 500g · HSD 13/05/2027" />
+
+            <TextView
+                android:id="@+id/tv_admin_product_price"
+                style="@style/Admin.Text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:maxLines="1"
+                android:textColor="@color/admin_primary_dark"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="35.000 đ" />
+
+            <!-- Nhãn hàng riêng để không cắt giá khi có cả 2 nhãn -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_badge_product_stock"
+                    style="@style/Admin.Badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    tools:text="Kho 120" />
+
+                <TextView
+                    android:id="@+id/tv_badge_product_expiry"
+                    style="@style/Admin.Badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/admin_space_xs"
+                    android:maxLines="1"
+                    tools:text="Còn 1 ngày" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

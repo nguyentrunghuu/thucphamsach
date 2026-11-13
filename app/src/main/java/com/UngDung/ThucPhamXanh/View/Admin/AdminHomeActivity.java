@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.UngDung.ThucPhamXanh.Helper.AdminProductFilter;
 import com.UngDung.ThucPhamXanh.Helper.DashboardStats;
 import com.UngDung.ThucPhamXanh.Helper.FirestoreMapper;
 import com.UngDung.ThucPhamXanh.Helper.MoneyUtil;
@@ -117,7 +118,8 @@ public class AdminHomeActivity extends BaseAdminActivity {
         statRevenueToday.setOnClickListener(v -> open(AdminChartBillActivity.class));
         statRevenueMonth.setOnClickListener(v -> open(AdminChartBillActivity.class));
         statPending.setOnClickListener(v -> open(AdminBillMainActivity.class));
-        statLowStock.setOnClickListener(v -> open(AdminProductActivity.class));
+        statLowStock.setOnClickListener(v -> startActivity(
+                AdminProductActivity.intent(this, AdminProductFilter.STATUS_LOW_STOCK)));
     }
 
     private void bindStatStatic(View card, @DrawableRes int icon, String label,
