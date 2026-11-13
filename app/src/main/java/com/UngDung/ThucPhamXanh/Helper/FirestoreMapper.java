@@ -53,15 +53,21 @@ public final class FirestoreMapper {
 
     /** Số nguyên của field; thiếu / không phải số → 0. Chấp nhận cả chuỗi số ("12"). */
     public static long num(DocumentSnapshot doc, String field) {
+        Long v = numOrNull(doc, field);
+        return v == null ? 0 : v;
+    }
+
+    /** Như {@link #num} nhưng thiếu / không đọc được → null (để phân biệt với giá trị 0 thật). */
+    public static Long numOrNull(DocumentSnapshot doc, String field) {
         Object v = doc.get(field);
         if (v instanceof Number) return ((Number) v).longValue();
         if (v instanceof String) {
             try {
                 return Long.parseLong(((String) v).trim());
             } catch (NumberFormatException e) {
-                return 0;
+                return null;
             }
         }
-        return 0;
+        return null;
     }
 }

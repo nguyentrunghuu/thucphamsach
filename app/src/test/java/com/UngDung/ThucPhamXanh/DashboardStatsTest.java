@@ -101,4 +101,50 @@ public class DashboardStatsTest {
         assertFalse(DashboardStats.isExpiringSoon("12/11/2026", TODAY)); // đã quá hạn: không phải "sắp"
         assertFalse(DashboardStats.isExpiringSoon("không rõ", TODAY));
     }
+
+    @Test
+    public void canhBaoSanPham() {
+        assertNull(DashboardStats.checkProduct(50, "30/11/2026", TODAY));   // ổn
+        assertNull(DashboardStats.checkProduct(50, "", TODAY));             // không có hạn: không cảnh báo
+
+        DashboardStats.ProductAlert a = DashboardStats.checkProduct(0, "12/11/2026", TODAY);
+        assertEquals("Hết hàng", a.stockLabel);
+        assertEquals("Hết hạn", a.expiryLabel);
+        assertEquals(DashboardStats.ProductAlert.EXPIRED, a.severity());
+
+        a = DashboardStats.checkProduct(3, "30/11/2026", TODAY);
+        assertEquals("Còn 3", a.stockLabel);
+        assertNull(a.expiryLabel);
+        assertEquals(DashboardStats.ProductAlert.LOW_STOCK, a.severity());
+
+        a = DashboardStats.checkProduct(40, "13/11/2026", TODAY);
+        assertNull(a.stockLabel);
+        assertEquals("Hết hạn hôm nay", a.expiryLabel);
+
+        a = DashboardStats.checkProduct(40, "15/11/2026", TODAY);
+        assertEquals("Còn 2 ngày", a.expiryLabel);
+        assertEquals(DashboardStats.ProductAlert.EXPIRING, a.severity());
+    }
+
+    @Test
+    public void thuTuGap_hetHanTruoc_itNgayTruoc_itHangTruoc() {
+        DashboardStats.ProductAlert hetHan = DashboardStats.checkProduct(40, "10/11/2026", TODAY);
+        DashboardStats.ProductAlert het = DashboardStats.checkProduct(0, "30/11/2026", TODAY);
+        DashboardStats.ProductAlert con1Ngay = DashboardStats.checkProduct(40, "14/11/2026", TODAY);
+        DashboardStats.ProductAlert con2Ngay = DashboardStats.checkProduct(40, "15/11/2026", TODAY);
+        DashboardStats.ProductAlert con2 = DashboardStats.checkProduct(2, "30/11/2026", TODAY);
+        DashboardStats.ProductAlert con4 = DashboardStats.checkProduct(4, "30/11/2026", TODAY);
+
+        java.util.List<DashboardStats.ProductAlert> list = new java.util.ArrayList<>(
+                java.util.Arrays.asList(con4, con2Ngay, het, con2, con1Ngay, hetHan));
+        list.sort(DashboardStats.ProductAlert.URGENCY);
+        assertEquals(java.util.Arrays.asList(hetHan, het, con1Ngay, con2Ngay, con2, con4), list);
+    }
+
+    @Test
+    public void ngayTiengViet() {
+        assertEquals("Thứ Sáu, 13/11/2026", DashboardStats.formatLongDate(TODAY));
+        assertEquals("Chủ Nhật, 15/11/2026", DashboardStats.formatLongDate(LocalDate.of(2026, 11, 15)));
+        assertEquals("Thứ Hai, 02/03/2026", DashboardStats.formatLongDate(LocalDate.of(2026, 3, 2)));
+    }
 }

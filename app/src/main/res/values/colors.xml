@@ -72,6 +72,7 @@
     <color name="admin_text_muted">#6B7468</color>
     <color name="admin_warning">#E69A28</color>        <!-- sắp hết hàng / sắp hết hạn -->
     <color name="admin_warning_soft">#FFF4E0</color>
+    <color name="admin_warning_text">#8A5300</color>   <!-- chữ trên nền warning_soft (đủ tương phản) -->
     <color name="admin_danger">#C62828</color>         <!-- hủy, xóa, hết hàng -->
     <color name="admin_danger_soft">#FDECEA</color>
     <color name="admin_info">#3E7CB1</color>           <!-- đang giao -->

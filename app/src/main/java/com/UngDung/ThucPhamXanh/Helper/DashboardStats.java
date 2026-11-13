@@ -134,4 +134,90 @@ public final class DashboardStats {
         Long days = daysUntilExpiry(hansudung, today);
         return days != null && days >= 0 && days <= EXPIRY_WARNING_DAYS;
     }
+
+    // ------------------------------------------------------------------ cảnh báo sản phẩm
+
+    /**
+     * Cảnh báo của một sản phẩm (danh sách "Cần chú ý" trên dashboard).
+     * Mỗi sản phẩm có tối đa một nhãn tồn kho và một nhãn hạn dùng.
+     */
+    public static final class ProductAlert {
+        /** Mức nghiêm trọng, lớn hơn = xếp trên. */
+        public static final int EXPIRED = 4, OUT_OF_STOCK = 3, EXPIRING = 2, LOW_STOCK = 1;
+
+        public final int stockLevel;   // 0, LOW_STOCK hoặc OUT_OF_STOCK
+        public final int expiryLevel;  // 0, EXPIRING hoặc EXPIRED
+        public final String stockLabel;   // "Hết hàng" / "Còn 3" / null
+        public final String expiryLabel;  // "Hết hạn" / "Hết hạn hôm nay" / "Còn 2 ngày" / null
+        public final long stock;          // số lượng tồn
+        public final Long daysLeft;       // số ngày còn hạn (âm = quá hạn), null = không rõ
+
+        ProductAlert(int stockLevel, String stockLabel, int expiryLevel, String expiryLabel,
+                     long stock, Long daysLeft) {
+            this.stockLevel = stockLevel;
+            this.stockLabel = stockLabel;
+            this.expiryLevel = expiryLevel;
+            this.expiryLabel = expiryLabel;
+            this.stock = stock;
+            this.daysLeft = daysLeft;
+        }
+
+        public int severity() {
+            return Math.max(stockLevel, expiryLevel);
+        }
+
+        /**
+         * Gấp hơn đứng trước: mức nghiêm trọng cao hơn → ít ngày còn hạn hơn → ít hàng tồn hơn.
+         * (Không xét tên; nơi gọi tự so tên nếu cần thứ tự ổn định.)
+         */
+        public static final java.util.Comparator<ProductAlert> URGENCY = (a, b) -> {
+            int c = Integer.compare(b.severity(), a.severity());
+            if (c != 0) return c;
+            long da = a.daysLeft == null ? Long.MAX_VALUE : a.daysLeft;
+            long db = b.daysLeft == null ? Long.MAX_VALUE : b.daysLeft;
+            c = Long.compare(da, db);
+            if (c != 0) return c;
+            return Long.compare(a.stock, b.stock);
+        };
+    }
+
+    /** Sản phẩm có cần admin chú ý không; ổn → null. */
+    public static ProductAlert checkProduct(long soluong, String hansudung, LocalDate today) {
+        int stockLevel = 0;
+        String stockLabel = null;
+        if (isOutOfStock(soluong)) {
+            stockLevel = ProductAlert.OUT_OF_STOCK;
+            stockLabel = "Hết hàng";
+        } else if (isLowStock(soluong)) {
+            stockLevel = ProductAlert.LOW_STOCK;
+            stockLabel = "Còn " + soluong;
+        }
+
+        int expiryLevel = 0;
+        String expiryLabel = null;
+        Long days = daysUntilExpiry(hansudung, today);
+        if (days != null) {
+            if (days < 0) {
+                expiryLevel = ProductAlert.EXPIRED;
+                expiryLabel = "Hết hạn";
+            } else if (days <= EXPIRY_WARNING_DAYS) {
+                expiryLevel = ProductAlert.EXPIRING;
+                expiryLabel = days == 0 ? "Hết hạn hôm nay" : "Còn " + days + " ngày";
+            }
+        }
+
+        if (stockLevel == 0 && expiryLevel == 0) return null;
+        return new ProductAlert(stockLevel, stockLabel, expiryLevel, expiryLabel, soluong, days);
+    }
+
+    // ------------------------------------------------------------------ hiển thị ngày
+
+    private static final String[] WEEKDAYS = {
+            "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"};
+
+    /** 2026-11-13 → "Thứ Sáu, 13/11/2026". */
+    public static String formatLongDate(LocalDate d) {
+        return WEEKDAYS[d.getDayOfWeek().getValue() - 1] + ", "
+                + String.format(java.util.Locale.ROOT, "%02d/%02d/%04d", d.getDayOfMonth(), d.getMonthValue(), d.getYear());
+    }
 }

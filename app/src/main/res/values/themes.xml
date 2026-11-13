@@ -399,6 +399,12 @@
         <item name="android:textColor">@color/admin_text_muted</item>
     </style>
 
+    <!-- Bo góc ảnh (ShapeableImageView app:shapeAppearanceOverlay) -->
+    <style name="Admin.Shape.Rounded" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">10dp</item>
+    </style>
+
     <!-- Nhãn nhỏ dạng "viên thuốc" (tồn kho, hạn dùng, trạng thái) — đặt màu nền bằng backgroundTint -->
     <style name="Admin.Badge">
         <item name="android:fontFamily">@font/be_vietnam_pro</item>

@@ -22,4 +22,22 @@ public final class MoneyUtil {
             return 0; // quá dài, dữ liệu lỗi
         }
     }
+
+    /** 2058250 → "2.058.250 đ" (dấu chấm ngăn cách nghìn, không phụ thuộc ngôn ngữ máy). */
+    public static String formatVnd(long amount) {
+        return formatNumber(amount) + " đ";
+    }
+
+    /** 2058250 → "2.058.250". */
+    public static String formatNumber(long amount) {
+        String digits = Long.toString(Math.abs(amount));
+        StringBuilder sb = new StringBuilder();
+        int lead = digits.length() % 3;
+        if (lead == 0) lead = 3;
+        sb.append(digits, 0, lead);
+        for (int i = lead; i < digits.length(); i += 3) {
+            sb.append('.').append(digits, i, i + 3);
+        }
+        return amount < 0 ? "-" + sb : sb.toString();
+    }
 }

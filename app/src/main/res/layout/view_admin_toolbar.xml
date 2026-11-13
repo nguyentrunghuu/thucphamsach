@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Toolbar xanh dùng chung cho các màn admin. Dùng: <include layout="@layout/view_admin_toolbar" />
+     rồi gọi BaseAdminActivity.setupAdminToolbar(title, subtitle). Container tự chừa chỗ cho status bar. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/admin_toolbar_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/admin_primary"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/admin_toolbar"
+        style="@style/Admin.Toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/admin_toolbar_height"
+        app:navigationIcon="@drawable/ic_ui_back"
+        app:navigationIconTint="@color/white"
+        app:subtitleTextColor="@color/admin_primary_soft" />
+</LinearLayout>
