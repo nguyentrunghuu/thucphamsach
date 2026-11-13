@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Số liệu nhỏ trong thẻ doanh thu (chữ trắng trên nền xanh): giá trị lớn + nhãn -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/mini_value"
+        style="@style/Admin.Text.Section"
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:autoSizeMaxTextSize="18sp"
+        android:autoSizeMinTextSize="12sp"
+        android:autoSizeTextType="uniform"
+        android:maxLines="1"
+        android:text="—"
+        android:textColor="@color/white" />
+
+    <TextView
+        android:id="@+id/mini_label"
+        style="@style/Admin.Text.Caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/admin_primary_soft" />
+</LinearLayout>

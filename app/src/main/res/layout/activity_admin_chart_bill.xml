@@ -1,372 +1,279 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Thống kê doanh thu admin: toolbar → chip chọn kỳ → thẻ doanh thu → biểu đồ cột →
+     đơn theo trạng thái → ghi chú đơn chưa giao → xuất Excel -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/home_gradient_background">
+    android:background="@color/admin_beige"
+    android:orientation="vertical"
+    tools:context=".View.Admin.AdminChartBillActivity">
 
-    <!-- App Bar -->
-    <com.google.android.material.appbar.AppBarLayout
+    <include layout="@layout/view_admin_toolbar" />
+
+    <!-- Chọn kỳ -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        app:elevation="0dp">
+        android:background="@color/admin_surface"
+        android:orientation="vertical"
+        android:paddingTop="@dimen/admin_space_m"
+        android:paddingBottom="@dimen/admin_space_s">
 
-        <androidx.cardview.widget.CardView
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginTop="20dp"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="6dp"
-            app:cardBackgroundColor="#FFFFFF">
+            android:scrollbars="none">
 
-            <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_group_period"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:minHeight="?attr/actionBarSize"
-                android:background="@android:color/transparent"
-                android:padding="20dp">
+                android:paddingStart="@dimen/admin_screen_padding"
+                android:paddingEnd="@dimen/admin_screen_padding"
+                app:chipSpacingHorizontal="@dimen/admin_space_s"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_period_7"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:text="7 ngày"
+                    app:checkedIconVisible="false" />
 
-                    <ImageView
-                        android:id="@+id/img_back_chart"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@drawable/ic_back"
-                        android:tint="#2196F3"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:padding="8dp"
-                        android:contentDescription="Back" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_period_30"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="30 ngày"
+                    app:checkedIconVisible="false" />
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:layout_marginStart="12dp">
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_period_month"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="Tháng này"
+                    app:checkedIconVisible="false" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Thống kê doanh thu"
-                            android:textColor="#2196F3"
-                            android:textSize="22sp"
-                            android:textStyle="bold" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_period_year"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Năm nay"
+                    app:checkedIconVisible="false" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Phân tích và báo cáo"
-                            android:textColor="#757575"
-                            android:textSize="13sp"
-                            android:layout_marginTop="4dp" />
-                    </LinearLayout>
-                </LinearLayout>
-            </androidx.appcompat.widget.Toolbar>
-        </androidx.cardview.widget.CardView>
-    </com.google.android.material.appbar.AppBarLayout>
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_period_custom"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Chọn ngày…"
+                    app:checkedIconVisible="false" />
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
 
-    <androidx.core.widget.NestedScrollView
+        <TextView
+            android:id="@+id/tv_range"
+            style="@style/Admin.Text.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/admin_screen_padding"
+            android:layout_marginTop="@dimen/admin_space_s"
+            android:layout_marginEnd="@dimen/admin_screen_padding" />
+    </LinearLayout>
+
+    <ScrollView
+        android:id="@+id/chart_scroll"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp"
-            android:paddingTop="24dp"
-            android:paddingBottom="100dp">
+            android:padding="@dimen/admin_screen_padding">
 
-            <!-- Pie Chart Card -->
-            <androidx.cardview.widget.CardView
+            <!-- Thẻ doanh thu -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Admin.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                app:cardCornerRadius="28dp"
-                app:cardElevation="8dp"
-                app:cardBackgroundColor="#FFFFFF">
+                app:cardBackgroundColor="@color/admin_primary"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="24dp">
+                    android:padding="@dimen/admin_card_padding">
 
                     <TextView
+                        style="@style/Admin.Text.Caption"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Biểu đồ tròn"
-                        android:textColor="#2196F3"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="20dp" />
-
-                    <com.github.mikephil.charting.charts.PieChart
-                        android:id="@+id/piechart"
-                        android:layout_width="match_parent"
-                        android:layout_height="320dp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Bar Chart Card -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                app:cardCornerRadius="28dp"
-                app:cardElevation="8dp"
-                app:cardBackgroundColor="#FFFFFF">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="24dp">
+                        android:text="Doanh thu (đơn đã giao)"
+                        android:textColor="@color/admin_primary_soft" />
 
                     <TextView
+                        android:id="@+id/tv_revenue"
+                        style="@style/Admin.Text.StatValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="2dp"
+                        android:autoSizeMaxTextSize="32sp"
+                        android:autoSizeMinTextSize="18sp"
+                        android:autoSizeTextType="uniform"
+                        android:maxLines="1"
+                        android:text="—"
+                        android:textColor="@color/white" />
+
+                    <TextView
+                        android:id="@+id/tv_delta"
+                        style="@style/Admin.Text.Caption"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Biểu đồ cột"
-                        android:textColor="#2196F3"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="20dp" />
+                        android:layout_marginTop="@dimen/admin_space_xs"
+                        android:textColor="@color/admin_primary_soft" />
 
-                    <com.github.mikephil.charting.charts.BarChart
-                        android:id="@+id/barchart"
+                    <View
                         android:layout_width="match_parent"
-                        android:layout_height="380dp"
-                        android:layout_marginBottom="20dp" />
+                        android:layout_height="1dp"
+                        android:layout_marginTop="@dimen/admin_space_m"
+                        android:layout_marginBottom="@dimen/admin_space_m"
+                        android:background="#33FFFFFF" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:padding="16dp"
-                        android:background="#F5F5F5">
+                        android:orientation="horizontal">
 
-                        <TextView
+                        <include
+                            android:id="@+id/mini_delivered"
+                            layout="@layout/item_admin_mini_stat"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Năm:"
-                            android:textColor="#2196F3"
-                            android:textSize="17sp"
-                            android:textStyle="bold" />
+                            android:layout_weight="1" />
 
-                        <Spinner
-                            android:id="@+id/spinner_doanhthu"
+                        <include
+                            android:id="@+id/mini_average"
+                            layout="@layout/item_admin_mini_stat"
                             android:layout_width="0dp"
-                            android:layout_height="64dp"
-                            android:layout_weight="2"
-                            android:layout_marginStart="16dp"
-                            android:background="@drawable/auth_input_background"
-                            android:paddingStart="20dp"
-                            android:paddingEnd="20dp" />
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+
+                        <include
+                            android:id="@+id/mini_cancelled"
+                            layout="@layout/item_admin_mini_stat"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
                     </LinearLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
-            <!-- Revenue by Date Range Card -->
-            <androidx.cardview.widget.CardView
+            <!-- Biểu đồ -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Admin.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="28dp"
-                app:cardElevation="8dp"
-                app:cardBackgroundColor="#FFFFFF">
+                android:layout_marginTop="@dimen/admin_card_gap">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="28dp">
+                    android:padding="@dimen/admin_card_padding">
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Doanh thu theo mốc thời gian"
-                        android:textColor="#2196F3"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:layout_gravity="center"
-                        android:layout_marginBottom="28dp" />
+                        android:id="@+id/tv_chart_title"
+                        style="@style/Admin.Text.Section"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
 
-                    <!-- From Date -->
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/tv_chart_hint"
+                        style="@style/Admin.Text.Caption"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginBottom="24dp">
+                        android:layout_marginTop="2dp" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Từ ngày"
-                            android:textColor="#2196F3"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="12dp" />
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="220dp"
+                        android:layout_marginTop="@dimen/admin_space_s">
 
-                        <com.google.android.material.textfield.TextInputLayout
+                        <com.github.mikephil.charting.charts.BarChart
+                            android:id="@+id/barchart"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            app:hintTextColor="#2196F3"
-                            app:boxStrokeColor="#2196F3"
-                            app:boxStrokeWidth="2dp"
-                            app:boxStrokeWidthFocused="2dp"
-                            app:boxCornerRadiusTopStart="16dp"
-                            app:boxCornerRadiusTopEnd="16dp"
-                            app:boxCornerRadiusBottomStart="16dp"
-                            app:boxCornerRadiusBottomEnd="16dp">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/edt_bill_from_date"
-                                android:layout_width="match_parent"
-                                android:layout_height="64dp"
-                                android:hint="Chọn ngày bắt đầu"
-                                android:clickable="true"
-                                android:focusable="false"
-                                android:drawableStart="@drawable/icons8_calendar"
-                                android:drawablePadding="12dp"
-                                android:paddingStart="20dp"
-                                android:paddingEnd="20dp"
-                                android:textSize="16sp"
-                                android:textColor="#212121" />
-                        </com.google.android.material.textfield.TextInputLayout>
-                    </LinearLayout>
-
-                    <!-- To Date -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginBottom="28dp">
+                            android:layout_height="match_parent" />
 
                         <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Đến ngày"
-                            android:textColor="#2196F3"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="12dp" />
-
-                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tv_chart_empty"
+                            style="@style/Admin.Text.Caption"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            app:hintTextColor="#2196F3"
-                            app:boxStrokeColor="#2196F3"
-                            app:boxStrokeWidth="2dp"
-                            app:boxStrokeWidthFocused="2dp"
-                            app:boxCornerRadiusTopStart="16dp"
-                            app:boxCornerRadiusTopEnd="16dp"
-                            app:boxCornerRadiusBottomStart="16dp"
-                            app:boxCornerRadiusBottomEnd="16dp">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/edt_bill_to_date"
-                                android:layout_width="match_parent"
-                                android:layout_height="64dp"
-                                android:hint="Chọn ngày kết thúc"
-                                android:clickable="true"
-                                android:focusable="false"
-                                android:drawableStart="@drawable/icons8_calendar"
-                                android:drawablePadding="12dp"
-                                android:paddingStart="20dp"
-                                android:paddingEnd="20dp"
-                                android:textSize="16sp"
-                                android:textColor="#212121" />
-                        </com.google.android.material.textfield.TextInputLayout>
-                    </LinearLayout>
-
-                    <!-- Action Buttons -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center"
-                        android:layout_marginBottom="28dp">
-
-                        <Button
-                            android:id="@+id/btn_tinh_doanh_thu"
-                            android:layout_width="0dp"
-                            android:layout_height="64dp"
-                            android:layout_weight="1"
-                            android:layout_marginEnd="10dp"
-                            android:text="Tính doanh thu"
-                            android:textColor="#FFFFFF"
-                            android:textSize="17sp"
-                            android:textStyle="bold"
-                            android:background="@drawable/button_blue_gradient"
-                            android:elevation="6dp" />
-
-                        <Button
-                            android:id="@+id/btn_xuat_excel"
-                            android:layout_width="0dp"
-                            android:layout_height="64dp"
-                            android:layout_weight="1"
-                            android:layout_marginStart="10dp"
-                            android:visibility="gone"
-                            android:text="Xuất Excel"
-                            android:textColor="#2196F3"
-                            android:textSize="17sp"
-                            android:textStyle="bold"
-                            android:background="@drawable/button_outline_blue"
-                            android:elevation="0dp" />
-                    </LinearLayout>
-
-                    <!-- Revenue Display -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center"
-                        android:background="#E3F2FD"
-                        android:padding="24dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Doanh thu: "
-                            android:textColor="#1976D2"
-                            android:textSize="22sp"
-                            android:textStyle="bold"
-                            android:layout_marginEnd="8dp" />
-
-                        <TextView
-                            android:id="@+id/tv_doanh_thu"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0"
-                            android:textColor="#2196F3"
-                            android:textSize="32sp"
-                            android:textStyle="bold"
-                            android:layout_marginEnd="4dp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="VNĐ"
-                            android:textColor="#1976D2"
-                            android:textSize="22sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:text="Chưa có đơn đã giao trong kỳ này"
+                            android:visibility="gone" />
+                    </FrameLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
+            <!-- Đơn theo trạng thái -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Admin.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/admin_card_gap">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/admin_card_padding">
+
+                    <TextView
+                        android:id="@+id/tv_status_title"
+                        style="@style/Admin.Text.Section"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Đơn theo trạng thái" />
+
+                    <LinearLayout
+                        android:id="@+id/status_rows"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/admin_space_s"
+                        android:orientation="vertical" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Ghi chú đơn chưa giao xong -->
+            <TextView
+                android:id="@+id/tv_unfinished"
+                style="@style/Admin.Text.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/admin_card_gap"
+                android:background="@drawable/bg_admin_badge"
+                android:backgroundTint="@color/admin_warning_soft"
+                android:padding="@dimen/admin_space_l"
+                android:textColor="@color/admin_warning_text"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_export"
+                style="@style/Admin.Button.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/admin_card_gap"
+                android:text="Xuất Excel đơn đã giao" />
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+    </ScrollView>
+</LinearLayout>

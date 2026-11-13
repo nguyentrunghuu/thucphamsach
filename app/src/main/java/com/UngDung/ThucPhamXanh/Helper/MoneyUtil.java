@@ -40,4 +40,23 @@ public final class MoneyUtil {
         }
         return amount < 0 ? "-" + sb : sb.toString();
     }
+
+    /**
+     * Rút gọn cho trục biểu đồ / chỗ hẹp: 500 → "500", 12.000 → "12k", 1.500.000 → "1,5tr", 2.300.000.000 → "2,3 tỷ".
+     */
+    public static String formatCompact(long amount) {
+        long abs = Math.abs(amount);
+        String s;
+        if (abs >= 1_000_000_000L) s = trim1(abs / 1_000_000_000.0) + " tỷ";
+        else if (abs >= 1_000_000L) s = trim1(abs / 1_000_000.0) + "tr";
+        else if (abs >= 1_000L) s = trim1(abs / 1_000.0) + "k";
+        else s = Long.toString(abs);
+        return amount < 0 ? "-" + s : s;
+    }
+
+    /** 1.5 → "1,5"; 2.0 → "2"; làm tròn 1 chữ số thập phân, dấu phẩy kiểu Việt Nam. */
+    private static String trim1(double v) {
+        long tenths = Math.round(v * 10);
+        return tenths % 10 == 0 ? Long.toString(tenths / 10) : (tenths / 10) + "," + (tenths % 10);
+    }
 }

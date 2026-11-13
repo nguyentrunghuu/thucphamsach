@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Một dòng "trạng thái – số đơn – thanh tỉ lệ" trong thẻ Đơn hàng theo trạng thái -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="@dimen/admin_space_s"
+    android:paddingBottom="@dimen/admin_space_s">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <View
+            android:id="@+id/row_dot"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:background="@drawable/bg_admin_badge" />
+
+        <TextView
+            android:id="@+id/row_label"
+            style="@style/Admin.Text.Body"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/admin_space_s"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/row_count"
+            style="@style/Admin.Text.Section"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/row_percent"
+            style="@style/Admin.Text.Caption"
+            android:layout_width="44dp"
+            android:layout_height="wrap_content"
+            android:gravity="end" />
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/row_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="@dimen/admin_space_xs"
+        android:max="100" />
+</LinearLayout>
