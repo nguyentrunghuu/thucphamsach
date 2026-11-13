@@ -215,7 +215,7 @@ public class ProductListActivity extends AppCompatActivity {
                         productList.clear();
                         if (queryDocumentSnapshots.size() > 0) {
                             for (QueryDocumentSnapshot d : queryDocumentSnapshots) {
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 try {
                                     Product product = new Product(
                                             d.getId(),
@@ -266,7 +266,7 @@ public class ProductListActivity extends AppCompatActivity {
                         productList.clear();
                         if (queryDocumentSnapshots.size() > 0) {
                             for (QueryDocumentSnapshot d : queryDocumentSnapshots) {
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 try {
                                     Product product = new Product(
                                             d.getId(),
@@ -388,7 +388,7 @@ public class ProductListActivity extends AppCompatActivity {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if (queryDocumentSnapshots.size() > 0) {
                             for (QueryDocumentSnapshot d : queryDocumentSnapshots) {
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 try {
                                     String loaisp = d.getString("loaisp");
                                     // Chỉ thêm sản phẩm thuộc các loại có khuyến mãi

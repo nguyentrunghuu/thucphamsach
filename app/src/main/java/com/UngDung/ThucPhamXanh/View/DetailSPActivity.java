@@ -93,9 +93,17 @@ public class DetailSPActivity extends AppCompatActivity implements BinhLuanView,
             }
         });
 
+        bindAvailability();
         btnAddCartDetail.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // Kiểm tra lại lúc bấm (màn hình có thể mở từ hôm trước)
+                String reason = unavailableReason();
+                if (reason != null) {
+                    bindAvailability();
+                    Toast.makeText(DetailSPActivity.this, reason, Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 setBottomSheetDialog();
                 tvTenBottom.setText(product.getTensp());
                 tvGiaBottom.setText(NumberFormat.getInstance().format(product.getGiatien()) + "");
@@ -109,6 +117,24 @@ public class DetailSPActivity extends AppCompatActivity implements BinhLuanView,
                 bottomSheetDialog.show();
             }
         });
+    }
+
+    /** Hết hạn / hết hàng → lý do (để báo khách); còn bán → null. */
+    private String unavailableReason() {
+        return com.UngDung.ThucPhamXanh.Helper.ProductVisibility.unavailableReason(
+                product.getHansudung(), product.getSoluong(), java.time.LocalDate.now());
+    }
+
+    /** Nút "Thêm vào giỏ" mờ đi và đổi chữ khi sản phẩm không bán được. */
+    private void bindAvailability() {
+        boolean expired = com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isExpired(
+                product.getHansudung(), java.time.LocalDate.now());
+        boolean available = unavailableReason() == null;
+        btnAddCartDetail.setAlpha(available ? 1f : 0.45f);
+        TextView label = findViewById(R.id.tv_addcart_detail);
+        if (label != null) {
+            label.setText(available ? "Thêm vào giỏ" : (expired ? "Đã hết hạn" : "Hết hàng"));
+        }
     }
 
     // Nút yêu thích

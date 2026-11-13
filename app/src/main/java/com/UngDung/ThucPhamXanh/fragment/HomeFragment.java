@@ -218,7 +218,7 @@ public class HomeFragment extends Fragment {
 
                         // Process all products
                         for (QueryDocumentSnapshot d : queryDocumentSnapshots) {
-                            if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                            if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                             Product product = new Product(d.getId(), d.getString("tensp"),
                                     d.getLong("giatien"), d.getString("hinhanh"),
                                     d.getString("loaisp"), d.getString("mota"),
@@ -886,7 +886,7 @@ public class HomeFragment extends Fragment {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if (queryDocumentSnapshots.size() > 0) {
                             for (QueryDocumentSnapshot d : queryDocumentSnapshots) {
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 arr_ds_sp.add(new Product(d.getId(), d.getString("tensp"),
                                         d.getLong("giatien"), d.getString("hinhanh"),
                                         d.getString("loaisp"), d.getString("mota"),
@@ -920,7 +920,7 @@ public class HomeFragment extends Fragment {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if (queryDocumentSnapshots.size() > 0) {
                             for (QueryDocumentSnapshot d : queryDocumentSnapshots) {
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 arr_sp_nb.add(new Product(d.getId(), d.getString("tensp"),
                                         d.getLong("giatien"), d.getString("hinhanh"),
                                         d.getString("loaisp"), d.getString("mota"),
@@ -953,7 +953,7 @@ public class HomeFragment extends Fragment {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if (queryDocumentSnapshots.size() > 0) {
                             for (QueryDocumentSnapshot d : queryDocumentSnapshots) {
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 // lấy id trên firebase
                                 arr_sp_du.add(new Product(d.getId(), d.getString("tensp"),
                                         d.getLong("giatien"), d.getString("hinhanh"),
@@ -988,7 +988,7 @@ public class HomeFragment extends Fragment {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if (queryDocumentSnapshots.size() > 0) {
                             for (QueryDocumentSnapshot d : queryDocumentSnapshots) {
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 // lấy id trên firebase
                                 arr_sp_hq.add(new Product(d.getId(), d.getString("tensp"),
                                         d.getLong("giatien"), d.getString("hinhanh"),
@@ -1023,7 +1023,7 @@ public class HomeFragment extends Fragment {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if (queryDocumentSnapshots.size() > 0) {
                             for (QueryDocumentSnapshot d : queryDocumentSnapshots) {
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 arr_sp_mc.add(new Product(d.getId(), d.getString("tensp"),
                                         d.getLong("giatien"), d.getString("hinhanh"),
                                         d.getString("loaisp"), d.getString("mota"),
@@ -1057,7 +1057,7 @@ public class HomeFragment extends Fragment {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if (queryDocumentSnapshots.size() > 0) {
                             for (QueryDocumentSnapshot d : queryDocumentSnapshots) {
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 // lấy id trên firebase
                                 arr_sp_yt.add(new Product(d.getId(), d.getString("tensp"),
                                         d.getLong("giatien"), d.getString("hinhanh"),
@@ -1091,7 +1091,7 @@ public class HomeFragment extends Fragment {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if (queryDocumentSnapshots.size() > 0) {
                             for (QueryDocumentSnapshot d : queryDocumentSnapshots) {
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 // lấy id trên firebase
                                 arr_sp_lau.add(new Product(d.getId(), d.getString("tensp"),
                                         d.getLong("giatien"), d.getString("hinhanh"),
@@ -1126,7 +1126,7 @@ public class HomeFragment extends Fragment {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if (queryDocumentSnapshots.size() > 0) {
                             for (QueryDocumentSnapshot d : queryDocumentSnapshots) {
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 // lấy id trên firebase
                                 arr_sp_gy.add(new Product(d.getId(), d.getString("tensp"),
                                         d.getLong("giatien"), d.getString("hinhanh"),

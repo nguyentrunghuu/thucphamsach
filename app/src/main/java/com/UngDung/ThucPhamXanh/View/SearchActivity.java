@@ -213,7 +213,7 @@ public class SearchActivity extends AppCompatActivity implements StoryView {
                     List<Product> products = new ArrayList<>();
                     Map<String, Long> sold = new HashMap<>();
                     for (QueryDocumentSnapshot d : snapshots) {
-                        if (ProductVisibility.isHidden(d)) continue;
+                        if (ProductVisibility.isHiddenFromShop(d)) continue;
                         products.add(new Product(d.getId(), d.getString("tensp"),
                                 longOrZero(d.getLong("giatien")), d.getString("hinhanh"),
                                 d.getString("loaisp"), d.getString("mota"),

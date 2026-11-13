@@ -924,6 +924,12 @@ public class CartActivity extends AppCompatActivity implements GioHangView {
                 Toast.makeText(this, "Số lượng sản phẩm " + p.getTensp() + " không hợp lệ", Toast.LENGTH_SHORT).show();
                 return false;
             }
+            // Giỏ mở từ hôm trước: kiểm tra lại hạn dùng ngay lúc thanh toán
+            if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isExpired(p.getHansudung(), java.time.LocalDate.now())) {
+                Toast.makeText(this, "\"" + p.getTensp() + "\" đã hết hạn sử dụng, vui lòng xóa khỏi giỏ",
+                        Toast.LENGTH_LONG).show();
+                return false;
+            }
         }
         return true;
     }
@@ -986,6 +992,14 @@ public class CartActivity extends AppCompatActivity implements GioHangView {
             if (tensp == null || giatien == null || soluong == null || soluong < 1) {
                 Log.w("CartActivity", "Bỏ sản phẩm lỗi khỏi giỏ: id=" + id + ", soluong=" + soluong);
                 gioHangPresenter.HandleDeleteDataGioHang(id);
+                return;
+            }
+            // Hết hạn sử dụng: ngừng bán → gỡ khỏi giỏ và báo cho khách biết
+            if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isExpired(hansudung, java.time.LocalDate.now())) {
+                Log.w("CartActivity", "Gỡ sản phẩm hết hạn khỏi giỏ: " + tensp + " (HSD " + hansudung + ")");
+                gioHangPresenter.HandleDeleteDataGioHang(id);
+                Toast.makeText(this, "Đã gỡ \"" + tensp + "\" khỏi giỏ vì sản phẩm đã hết hạn sử dụng",
+                        Toast.LENGTH_LONG).show();
                 return;
             }
             listGiohang.add(
