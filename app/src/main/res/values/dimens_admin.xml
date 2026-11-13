@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kích thước dùng chung cho trang admin -->
+<resources>
+    <!-- Khoảng cách -->
+    <dimen name="admin_space_xs">4dp</dimen>
+    <dimen name="admin_space_s">8dp</dimen>
+    <dimen name="admin_space_m">12dp</dimen>
+    <dimen name="admin_space_l">16dp</dimen>
+    <dimen name="admin_space_xl">24dp</dimen>
+
+    <!-- Lề màn hình / giữa các card / padding trong card -->
+    <dimen name="admin_screen_padding">16dp</dimen>
+    <dimen name="admin_card_gap">12dp</dimen>
+    <dimen name="admin_card_padding">16dp</dimen>
+
+    <!-- Bo góc -->
+    <dimen name="admin_radius_card">16dp</dimen>
+    <dimen name="admin_radius_field">12dp</dimen>
+    <dimen name="admin_radius_badge">10dp</dimen>
+
+    <!-- Icon, ảnh, vùng bấm -->
+    <dimen name="admin_icon">24dp</dimen>
+    <dimen name="admin_icon_box">44dp</dimen>
+    <dimen name="admin_thumb">72dp</dimen>
+    <dimen name="admin_touch_min">48dp</dimen>
+    <dimen name="admin_toolbar_height">56dp</dimen>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ô vuông bo góc chứa icon (menu dashboard, thẻ số liệu); đổi màu bằng android:backgroundTint -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/admin_primary_soft" />
+    <corners android:radius="@dimen/admin_radius_field" />
+</shape>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chữ chip lọc trang admin -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/admin_primary_dark" android:state_checked="true" />
+    <item android:color="@color/admin_text_muted" />
+</selector>
