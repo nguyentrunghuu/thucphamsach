@@ -117,7 +117,8 @@ public class AdminHomeActivity extends BaseAdminActivity {
 
         statRevenueToday.setOnClickListener(v -> open(AdminChartBillActivity.class));
         statRevenueMonth.setOnClickListener(v -> open(AdminChartBillActivity.class));
-        statPending.setOnClickListener(v -> open(AdminBillMainActivity.class));
+        statPending.setOnClickListener(v -> startActivity(
+                AdminBillMainActivity.intent(this, com.UngDung.ThucPhamXanh.Helper.AdminOrderFilter.TAB_PENDING)));
         statLowStock.setOnClickListener(v -> startActivity(
                 AdminProductActivity.intent(this, AdminProductFilter.STATUS_LOW_STOCK)));
     }

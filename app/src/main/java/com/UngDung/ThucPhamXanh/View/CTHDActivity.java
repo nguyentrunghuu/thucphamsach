@@ -79,13 +79,22 @@ public class CTHDActivity extends AppCompatActivity implements GioHangView, HoaD
             public void onClick(View view) {
                 // Kiểm tra trạng thái trước khi hủy
                 if (OrderStatus.customerCanCancel(hoaDon.getType())) {
-                    Log.d("CTHDActivity", "🔄 User hủy đơn hàng - Trạng thái hiện tại: " + hoaDon.getType());
-                    hoaDonPreSenter.CapNhatTrangThai(OrderStatus.DA_HUY, hoaDon.getId());
-                    mlist.clear();
-                    hoaDonDaGiaoAdapter.notifyDataSetChanged();
-                    Toast.makeText(CTHDActivity.this, "Đã hủy đơn hàng", Toast.LENGTH_SHORT).show();
-                    Log.d("CTHDActivity", "✅ Đã hủy đơn hàng thành công");
-                    finish();
+                    // Transaction kiểm tra lại trạng thái mới nhất (admin có thể vừa xác nhận) + cộng lại kho
+                    btnCapnhat.setEnabled(false);
+                    com.UngDung.ThucPhamXanh.Helper.OrderActions.customerCancel(hoaDon.getId(), "",
+                            new com.UngDung.ThucPhamXanh.Helper.OrderActions.Callback() {
+                                @Override
+                                public void onSuccess(int newStatus) {
+                                    Toast.makeText(CTHDActivity.this, "Đã hủy đơn hàng", Toast.LENGTH_SHORT).show();
+                                    finish();
+                                }
+
+                                @Override
+                                public void onError(String message) {
+                                    btnCapnhat.setEnabled(true);
+                                    Toast.makeText(CTHDActivity.this, message, Toast.LENGTH_LONG).show();
+                                }
+                            });
                 } else {
                     Log.w("CTHDActivity", "⚠️ Không thể hủy đơn hàng - Trạng thái: " + hoaDon.getType());
                     Toast.makeText(CTHDActivity.this, "Không thể hủy đơn hàng ở trạng thái này", Toast.LENGTH_SHORT)

@@ -45,6 +45,29 @@ public final class FirestoreMapper {
                 num(doc, "trangthai"));
     }
 
+    /** Document collection "HoaDon" → AdminOrder (đủ field cho màn admin). */
+    public static AdminOrder toAdminOrder(DocumentSnapshot doc) {
+        AdminOrder o = new AdminOrder();
+        o.id = doc.getId();
+        o.uid = str(doc, "UID");
+        o.code = str(doc, "madonhang");
+        o.name = str(doc, "hoten");
+        o.phone = str(doc, "sdt");
+        o.address = str(doc, "diachi");
+        o.note = str(doc, "ghichu");
+        o.date = str(doc, "ngaydat");
+        o.payment = str(doc, "phuongthuc");
+        o.total = MoneyUtil.parseVnd(doc.get("tongtien"));
+        o.shippingFee = MoneyUtil.parseVnd(doc.get("phivanchuyen"));
+        o.status = num(doc, "trangthai");
+        o.shipperName = str(doc, "shipperName");
+        o.deliverySlot = str(doc, "khung_gio_giao");
+        o.deliveryDate = str(doc, "ngay_giao");
+        o.cancelReason = str(doc, "cancelReason");
+        o.cancelledBy = str(doc, "cancelledBy");
+        return o;
+    }
+
     /** Chuỗi của field; thiếu → "", kiểu khác (vd. số) → toString(). */
     public static String str(DocumentSnapshot doc, String field) {
         Object v = doc.get(field);

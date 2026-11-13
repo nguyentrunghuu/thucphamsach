@@ -499,6 +499,7 @@ public class CartActivity extends AppCompatActivity implements GioHangView {
                                 map_chitiet.put("id_hoadon", idhoadon); // Sửa từ idhoadon thành id_hoadon
                                 map_chitiet.put("id_product", product.getIdsp()); // Sửa từ idsp thành id_product
                                 map_chitiet.put("soluong", product.getSoluong());
+                                map_chitiet.put("giaBan", product.getGiatien()); // giá lúc đặt (admin / hóa đơn dùng, không đổi theo giá mới)
                                 
                                 // Lưu vào đúng cấu trúc: ChitietHoaDon/{uid}/ALL
                                 db.collection("ChitietHoaDon") // Sửa từ ChiTietHoaDon thành ChitietHoaDon
@@ -1143,6 +1144,7 @@ public class CartActivity extends AppCompatActivity implements GioHangView {
                                 chiTietHoaDon.put("id_hoadon", realIdhoadon); // Sửa từ idhoadon thành id_hoadon
                                 chiTietHoaDon.put("id_product", product.getIdsp()); // Sửa từ idsp thành id_product
                                 chiTietHoaDon.put("soluong", product.getSoluong());
+                                chiTietHoaDon.put("giaBan", product.getGiatien()); // giá lúc đặt
 
                                 // Lưu vào đúng cấu trúc: ChitietHoaDon/{uid}/ALL
                                 db.collection("ChitietHoaDon") // Sửa từ ChiTietHoaDon thành ChitietHoaDon

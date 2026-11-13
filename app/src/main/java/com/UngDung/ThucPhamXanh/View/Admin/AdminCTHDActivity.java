@@ -1,390 +1,270 @@
 package com.UngDung.ThucPhamXanh.View.Admin;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import android.Manifest;
-import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Typeface;
-import android.graphics.pdf.PdfDocument;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.Spinner;
+import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.UngDung.ThucPhamXanh.Models.HoaDon;
+import androidx.core.content.FileProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.UngDung.ThucPhamXanh.Helper.AdminOrder;
+import com.UngDung.ThucPhamXanh.Helper.AdminOrderFlow;
+import com.UngDung.ThucPhamXanh.Helper.FirestoreMapper;
+import com.UngDung.ThucPhamXanh.Helper.InvoicePdf;
+import com.UngDung.ThucPhamXanh.Helper.MoneyUtil;
+import com.UngDung.ThucPhamXanh.Helper.OrderActions;
+import com.UngDung.ThucPhamXanh.Helper.OrderMath;
 import com.UngDung.ThucPhamXanh.Models.OrderStatus;
-import com.UngDung.ThucPhamXanh.Models.Product;
-import com.UngDung.ThucPhamXanh.Presenter.GioHangPresenter;
-import com.UngDung.ThucPhamXanh.Presenter.HoaDonPreSenter;
 import com.UngDung.ThucPhamXanh.R;
-import com.UngDung.ThucPhamXanh.my_interface.GioHangView;
-import com.UngDung.ThucPhamXanh.my_interface.HoaDonView;
+import com.google.android.material.button.MaterialButton;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Locale;
+import java.util.Arrays;
+import java.util.List;
 
-public class AdminCTHDActivity extends AppCompatActivity implements GioHangView, HoaDonView {
+/**
+ * Chi tiết đơn hàng trang admin.
+ *
+ * Nhận {@link AdminOrder} qua {@link #intent}, rồi nghe document HoaDon/{id} để trạng thái luôn mới
+ * (shipper / khách đổi đơn thì màn hình tự cập nhật). Dòng sản phẩm đọc một lần từ
+ * ChitietHoaDon/{uid}/ALL; giá dùng "giaBan" (giá lúc đặt) nếu có, đơn cũ thì giá hiện tại kèm dấu *.
+ * Đổi trạng thái qua {@link AdminOrderStatusSheet}; "Xuất hóa đơn" tạo PDF ({@link InvoicePdf}) rồi chia sẻ.
+ */
+public class AdminCTHDActivity extends BaseAdminActivity {
 
-    private ImageView imgAdminFinishHD;
-    private TextView tvAdminMaHD, tvAdminDateHD, tvAdminNameHD, tvAdminAddressHD, tvAdminSdtHD, tvAdminTotalHD,
-            tvAdminStatusHD;
-    private RecyclerView rcvAminHD;
-    private Button btnAdminUpdate;
-    private HoaDon hoaDon;
-    private ArrayList<Product> mlist;
-    private AdminCTHDAdapter adapter;
-    private GioHangPresenter gioHangPresenter;
-    private HoaDonPreSenter hoaDonPreSenter;
+    private static final String TAG = "AdminCTHDActivity";
+    private static final String EXTRA_ORDER = "admin_order";
 
-    private Button btnExportHD;
-    private int num = 0;
-    int pageWidth = 1200;
-    private Date dateObj;
-    private DateFormat dateFormat;
-    private int i = 0;
-    private int j = 0;
-    private String total = "";
-    private int tong = 0;
-    private Bitmap bmp, scalebmp;
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private AdminOrder order;
+    private List<OrderMath.Line> lines;   // null = đang tải
+
+    private TextView tvTotalBig, tvStatus, tvDate, tvCancel, tvItemsTitle, tvItemsNote, tvTotal;
+    private ViewGroup boxCustomer, boxDelivery, boxPayment;
+    private View cardDelivery, progressItems;
+    private MaterialButton btnUpdate, btnExport, btnCall;
+    private final AdminCTHDAdapter adapter = new AdminCTHDAdapter();
+
+    public static Intent intent(Context context, AdminOrder order) {
+        return new Intent(context, AdminCTHDActivity.class).putExtra(EXTRA_ORDER, order);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_cthdactivity);
 
-        InitWidget();
-        Init();
-        Event();
+        order = (AdminOrder) getIntent().getSerializableExtra(EXTRA_ORDER);
+        if (order == null) {
+            Toast.makeText(this, "Không có thông tin đơn hàng", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+        setupAdminToolbar("Chi tiết đơn", order.displayCode());
+        applySystemBarInsets(null, findViewById(R.id.bottom_bar_detail));
+
+        tvTotalBig = findViewById(R.id.tv_detail_total_big);
+        tvStatus = findViewById(R.id.tv_detail_status);
+        tvDate = findViewById(R.id.tv_detail_date);
+        tvCancel = findViewById(R.id.tv_detail_cancel);
+        tvItemsTitle = findViewById(R.id.tv_detail_items_title);
+        tvItemsNote = findViewById(R.id.tv_detail_items_note);
+        tvTotal = findViewById(R.id.tv_detail_total);
+        boxCustomer = findViewById(R.id.box_detail_customer);
+        boxDelivery = findViewById(R.id.box_detail_delivery);
+        boxPayment = findViewById(R.id.box_detail_payment);
+        cardDelivery = findViewById(R.id.card_detail_delivery);
+        progressItems = findViewById(R.id.progress_detail_items);
+        btnUpdate = findViewById(R.id.btn_admin_updatehd);
+        btnExport = findViewById(R.id.btn_admin_export_hd);
+        btnCall = findViewById(R.id.btn_detail_call);
+
+        RecyclerView rcv = findViewById(R.id.rcv_admin_hd);
+        rcv.setLayoutManager(new LinearLayoutManager(this));
+        rcv.setAdapter(adapter);
+
+        btnUpdate.setOnClickListener(v -> AdminOrderStatusSheet.show(this, order, null)); // listener tự vẽ lại
+        btnExport.setOnClickListener(v -> exportInvoice());
+        btnCall.setOnClickListener(v -> {
+            if (order.phone.trim().isEmpty()) return;
+            startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + order.phone.replace(" ", ""))));
+        });
+
+        bindOrder();
+        loadLines();
     }
 
-    private void Event() {
-        imgAdminFinishHD.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-            }
-        });
-
-        btnAdminUpdate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                DiaLogUpDate();
-                // Toast.makeText(AdminCTHDActivity.this, "Cập nhật thành công",
-                // Toast.LENGTH_SHORT).show();
-                // finish();
-            }
-        });
-
-        btnExportHD.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                num++;
-                CreatePDF();
-            }
-        });
+    @Override
+    protected void onStartListening() {
+        if (order == null) return;
+        listen(db.collection("HoaDon").document(order.id).addSnapshotListener((doc, e) -> {
+            if (e != null) { Log.e(TAG, "Lỗi đọc đơn " + order.id, e); return; }
+            if (doc == null || !doc.exists()) return;
+            order = FirestoreMapper.toAdminOrder(doc);
+            bindOrder();
+        }));
     }
 
-    private void CreatePDF() {
-        dateObj = new Date();
+    // ------------------------------------------------------------------ hiển thị
 
-        PdfDocument myPdfDocument = new PdfDocument();
-        Paint myPaint = new Paint();
-        Paint titlePaint = new Paint();
-        PdfDocument.PageInfo myPageInfo = new PdfDocument.PageInfo.Builder(1200, 2010, 1).create();
-        PdfDocument.Page myPage = myPdfDocument.startPage(myPageInfo);
-        Canvas canvas = myPage.getCanvas();
+    private void bindOrder() {
+        tvTotalBig.setText(MoneyUtil.formatVnd(order.total));
+        AdminOrderStatusSheet.bindStatusBadge(tvStatus, order.status);
+        tvDate.setText("Đặt ngày " + (order.date.isEmpty() ? "?" : order.date)
+                + (order.payment.isEmpty() ? "" : " · " + order.payment));
 
-        canvas.drawBitmap(scalebmp, 0, 0, myPaint);
-        titlePaint.setTextAlign(Paint.Align.CENTER);
-        titlePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        titlePaint.setTextSize(70);
-        canvas.drawText("Gofood N.V.C", pageWidth / 2, 270, titlePaint);
-
-        myPaint.setColor(Color.rgb(0, 113, 188));
-        myPaint.setTextSize(30f);
-        myPaint.setTextAlign(Paint.Align.RIGHT);
-        canvas.drawText("SĐT: 0906181931", 1160, 40, myPaint);
-        canvas.drawText("090681931", 1160, 80, myPaint);
-
-        titlePaint.setTextAlign(Paint.Align.CENTER);
-        titlePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.ITALIC));
-        titlePaint.setTextSize(60);
-        canvas.drawText("Hóa đơn", pageWidth / 2, 500, titlePaint);
-
-        myPaint.setTextAlign(Paint.Align.LEFT);
-        myPaint.setTextSize(35f);
-        myPaint.setColor(Color.BLACK);
-        canvas.drawText("Tên khách hàng: " + hoaDon.getHoten(), 20, 590, myPaint);
-        canvas.drawText("Liên hệ: " + hoaDon.getSdt(), 20, 640, myPaint);
-        canvas.drawText("Địa chỉ: " + hoaDon.getDiachi(), 20, 690, myPaint);
-        canvas.drawText("Phương thức: " + hoaDon.getPhuongthuc(), 20, 740, myPaint);
-
-        // if (!ghichu.equals("")){
-        // myPaint.setTextAlign(Paint.Align.LEFT);
-        // myPaint.setTextSize(30f);
-        // myPaint.setColor(Color.BLACK);
-        // canvas.drawText("Ghi chú: " + ghichu, 20, 2000, myPaint);
-        // }
-
-        myPaint.setTextAlign(Paint.Align.RIGHT);
-        canvas.drawText("ID hóa đơn: " + hoaDon.getId(), pageWidth - 20, 590, myPaint);
-
-        canvas.drawText("Ngày đặt: " + hoaDon.getNgaydat(), pageWidth - 20, 640, myPaint);
-
-        dateFormat = new SimpleDateFormat("HH:mm:ss");
-        canvas.drawText("Thời gian: " + dateFormat.format(dateObj), pageWidth - 20, 690, myPaint);
-
-        myPaint.setStyle(Paint.Style.STROKE);
-        myPaint.setStrokeWidth(2);
-        canvas.drawRect(20, 780, pageWidth - 20, 860, myPaint);
-
-        myPaint.setTextAlign(Paint.Align.LEFT);
-        myPaint.setStyle(Paint.Style.FILL);
-        canvas.drawText("STT", 40, 830, myPaint);
-        canvas.drawText("Mô tả", 200, 830, myPaint);
-        canvas.drawText("Đơn giá", 700, 830, myPaint);
-        canvas.drawText("SL.", 900, 830, myPaint);
-        canvas.drawText("TT.", 1050, 830, myPaint);
-
-        canvas.drawLine(180, 790, 180, 840, myPaint);
-        canvas.drawLine(680, 790, 680, 840, myPaint);
-        canvas.drawLine(880, 790, 880, 840, myPaint);
-        canvas.drawLine(1030, 790, 1030, 840, myPaint);
-
-        String s = "";
-        for (Product product : mlist) {
-            i++;
-            if (product.getTensp().length() > 20) {
-                s = product.getTensp().substring(0, 20) + "...";
-            } else
-                s = product.getTensp();
-
-            canvas.drawText(i + ". ", 40, 950 + j, myPaint);
-            canvas.drawText(s, 200, 950 + j, myPaint);
-            canvas.drawText(NumberFormat.getInstance().format(product.getGiatien()), 700, 950 + j, myPaint);
-            canvas.drawText(String.valueOf(product.getSoluong()), 900, 950 + j, myPaint);
-            int gia = Integer.parseInt(product.getGiatien() + "");
-            int soluong = Integer.parseInt(product.getSoluong() + "");
-            total = NumberFormat.getInstance().format(gia * soluong);
-            myPaint.setTextAlign(Paint.Align.RIGHT);
-            canvas.drawText(total, pageWidth - 40, 950 + j, myPaint);
-            myPaint.setTextAlign(Paint.Align.LEFT);
-            j = j + 100; // j=j+100;
+        if (order.status == OrderStatus.DA_HUY) {
+            String by = OrderActions.BY_ADMIN.equals(order.cancelledBy) ? "cửa hàng"
+                    : OrderActions.BY_CUSTOMER.equals(order.cancelledBy) ? "khách" : "";
+            String reason = order.cancelReason.trim();
+            tvCancel.setText("Đơn đã bị hủy" + (by.isEmpty() ? "" : " bởi " + by)
+                    + (reason.isEmpty() ? "" : ": " + reason));
+            tvCancel.setVisibility(View.VISIBLE);
+        } else {
+            tvCancel.setVisibility(View.GONE);
         }
 
+        boxCustomer.removeAllViews();
+        addRow(boxCustomer, "Họ tên", order.name);
+        addRow(boxCustomer, "Điện thoại", order.phone);
+        addRow(boxCustomer, "Địa chỉ", order.address);
+        addRow(boxCustomer, "Ghi chú", order.note);
+        btnCall.setVisibility(order.phone.trim().isEmpty() ? View.GONE : View.VISIBLE);
+
+        boxDelivery.removeAllViews();
+        String when = (order.deliveryDate + " " + order.deliverySlot).trim();
+        addRow(boxDelivery, "Ngày giao", when);
+        addRow(boxDelivery, "Shipper", order.shipperName);
+        cardDelivery.setVisibility(boxDelivery.getChildCount() == 0 ? View.GONE : View.VISIBLE);
+
+        btnUpdate.setVisibility(AdminOrderFlow.nextStatuses(order.status).length > 0 ? View.VISIBLE : View.GONE);
+        bindPayment();
+    }
+
+    private void bindPayment() {
+        boxPayment.removeAllViews();
+        tvTotal.setText(MoneyUtil.formatVnd(order.total));
+        if (lines == null) return;
+        long subtotal = OrderMath.subtotal(lines);
+        addRow(boxPayment, "Tạm tính (" + OrderMath.totalQuantity(lines) + " sp)", MoneyUtil.formatVnd(subtotal));
+        addRow(boxPayment, "Phí vận chuyển", order.shippingFee > 0 ? MoneyUtil.formatVnd(order.shippingFee) : "Miễn phí");
+        long discount = discount();
+        if (discount > 0) addRow(boxPayment, "Khuyến mãi", "−" + MoneyUtil.formatVnd(discount));
+    }
+
+    /** Khuyến mãi suy ra; chỉ tin được khi mọi dòng đều có giá lúc đặt. */
+    private long discount() {
+        if (lines == null) return 0;
+        for (OrderMath.Line l : lines) if (l.priceIsCurrent) return 0;
+        return OrderMath.discount(OrderMath.subtotal(lines), order.shippingFee, order.total);
+    }
+
+    private void addRow(ViewGroup box, String label, String value) {
+        if (value == null || value.trim().isEmpty()) return;
+        View row = LayoutInflater.from(this).inflate(R.layout.item_admin_kv, box, false);
+        ((TextView) row.findViewById(R.id.tv_kv_label)).setText(label);
+        ((TextView) row.findViewById(R.id.tv_kv_value)).setText(value.trim());
+        box.addView(row);
+    }
+
+    // ------------------------------------------------------------------ dòng sản phẩm
+
+    private void loadLines() {
+        if (order.uid.isEmpty()) {
+            showLines(new ArrayList<>());
+            return;
+        }
+        db.collection("ChitietHoaDon").document(order.uid).collection("ALL")
+                .whereEqualTo("id_hoadon", order.id).get()
+                .addOnSuccessListener(snap -> {
+                    List<QueryDocumentSnapshot> docs = new ArrayList<>();
+                    for (QueryDocumentSnapshot d : snap) docs.add(d);
+                    if (docs.isEmpty()) { showLines(new ArrayList<>()); return; }
+
+                    OrderMath.Line[] result = new OrderMath.Line[docs.size()];
+                    int[] pending = {docs.size()};
+                    for (int i = 0; i < docs.size(); i++) {
+                        final int idx = i;
+                        QueryDocumentSnapshot line = docs.get(i);
+                        String productId = line.getString("id_product");
+                        long qty = FirestoreMapper.num(line, "soluong");
+                        Long priceAtOrder = FirestoreMapper.numOrNull(line, "giaBan");
+                        if (productId == null || productId.isEmpty()) {
+                            result[idx] = new OrderMath.Line("", "(Không rõ sản phẩm)", "", qty,
+                                    priceAtOrder == null ? 0 : priceAtOrder, priceAtOrder == null);
+                            if (--pending[0] == 0) showLines(Arrays.asList(result));
+                            continue;
+                        }
+                        db.collection("SanPham").document(productId).get()
+                                .addOnCompleteListener(t -> {
+                                    DocumentSnapshot p = t.isSuccessful() ? t.getResult() : null;
+                                    boolean exists = p != null && p.exists();
+                                    String name = exists ? FirestoreMapper.str(p, "tensp") : "(Sản phẩm đã bị xóa)";
+                                    String image = exists ? FirestoreMapper.str(p, "hinhanh") : "";
+                                    long current = exists ? FirestoreMapper.num(p, "giatien") : 0;
+                                    boolean priceIsCurrent = priceAtOrder == null || priceAtOrder <= 0;
+                                    result[idx] = new OrderMath.Line(productId, name, image, qty,
+                                            OrderMath.unitPrice(priceAtOrder, current), priceIsCurrent);
+                                    if (--pending[0] == 0) showLines(Arrays.asList(result));
+                                });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Lỗi đọc chi tiết đơn " + order.id, e);
+                    progressItems.setVisibility(View.GONE);
+                    tvItemsNote.setVisibility(View.VISIBLE);
+                    tvItemsNote.setText("Không tải được danh sách sản phẩm");
+                });
+    }
+
+    private void showLines(List<OrderMath.Line> data) {
+        if (isFinishing()) return;
+        lines = new ArrayList<>(data);
+        progressItems.setVisibility(View.GONE);
+        adapter.setLines(lines);
+        tvItemsTitle.setText("Sản phẩm (" + lines.size() + ")");
+
+        boolean anyCurrent = false;
+        for (OrderMath.Line l : lines) anyCurrent |= l.priceIsCurrent;
+        if (lines.isEmpty()) {
+            tvItemsNote.setText("Đơn không có dòng sản phẩm nào");
+        } else if (anyCurrent) {
+            tvItemsNote.setText("* Đơn cũ không lưu giá lúc đặt — dòng có dấu * đang dùng giá hiện tại, "
+                    + "nên tạm tính có thể khác tổng tiền.");
+        }
+        tvItemsNote.setVisibility(lines.isEmpty() || anyCurrent ? View.VISIBLE : View.GONE);
+        btnExport.setEnabled(!lines.isEmpty());
+        bindPayment();
+    }
+
+    // ------------------------------------------------------------------ xuất hóa đơn
+
+    private void exportInvoice() {
+        if (lines == null || lines.isEmpty()) return;
         try {
-            Number number = NumberFormat.getInstance().parse(hoaDon.getTongtien());
-            tong = Integer.parseInt(String.valueOf(number));
-        } catch (ParseException e) {
-            e.printStackTrace();
+            File file = InvoicePdf.create(this, order, lines, OrderMath.subtotal(lines), discount());
+            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+            Intent share = new Intent(Intent.ACTION_SEND)
+                    .setType("application/pdf")
+                    .putExtra(Intent.EXTRA_STREAM, uri)
+                    .putExtra(Intent.EXTRA_SUBJECT, "Hóa đơn " + order.displayCode())
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(share, "Gửi / lưu hóa đơn"));
+        } catch (Exception e) {
+            Log.e(TAG, "Xuất hóa đơn thất bại", e);
+            Toast.makeText(this, "Không tạo được hóa đơn: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
-
-        // Thành tiền
-        canvas.drawLine(680, 1735, pageWidth - 20, 1735, myPaint);
-        canvas.drawText("Thành tiền", 700, 1785, myPaint);
-        canvas.drawText(":", 900, 1785, myPaint);
-        myPaint.setTextAlign(Paint.Align.RIGHT);
-        int phi = 10000;
-        canvas.drawText(NumberFormat.getInstance().format(tong - phi), pageWidth - 40, 1785, myPaint);
-
-        // Phí vận chuyển
-        myPaint.setTextAlign(Paint.Align.LEFT);
-        canvas.drawText("Phí vận đơn", 700, 1835, myPaint);
-        canvas.drawText(":", 900, 1835, myPaint);
-        myPaint.setTextAlign(Paint.Align.RIGHT);
-        canvas.drawText(String.valueOf(10000), pageWidth - 40, 1835, myPaint);
-        myPaint.setTextAlign(Paint.Align.LEFT);
-
-        myPaint.setColor(Color.rgb(247, 147, 30));
-        canvas.drawRect(680, 1875, pageWidth - 20, 1975, myPaint);
-
-        myPaint.setColor(Color.BLACK);
-        myPaint.setTextSize(50f);
-        myPaint.setTextAlign(Paint.Align.LEFT);
-        canvas.drawText("Tổng:", 700, 1950, myPaint);
-        myPaint.setTextAlign(Paint.Align.RIGHT);
-        canvas.drawText(hoaDon.getTongtien() + " đ", pageWidth - 40, 1950, myPaint);
-
-        myPdfDocument.finishPage(myPage);
-        String currentDate = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date());
-        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-                .getAbsolutePath() + "/Admin-Invoice-" + currentDate + "-" + num + ".pdf");
-
-        try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
-            myPdfDocument.writeTo(fileOutputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            myPdfDocument.close();
-        }
-        Toast.makeText(this, "In hóa đơn hoàn tất", Toast.LENGTH_SHORT).show();
-    }
-
-    private void DiaLogUpDate() {
-        Dialog dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_update_trangthai);
-        dialog.show();
-
-        Spinner spiner = dialog.findViewById(R.id.spinerCapNhat);
-        String[] s = { "Chọn Mục", "Đang xử lý", "Đã xác nhận", "Đang giao hàng", "Giao hàng thành công" };
-        ArrayAdapter arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, s);
-        spiner.setAdapter(arrayAdapter);
-        spiner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position > 0) {
-                    // Đơn đã giao / đã hủy thì không đổi trạng thái được nữa
-                    if (OrderStatus.isFinal(hoaDon.getType())) {
-                        Log.w("AdminCTHDActivity", "⚠️ Không thể đổi trạng thái đơn đã kết thúc: " + hoaDon.getType());
-                        Toast.makeText(AdminCTHDActivity.this, "Không thể thay đổi trạng thái đơn hàng "
-                                + OrderStatus.label(hoaDon.getType()).toLowerCase(), Toast.LENGTH_LONG).show();
-                        dialog.cancel();
-                        return;
-                    }
-
-                    // Map position to status: 1=Đang xử lý(2), 2=Đã xác nhận(5), 3=Đang giao hàng(4), 4=Đã giao(3)
-                    int status;
-                    if (position == 1) {
-                        status = 2; // Đang xử lý
-                    } else if (position == 2) {
-                        status = 5; // Đã xác nhận
-                    } else if (position == 3) {
-                        status = 4; // Đang giao hàng
-                    } else {
-                        status = 3; // Đã giao
-                    }
-
-                    Log.d("AdminCTHDActivity", "🔄 Admin cập nhật trạng thái hóa đơn: " + hoaDon.getId() + " từ "
-                            + hoaDon.getType() + " thành " + status);
-                    hoaDonPreSenter.CapNhatTrangThai(status, hoaDon.getId());
-                    
-                    // Cập nhật trạng thái trong hoaDon object
-                    hoaDon.setType((long) status);
-                    
-                    // Chỉ gọi notifyDataSetChanged nếu adapter đã được khởi tạo
-                    if (adapter != null) {
-                        adapter.notifyDataSetChanged();
-                    }
-                    
-                    // Cập nhật text hiển thị status
-                    tvAdminStatusHD.setText(s[position]);
-
-                    // Thông báo đặc biệt khi chuyển sang "Đã xác nhận"
-                    if (position == 2) {
-                        Log.d("AdminCTHDActivity", "✅ Admin xác nhận đơn hàng - Shipper có thể nhận đơn");
-                        Toast.makeText(AdminCTHDActivity.this, "Đã xác nhận - Shipper có thể nhận đơn hàng",
-                                Toast.LENGTH_LONG).show();
-                    } else if (position == 3) {
-                        Log.d("AdminCTHDActivity",
-                                "🚚 Admin xác nhận đơn hàng đang giao - User sẽ không thể hủy đơn hàng");
-                        Toast.makeText(AdminCTHDActivity.this, "Đơn hàng đang giao - User không thể hủy",
-                                Toast.LENGTH_LONG).show();
-                    } else if (position == 4) {
-                        Log.d("AdminCTHDActivity", "✅ Admin xác nhận giao hàng thành công");
-                        Toast.makeText(AdminCTHDActivity.this, "Giao hàng thành công - Đơn hàng hoàn tất",
-                                Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(AdminCTHDActivity.this, "Cập nhật thành công", Toast.LENGTH_SHORT).show();
-                    }
-                    dialog.cancel();
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-
-    }
-
-    private void Init() {
-        mlist = new ArrayList<>();
-        Intent intent = getIntent();
-        hoaDon = (HoaDon) intent.getSerializableExtra("CTHD");
-        tvAdminMaHD.setText(hoaDon.getId());
-        tvAdminDateHD.setText(hoaDon.getNgaydat());
-        tvAdminNameHD.setText(hoaDon.getHoten());
-        tvAdminAddressHD.setText(hoaDon.getDiachi());
-        tvAdminSdtHD.setText(hoaDon.getSdt());
-        tvAdminTotalHD.setText(hoaDon.getTongtien());
-        tvAdminStatusHD.setText(OrderStatus.label(hoaDon.getType()));
-        if (hoaDon.getType() == OrderStatus.DA_GIAO) {
-            btnExportHD.setVisibility(View.VISIBLE);
-        }
-        hoaDonPreSenter = new HoaDonPreSenter(this);
-        gioHangPresenter = new GioHangPresenter(this);
-        gioHangPresenter.HandlegetDataCTHD(hoaDon.getId(), hoaDon.getUid());
-
-        ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE },
-                PackageManager.PERMISSION_GRANTED);
-
-        bmp = BitmapFactory.decodeResource(getResources(), R.drawable.pizzahead);
-        scalebmp = Bitmap.createScaledBitmap(bmp, 1200, 518, false);
-    }
-
-    private void InitWidget() {
-        imgAdminFinishHD = findViewById(R.id.img_admin_finish);
-        tvAdminMaHD = findViewById(R.id.tv_admin_mahd);
-        tvAdminDateHD = findViewById(R.id.tv_admin_datehd);
-        tvAdminNameHD = findViewById(R.id.tv_admin_namehd);
-        tvAdminAddressHD = findViewById(R.id.tv_admin_addresshd);
-        tvAdminSdtHD = findViewById(R.id.tv_admin_sdthd);
-        tvAdminTotalHD = findViewById(R.id.tv_admin_totalhd);
-        tvAdminStatusHD = findViewById(R.id.tv_admin_statushd);
-        rcvAminHD = findViewById(R.id.rcv_admin_hd);
-        btnAdminUpdate = findViewById(R.id.btn_admin_updatehd);
-        btnExportHD = findViewById(R.id.btn_admin_export_hd);
-    }
-
-    @Override
-    public void OnSucess() {
-
-    }
-
-    @Override
-    public void getDataHD(String id, String uid, String ghichu, String diachi, String hoten, String ngaydat,
-            String phuongthuc, String sdt, String tongtien, Long type) {
-
-    }
-
-    @Override
-    public void OnFail() {
-
-    }
-
-    @Override
-    public void getDataSanPham(String id, String idsp, String tensp, Long giatien, String hinhanh, String loaisp,
-            String mota, Long soluong, String hansudung, Long type, String trongluong) {
-        mlist.add(new Product(id, idsp, tensp, giatien, hinhanh, loaisp, mota, soluong, hansudung, type, trongluong));
-        adapter = new AdminCTHDAdapter();
-        adapter.setData(mlist);
-        rcvAminHD.setLayoutManager(new LinearLayoutManager(this));
-        rcvAminHD.setAdapter(adapter);
     }
 }
