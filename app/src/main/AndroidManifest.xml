@@ -87,6 +87,7 @@
 
         </activity>
         <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminAddSPActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false"
             android:theme="@style/Theme.ThucPhamXanh.Admin" >
 

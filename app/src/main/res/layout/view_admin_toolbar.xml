@@ -13,7 +13,9 @@
         android:id="@+id/admin_toolbar"
         style="@style/Admin.Toolbar"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/admin_toolbar_height"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/admin_toolbar_height"
+        android:paddingBottom="@dimen/admin_space_xs"
         app:navigationIcon="@drawable/ic_ui_back"
         app:navigationIconTint="@color/white"
         app:subtitleTextColor="@color/admin_primary_soft" />

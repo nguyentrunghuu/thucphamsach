@@ -334,6 +334,17 @@
         <item name="boxBackgroundColor">@color/admin_surface</item>
     </style>
 
+    <!-- Ô chọn từ danh sách (AutoCompleteTextView bên trong, inputType="none") -->
+    <style name="Admin.TextField.Dropdown" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        <item name="boxCornerRadiusTopStart">@dimen/admin_radius_field</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/admin_radius_field</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/admin_radius_field</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/admin_radius_field</item>
+        <item name="boxStrokeColor">@color/admin_primary</item>
+        <item name="hintTextColor">@color/admin_primary</item>
+        <item name="boxBackgroundColor">@color/admin_surface</item>
+    </style>
+
     <style name="Admin.Chip.Filter" parent="Widget.MaterialComponents.Chip.Filter">
         <item name="chipBackgroundColor">@color/admin_chip_bg</item>
         <item name="chipStrokeColor">@color/admin_outline</item>
