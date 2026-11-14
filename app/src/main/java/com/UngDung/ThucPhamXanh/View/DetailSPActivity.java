@@ -385,8 +385,15 @@ public class DetailSPActivity extends AppCompatActivity implements BinhLuanView,
 
     @Override
     public void OnSucess() {
-        Toast.makeText(this, "Thêm giỏ hàng thành công", Toast.LENGTH_SHORT).show();
         bottomSheetDialog.dismiss();
+        // Thông báo kèm nút "Xem giỏ hàng": khách mở giỏ ngay, khỏi phải thoát ra màn hình chính
+        com.google.android.material.snackbar.Snackbar bar = com.google.android.material.snackbar.Snackbar
+                .make(findViewById(android.R.id.content), "Đã thêm vào giỏ hàng",
+                        com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                .setAction("Xem giỏ hàng", v -> startActivity(new Intent(this, CartActivity.class)))
+                .setActionTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.primary_green_lighter));
+        if (btnAddCartDetail != null) bar.setAnchorView(btnAddCartDetail); // nằm trên nút "Thêm vào giỏ", không che thanh giá
+        bar.show();
     }
 
     @Override
