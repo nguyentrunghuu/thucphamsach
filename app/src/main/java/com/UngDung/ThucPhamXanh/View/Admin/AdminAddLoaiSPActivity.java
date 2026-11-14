@@ -1,377 +1,308 @@
 package com.UngDung.ThucPhamXanh.View.Admin;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
-import android.Manifest;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 
-import com.UngDung.ThucPhamXanh.Helper.ImageUploadHelper;
-import com.UngDung.ThucPhamXanh.Models.LoaiProduct;
+import com.UngDung.ThucPhamXanh.Helper.CategoryForm;
+import com.UngDung.ThucPhamXanh.Helper.FirestoreMapper;
 import com.UngDung.ThucPhamXanh.R;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.DocumentReference;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.imageview.ShapeableImageView;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.WriteBatch;
 import com.squareup.picasso.Picasso;
 
-public class AdminAddLoaiSPActivity extends AppCompatActivity {
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-    private ImageView imgBackThemLoai, imgThemLoai;
-    private EditText edtThemLoai;
-    private Button btnThemLoai;
-    private String image = "";
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
-    // Khi sửa danh mục: tên cũ và document id của danh mục đang sửa (null = thêm mới)
+/**
+ * Thêm / sửa danh mục (LoaiProduct: tenloai, hinhanh). Mở với {@link #EXTRA_DOC_ID} + {@link #EXTRA_NAME} để sửa.
+ * Sửa tên → các sản phẩm có loaisp = tên cũ được đổi theo trong cùng một lần ghi (batch).
+ * Kiểm tra tên trống / quá dài / trùng (không phân biệt hoa-thường, dấu) bằng {@link CategoryForm}.
+ */
+public class AdminAddLoaiSPActivity extends BaseAdminActivity {
+
+    private static final String TAG = "AdminAddLoaiSPActivity";
+    public static final String EXTRA_DOC_ID = "loai_doc_id";
+    public static final String EXTRA_NAME = "loai_name";
+    private static final String STATE_IMAGE = "image";
+    private static final int BATCH_LIMIT = 400; // Firestore tối đa 500 thao tác / batch
+
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    private ShapeableImageView imgCategory;
+    private ImageView imgPlaceholder;
+    private View progressImage;
+    private MaterialButton btnPick, btnSave;
+    private TextInputLayout tilName;
+    private TextInputEditText edtName;
+    private View renameNote;
+
+    private AdminImagePicker imagePicker;
+
+    private String editingDocId;      // null = thêm mới
     private String editingOldName;
-    private String editingDocId;
-    private ProgressDialog progressDialog;
-    
-    // ActivityResultLaunchers cho chọn ảnh
-    private ActivityResultLauncher<Intent> cameraLauncher;
-    private ActivityResultLauncher<String> galleryLauncher;
+    private String image = "";
+    private String initialName = "";
+    private String initialImage = "";
+    private boolean saving;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_add_loai_spactivity);
 
-        initImageLaunchers();
-        Init();
-        Event();
-    }
-    
-    private Uri cameraImageUri;
-    
-    private void initImageLaunchers() {
-        // Camera launcher
-        cameraLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == RESULT_OK) {
-                    if (cameraImageUri != null) {
-                        uploadImageToStorage(cameraImageUri);
-                    } else if (result.getData() != null && result.getData().getExtras() != null) {
-                        // Nếu camera trả về Bitmap (fallback)
-                        android.graphics.Bitmap bitmap = (android.graphics.Bitmap) result.getData().getExtras().get("data");
-                        if (bitmap != null) {
-                            Uri imageUri = saveBitmapToTempFile(bitmap);
-                            if (imageUri != null) {
-                                uploadImageToStorage(imageUri);
-                            }
-                        }
-                    }
-                }
+        editingDocId = getIntent().getStringExtra(EXTRA_DOC_ID);
+        editingOldName = getIntent().getStringExtra(EXTRA_NAME);
+        boolean editing = !TextUtils.isEmpty(editingDocId);
+
+        setupAdminToolbar(editing ? "Sửa danh mục" : "Thêm danh mục", null)
+                .setNavigationOnClickListener(v -> attemptClose());
+        applySystemBarInsets(null, findViewById(R.id.bottom_bar_loai));
+
+        imgCategory = findViewById(R.id.image_them_loai);
+        imgPlaceholder = findViewById(R.id.img_loai_placeholder);
+        progressImage = findViewById(R.id.progress_image_loai);
+        btnPick = findViewById(R.id.btn_pick_image_loai);
+        btnSave = findViewById(R.id.btn_them_loai);
+        tilName = findViewById(R.id.til_loai_name);
+        edtName = findViewById(R.id.edt_them_loai);
+        renameNote = findViewById(R.id.tv_loai_rename_note);
+        btnSave.setText(editing ? "Lưu thay đổi" : "Thêm danh mục");
+
+        imagePicker = new AdminImagePicker(this, "categories", "Ảnh danh mục", new AdminImagePicker.Listener() {
+            @Override
+            public void onUploadStart() {
+                setUploading(true);
             }
-        );
-        
-        // Gallery launcher
-        galleryLauncher = registerForActivityResult(
-            new ActivityResultContracts.GetContent(),
-            uri -> {
-                if (uri != null) {
-                    uploadImageToStorage(uri);
-                }
+
+            @Override
+            public void onUploaded(String imageUrl) {
+                image = imageUrl;
+                setUploading(false);
             }
-        );
-    }
-    
-    private Uri saveBitmapToTempFile(android.graphics.Bitmap bitmap) {
-        try {
-            java.io.File tempFile = new java.io.File(getCacheDir(), "temp_camera_image_" + System.currentTimeMillis() + ".jpg");
-            java.io.FileOutputStream fos = new java.io.FileOutputStream(tempFile);
-            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, fos);
-            fos.flush();
-            fos.close();
-            // Sử dụng FileProvider để tạo URI an toàn
-            return androidx.core.content.FileProvider.getUriForFile(
-                this,
-                getPackageName() + ".fileprovider",
-                tempFile
-            );
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+
+            @Override
+            public void onUploadFailed() {
+                setUploading(false);
+            }
+        });
+        View.OnClickListener pick = v -> imagePicker.show();
+        imgCategory.setOnClickListener(pick);
+        btnPick.setOnClickListener(pick);
+        btnSave.setOnClickListener(v -> save());
+
+        edtName.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
+            @Override public void onTextChanged(CharSequence s, int a, int b, int c) { }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                tilName.setError(null);
+                renameNote.setVisibility(editing && !CategoryForm.cleanName(s.toString())
+                        .equals(CategoryForm.cleanName(editingOldName)) ? View.VISIBLE : View.GONE);
+            }
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                attemptClose();
+            }
+        });
+
+        if (savedInstanceState != null) {
+            image = savedInstanceState.getString(STATE_IMAGE, "");
+            initialName = CategoryForm.cleanName(editingOldName);
+            initialImage = savedInstanceState.getString("initial_image", "");
+            showImage();
+        } else if (editing) {
+            edtName.setText(editingOldName);
+            initialName = CategoryForm.cleanName(editingOldName);
+            loadCurrent();
+        } else {
+            showImage();
         }
     }
 
-    private void Event() {
-        imgBackThemLoai.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-            }
-        });
-
-        imgThemLoai.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showImageSourceDialog();
-            }
-        });
-
-        btnThemLoai.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                saveCategory();
-            }
-        });
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(STATE_IMAGE, image);
+        outState.putString("initial_image", initialImage);
     }
 
-    /** Thêm mới hoặc cập nhật danh mục (kiểm tra tên trống / trùng tên). */
-    private void saveCategory() {
-        String newName = edtThemLoai.getText().toString().trim();
-        if (newName.isEmpty()) {
-            edtThemLoai.setError("Vui lòng nhập tên danh mục");
+    /** Đọc lại bản ghi hiện tại (ảnh, tên mới nhất). */
+    private void loadCurrent() {
+        db.collection("LoaiProduct").document(editingDocId).get().addOnSuccessListener(d -> {
+            if (isFinishing()) return;
+            if (!d.exists()) {
+                Toast.makeText(this, "Danh mục này không còn tồn tại", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
+            String name = FirestoreMapper.str(d, "tenloai");
+            String img = FirestoreMapper.str(d, "hinhanh");
+            if (img.isEmpty()) img = FirestoreMapper.str(d, "hinhanhloai"); // dữ liệu cũ
+            editingOldName = name;
+            initialName = CategoryForm.cleanName(name);
+            initialImage = img;
+            image = img;
+            edtName.setText(name);
+            showImage();
+        }).addOnFailureListener(e -> Log.e(TAG, "Không đọc được danh mục", e));
+    }
+
+    private void showImage() {
+        boolean has = !TextUtils.isEmpty(image);
+        imgPlaceholder.setVisibility(has ? View.GONE : View.VISIBLE);
+        if (has) {
+            Picasso.get().load(image.trim()).placeholder(R.drawable.logo_new).error(R.drawable.logo_new).into(imgCategory);
+        } else {
+            Picasso.get().cancelRequest(imgCategory);
+            imgCategory.setImageDrawable(null);
+        }
+    }
+
+    private void setUploading(boolean uploading) {
+        progressImage.setVisibility(uploading ? View.VISIBLE : View.GONE);
+        btnPick.setEnabled(!uploading);
+        btnSave.setEnabled(!uploading && !saving);
+        if (uploading) imgPlaceholder.setVisibility(View.GONE);
+        else showImage();
+    }
+
+    // ------------------------------------------------------------------ lưu
+
+    private void save() {
+        if (saving || imagePicker.isUploading()) return;
+        final String newName = CategoryForm.cleanName(edtName.getText() == null ? "" : edtName.getText().toString());
+
+        // Kiểm tra nhanh các lỗi không cần dữ liệu (rỗng / quá dài)
+        String quick = CategoryForm.validateName(newName, null, null);
+        if (quick != null) {
+            tilName.setError(quick);
+            edtName.requestFocus();
             return;
         }
-        btnThemLoai.setEnabled(false);
-
-        // Kiểm tra trùng tên (không phân biệt hoa thường, bỏ qua chính danh mục đang sửa)
+        setSaving(true);
+        // Đọc danh sách mới nhất để kiểm tra trùng tên
         db.collection("LoaiProduct").get().addOnSuccessListener(all -> {
+            List<String> others = new ArrayList<>();
             for (QueryDocumentSnapshot q : all) {
-                String name = q.getString("tenloai");
-                if (name != null && name.trim().equalsIgnoreCase(newName) && !q.getId().equals(editingDocId)) {
-                    btnThemLoai.setEnabled(true);
-                    edtThemLoai.setError("Danh mục \"" + name + "\" đã tồn tại");
-                    return;
-                }
+                if (q.getId().equals(editingDocId)) continue; // chính danh mục đang sửa không tính là trùng
+                others.add(FirestoreMapper.str(q, "tenloai"));
             }
-
-            if (editingDocId == null) {
-                // THÊM MỚI
-                LoaiProduct sp = new LoaiProduct();
-                sp.setTenloai(newName);
-                sp.setHinhanh(image);
-                db.collection("LoaiProduct").add(sp)
-                        .addOnSuccessListener(ref -> onSaved("Đã thêm danh mục"))
-                        .addOnFailureListener(e -> onSaveFailed(e));
-            } else {
-                // CẬP NHẬT danh mục + đổi tên loại trong các sản phẩm thuộc danh mục cũ
-                java.util.Map<String, Object> data = new java.util.HashMap<>();
-                data.put("tenloai", newName);
-                data.put("hinhanh", image);
-                com.google.firebase.firestore.WriteBatch batch = db.batch();
-                batch.update(db.collection("LoaiProduct").document(editingDocId), data);
-
-                boolean renamed = !newName.equals(editingOldName);
-                if (!renamed) {
-                    batch.commit().addOnSuccessListener(v -> onSaved("Đã cập nhật danh mục"))
-                            .addOnFailureListener(this::onSaveFailed);
-                    return;
-                }
-                db.collection("SanPham").whereEqualTo("loaisp", editingOldName).get()
-                        .addOnSuccessListener(products -> {
-                            for (QueryDocumentSnapshot p : products) {
-                                batch.update(p.getReference(), "loaisp", newName);
-                            }
-                            batch.commit().addOnSuccessListener(v -> onSaved(
-                                    "Đã cập nhật danh mục (" + products.size() + " sản phẩm được đổi theo)"))
-                                    .addOnFailureListener(this::onSaveFailed);
-                        })
-                        .addOnFailureListener(this::onSaveFailed);
+            String error = CategoryForm.validateName(newName, others, null);
+            if (error != null) {
+                setSaving(false);
+                tilName.setError(error);
+                edtName.requestFocus();
+                return;
             }
-        }).addOnFailureListener(this::onSaveFailed);
+            if (editingDocId == null) create(newName);
+            else update(newName);
+        }).addOnFailureListener(this::onFailed);
+    }
+
+    private void create(String name) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("tenloai", name);
+        data.put("hinhanh", image == null ? "" : image);
+        db.collection("LoaiProduct").add(data)
+                .addOnSuccessListener(ref -> onSaved("Đã thêm danh mục"))
+                .addOnFailureListener(this::onFailed);
+    }
+
+    private void update(String newName) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("tenloai", newName);
+        data.put("hinhanh", image == null ? "" : image);
+        final boolean renamed = !newName.equals(editingOldName);
+
+        if (!renamed) {
+            db.collection("LoaiProduct").document(editingDocId).update(data)
+                    .addOnSuccessListener(v -> onSaved("Đã cập nhật danh mục"))
+                    .addOnFailureListener(this::onFailed);
+            return;
+        }
+        // Đổi tên → đổi loaisp của các sản phẩm thuộc danh mục cũ; ghi theo từng batch ≤ 400 thao tác
+        db.collection("SanPham").whereEqualTo("loaisp", editingOldName).get().addOnSuccessListener(products -> {
+            List<DocumentSnapshot> docs = new ArrayList<>(products.getDocuments());
+            WriteBatch first = db.batch();
+            first.update(db.collection("LoaiProduct").document(editingDocId), data);
+            int inFirst = Math.min(docs.size(), BATCH_LIMIT - 1);
+            for (int i = 0; i < inFirst; i++) first.update(docs.get(i).getReference(), "loaisp", newName);
+            first.commit().addOnSuccessListener(v -> commitRest(docs, inFirst, newName))
+                    .addOnFailureListener(this::onFailed);
+        }).addOnFailureListener(this::onFailed);
+    }
+
+    /** Các sản phẩm còn lại (danh mục có hơn ~400 sản phẩm); đệ quy từng batch. */
+    private void commitRest(List<DocumentSnapshot> docs, int from, String newName) {
+        if (from >= docs.size()) {
+            onSaved(docs.isEmpty() ? "Đã cập nhật danh mục"
+                    : "Đã cập nhật danh mục (" + docs.size() + " sản phẩm được đổi theo)");
+            return;
+        }
+        WriteBatch b = db.batch();
+        int to = Math.min(docs.size(), from + BATCH_LIMIT);
+        for (int i = from; i < to; i++) b.update(docs.get(i).getReference(), "loaisp", newName);
+        b.commit().addOnSuccessListener(v -> commitRest(docs, to, newName)).addOnFailureListener(this::onFailed);
+    }
+
+    private void setSaving(boolean s) {
+        saving = s;
+        btnSave.setEnabled(!s);
+        btnSave.setText(s ? "Đang lưu..." : (editingDocId == null ? "Thêm danh mục" : "Lưu thay đổi"));
     }
 
     private void onSaved(String message) {
+        saving = false;
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
         setResult(RESULT_OK);
         finish();
     }
 
-    private void onSaveFailed(Exception e) {
-        btnThemLoai.setEnabled(true);
-        Toast.makeText(this, "Lưu thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+    private void onFailed(Exception e) {
+        Log.e(TAG, "Lưu danh mục thất bại", e);
+        setSaving(false);
+        Toast.makeText(this, "Lưu thất bại, vui lòng thử lại", Toast.LENGTH_SHORT).show();
     }
 
-    private void Init() {
-        imgBackThemLoai = findViewById(R.id.img_back_themloai);
-        imgThemLoai = findViewById(R.id.image_them_loai);
-        edtThemLoai = findViewById(R.id.edt_them_loai);
-        btnThemLoai = findViewById(R.id.btn_them_loai);
+    // ------------------------------------------------------------------ thoát
 
-        Intent intent = getIntent();
-        String a = intent.getStringExtra("loaisp");
-        editingOldName = TextUtils.isEmpty(a) ? null : a;
-        edtThemLoai.setText(a);
-        if (editingOldName != null) {
-            btnThemLoai.setText("Lưu thay đổi");
-        }
-        if (editingOldName == null) return;
-        db.collection("LoaiProduct").whereEqualTo("tenloai", a).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-            @Override
-            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                for (QueryDocumentSnapshot q : queryDocumentSnapshots){
-                    if (editingDocId == null) editingDocId = q.getId();
-                    // Đọc field "hinhanh" (theo model) hoặc "hinhanhloai" (dữ liệu cũ)
-                    String imageUrl = q.getString("hinhanh");
-                    if (imageUrl == null || imageUrl.isEmpty()) {
-                        imageUrl = q.getString("hinhanhloai");
-                    }
-                    if (!TextUtils.isEmpty(imageUrl)) {
-                        Picasso.get().load(imageUrl).into(imgThemLoai);
-                        image = imageUrl;
-                    }
-                }
-            }
-        });
+    private boolean isDirty() {
+        String name = CategoryForm.cleanName(edtName.getText() == null ? "" : edtName.getText().toString());
+        return !name.equals(initialName) || !TextUtils.equals(image == null ? "" : image, initialImage == null ? "" : initialImage);
     }
 
-    private void showImageSourceDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Chọn nguồn ảnh");
-        builder.setItems(new String[]{"Chụp ảnh", "Chọn từ thư viện"}, (dialog, which) -> {
-            if (which == 0) {
-                // Camera
-                if (checkCameraPermission()) {
-                    openCamera();
-                }
-            } else if (which == 1) {
-                // Gallery - không cần permission với GetContent() trên Android 13+
-                // Nhưng vẫn cần cho Android < 13
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    // Android 13+ không cần permission khi dùng GetContent()
-                    openGallery();
-                } else {
-                    // Android < 13 cần permission
-                    if (checkStoragePermission()) {
-                        openGallery();
-                    }
-                }
-            }
-        });
-        builder.setNegativeButton("Hủy", null);
-        builder.show();
-    }
-    
-    private boolean checkCameraPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 100);
-            return false;
-        }
-        return true;
-    }
-    
-    private boolean checkStoragePermission() {
-        // Chỉ cần cho Android < 13
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 101);
-                return false;
-            }
-        }
-        return true;
-    }
-    
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 100) {
-            // Camera permission
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                openCamera();
-            } else {
-                Toast.makeText(this, "Cần quyền camera để chụp ảnh", Toast.LENGTH_SHORT).show();
-            }
-        } else if (requestCode == 101) {
-            // Storage permission
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                openGallery();
-            } else {
-                Toast.makeText(this, "Cần quyền truy cập thư viện để chọn ảnh", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-    
-    private void openCamera() {
-        try {
-            // Tạo file tạm để lưu ảnh
-            java.io.File photoFile = new java.io.File(getCacheDir(), "camera_image_" + System.currentTimeMillis() + ".jpg");
-            cameraImageUri = androidx.core.content.FileProvider.getUriForFile(
-                this,
-                getPackageName() + ".fileprovider",
-                photoFile
-            );
-            
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                cameraLauncher.launch(intent);
-            } else {
-                Toast.makeText(this, "Không thể mở camera", Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            // Fallback: không chỉ định output URI
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                cameraLauncher.launch(intent);
-            } else {
-                Toast.makeText(this, "Không thể mở camera", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-    
-    private void openGallery() {
-        galleryLauncher.launch("image/*");
-    }
-    
-    private void uploadImageToStorage(Uri imageUri) {
-        if (imageUri == null) {
-            Toast.makeText(this, "Không thể lấy ảnh", Toast.LENGTH_SHORT).show();
+    private void attemptClose() {
+        if (saving || !isDirty()) {
+            finish();
             return;
         }
-        
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Đang tải ảnh lên...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
-        
-        ImageUploadHelper.uploadImage(
-            this,
-            imageUri,
-            "categories", // Folder trong Storage
-            progressDialog,
-            new ImageUploadHelper.UploadCallback() {
-                @Override
-                public void onSuccess(String imageUrl) {
-                    image = imageUrl;
-                    Picasso.get()
-                            .load(imageUrl)
-                            .placeholder(R.drawable.pl)
-                            .error(R.drawable.pl)
-                            .into(imgThemLoai);
-                    Toast.makeText(AdminAddLoaiSPActivity.this, "Tải ảnh lên thành công", Toast.LENGTH_SHORT).show();
-                }
-                
-                @Override
-                public void onFailure(Exception e) {
-                    Toast.makeText(AdminAddLoaiSPActivity.this, "Lỗi tải ảnh: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            }
-        );
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Bỏ thay đổi?")
+                .setMessage("Những gì bạn vừa nhập sẽ không được lưu.")
+                .setNegativeButton("Tiếp tục sửa", null)
+                .setPositiveButton("Bỏ thay đổi", (d, w) -> finish())
+                .show();
     }
 }

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Một loại sản phẩm + quy tắc khuyến mãi của nó — AdminPromotionAdapter -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/admin_space_s"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="@dimen/admin_radius_field">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="@dimen/admin_space_m">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_promo_category"
+                style="@style/Admin.Text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="Thịt heo" />
+
+            <TextView
+                android:id="@+id/tv_promo_rule"
+                style="@style/Admin.Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                tools:text="Mua từ 3 sản phẩm → giảm 10%" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_promo_badge"
+            style="@style/Admin.Text.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/admin_space_s"
+            android:background="@drawable/bg_admin_badge"
+            android:backgroundTint="@color/admin_warning_soft"
+            android:paddingStart="10dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="4dp"
+            android:textColor="@color/admin_warning_text"
+            android:textStyle="bold"
+            tools:text="-10%" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -1,39 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Một danh mục trong danh sách admin — AdminLoaiSPAdapter -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="4dp"
-    app:cardBackgroundColor="#FFFFFF">
+    android:layout_marginBottom="@dimen/admin_space_s"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="@dimen/admin_radius_field">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:gravity="center">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="@dimen/admin_space_m">
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/img_loai_sp"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:background="@color/admin_beige"
+            android:importantForAccessibility="no"
             android:scaleType="centerCrop"
-            android:background="@drawable/border5"
-            android:layout_marginBottom="12dp" />
+            app:shapeAppearanceOverlay="@style/Admin.Shape.Rounded" />
 
-        <TextView
-            android:id="@+id/tv_ten_loai_sp"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Tên loại"
-            android:textColor="#212121"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:maxLines="2"
-            android:ellipsize="end" />
-    </LinearLayout>
-</androidx.cardview.widget.CardView>
+            android:layout_marginStart="@dimen/admin_space_m"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
+            <TextView
+                android:id="@+id/tv_ten_loai_sp"
+                style="@style/Admin.Text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="Rau Củ" />
+
+            <TextView
+                android:id="@+id/tv_loai_sp_count"
+                style="@style/Admin.Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                tools:text="12 sản phẩm" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btn_delete_loai_sp"
+            android:layout_width="@dimen/admin_touch_min"
+            android:layout_height="@dimen/admin_touch_min"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Xóa danh mục"
+            android:src="@drawable/ic_ui_delete"
+            app:tint="@color/admin_danger" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -355,6 +355,14 @@
                             android:inputType="textMultiLine|textCapSentences"
                             android:minLines="4" />
                     </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_ai_description"
+                        style="@style/Admin.Button.Outlined"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/admin_space_s"
+                        android:text="Viết mô tả bằng AI" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

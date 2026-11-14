@@ -1,13 +1,8 @@
 package com.UngDung.ThucPhamXanh.View.Admin;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -23,20 +18,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.NestedScrollView;
 
+import com.UngDung.ThucPhamXanh.BotAI.GeminiClient;
+import com.UngDung.ThucPhamXanh.Helper.AdminAiPrompts;
 import com.UngDung.ThucPhamXanh.Helper.DashboardStats;
 import com.UngDung.ThucPhamXanh.Helper.FirestoreMapper;
-import com.UngDung.ThucPhamXanh.Helper.ImageUploadHelper;
 import com.UngDung.ThucPhamXanh.Helper.ProductForm;
 import com.UngDung.ThucPhamXanh.Helper.ProductVisibility;
 import com.UngDung.ThucPhamXanh.Models.Product;
@@ -53,7 +45,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.squareup.picasso.Picasso;
 
-import java.io.File;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -89,7 +80,7 @@ public class AdminAddSPActivity extends BaseAdminActivity {
     private ImageView imgProduct, imgPlaceholder;
     private View progressImage;
     private TextView tvImageHint;
-    private MaterialButton btnPickImage, btnSave, btnDelete;
+    private MaterialButton btnPickImage, btnSave, btnDelete, btnAiDescription;
     private TextInputLayout tilName, tilPrice, tilCategory, tilType, tilQuantity, tilWeight, tilExpiry,
             tilOrigin, tilDescription;
     private EditText edtName, edtPrice, edtQuantity, edtWeight, edtExpiry, edtOrigin, edtDescription;
@@ -98,9 +89,7 @@ public class AdminAddSPActivity extends BaseAdminActivity {
     private final List<String> categories = new ArrayList<>();
     private ArrayAdapter<String> categoryAdapter;
 
-    private ActivityResultLauncher<Intent> cameraLauncher;
-    private ActivityResultLauncher<String> galleryLauncher;
-    private Uri cameraImageUri;
+    private AdminImagePicker imagePicker;
 
     public static Intent edit(Context context, Product product) {
         return new Intent(context, AdminAddSPActivity.class).putExtra("SP", product);
@@ -277,11 +266,57 @@ public class AdminAddSPActivity extends BaseAdminActivity {
         clearErrorOnEdit(edtWeight, tilWeight);
         clearErrorOnEdit(edtDescription, tilDescription);
 
+        btnAiDescription = findViewById(R.id.btn_ai_description);
+        btnAiDescription.setOnClickListener(v -> onAiDescriptionClick());
+
         btnSave.setOnClickListener(v -> save());
         btnDelete.setOnClickListener(v -> confirm("Xóa sản phẩm?",
                 "\"" + edtName.getText().toString().trim() + "\" sẽ bị gỡ khỏi cửa hàng. "
                         + "Các đơn hàng cũ có sản phẩm này vẫn được giữ nguyên.",
                 "Xóa", this::deleteProduct));
+    }
+
+    // ------------------------------------------------------------------ AI viết mô tả
+
+    private void onAiDescriptionClick() {
+        if (edtName.getText().toString().trim().isEmpty()) {
+            tilName.setError("Nhập tên sản phẩm để AI viết mô tả");
+            edtName.requestFocus();
+            return;
+        }
+        if (edtDescription.getText().toString().trim().isEmpty()) {
+            generateDescription();
+        } else {
+            confirm("Viết lại mô tả?", "Mô tả hiện tại sẽ bị thay bằng đoạn do AI viết. Bạn vẫn có thể sửa lại sau.",
+                    "Viết lại", this::generateDescription);
+        }
+    }
+
+    private void generateDescription() {
+        btnAiDescription.setEnabled(false);
+        btnAiDescription.setText("AI đang viết…");
+        String user = AdminAiPrompts.descriptionUserMessage(edtName.getText().toString(),
+                ddCategory.getText().toString(), edtWeight.getText().toString(), edtOrigin.getText().toString());
+        GeminiClient.ask(AdminAiPrompts.descriptionSystemPrompt(), null, user, new GeminiClient.Result() {
+            @Override
+            public void onSuccess(String text) {
+                if (isFinishing() || isDestroyed()) return;
+                String desc = AdminAiPrompts.cleanDescription(text);
+                if (desc.isEmpty()) { onError("AI không trả về nội dung, hãy thử lại."); return; }
+                edtDescription.setText(desc);
+                tilDescription.setError(null);
+                btnAiDescription.setEnabled(true);
+                btnAiDescription.setText("Viết lại bằng AI");
+            }
+
+            @Override
+            public void onError(String message) {
+                if (isFinishing() || isDestroyed()) return;
+                Toast.makeText(AdminAddSPActivity.this, message, Toast.LENGTH_LONG).show();
+                btnAiDescription.setEnabled(true);
+                btnAiDescription.setText("Viết mô tả bằng AI");
+            }
+        });
     }
 
     private static void clearErrorOnEdit(EditText edt, TextInputLayout til) {
@@ -509,83 +544,31 @@ public class AdminAddSPActivity extends BaseAdminActivity {
 
     // ------------------------------------------------------------------ ảnh
 
+    /** Chọn ảnh (camera / thư viện) + tải lên Storage: dùng chung với form danh mục. */
     private void initImageLaunchers() {
-        cameraLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == RESULT_OK && cameraImageUri != null) {
-                        uploadImage(cameraImageUri);
-                    }
-                });
-        galleryLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(),
-                uri -> { if (uri != null) uploadImage(uri); });
-    }
-
-    private void showImageSourceDialog() {
-        if (uploading) return;
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Ảnh sản phẩm")
-                .setItems(new String[]{"Chụp ảnh", "Chọn từ thư viện"}, (dialog, which) -> {
-                    if (which == 0) {
-                        if (hasPermission(Manifest.permission.CAMERA, 100)) openCamera();
-                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                            || hasPermission(Manifest.permission.READ_EXTERNAL_STORAGE, 101)) {
-                        galleryLauncher.launch("image/*"); // Android 13+ không cần quyền với GetContent
-                    }
-                })
-                .setNegativeButton("Hủy", null)
-                .show();
-    }
-
-    private boolean hasPermission(String permission, int requestCode) {
-        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) return true;
-        ActivityCompat.requestPermissions(this, new String[]{permission}, requestCode);
-        return false;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
-        if (requestCode == 100) {
-            if (granted) openCamera();
-            else Toast.makeText(this, "Cần quyền camera để chụp ảnh", Toast.LENGTH_SHORT).show();
-        } else if (requestCode == 101) {
-            if (granted) galleryLauncher.launch("image/*");
-            else Toast.makeText(this, "Cần quyền truy cập thư viện để chọn ảnh", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void openCamera() {
-        try {
-            File photo = new File(getCacheDir(), "camera_image_" + System.currentTimeMillis() + ".jpg");
-            cameraImageUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", photo);
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            cameraLauncher.launch(intent);
-        } catch (Exception e) {
-            Log.e(TAG, "Không mở được camera", e);
-            Toast.makeText(this, "Không thể mở camera", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void uploadImage(Uri uri) {
-        setUploading(true);
-        ImageUploadHelper.uploadImage(this, uri, "products", null, new ImageUploadHelper.UploadCallback() {
+        imagePicker = new AdminImagePicker(this, "products", "Ảnh sản phẩm", new AdminImagePicker.Listener() {
             @Override
-            public void onSuccess(String imageUrl) {
-                if (isFinishing()) return;
+            public void onUploadStart() {
+                setUploading(true);
+            }
+
+            @Override
+            public void onUploaded(String imageUrl) {
                 image = imageUrl;
                 setUploading(false);
                 setImageError(null);
             }
 
             @Override
-            public void onFailure(Exception e) {
-                // ImageUploadHelper đã báo lỗi bằng Toast
-                if (!isFinishing()) setUploading(false);
+            public void onUploadFailed() {
+                setUploading(false); // ImageUploadHelper đã báo lỗi bằng Toast
             }
         });
+    }
+
+    private void showImageSourceDialog() {
+        if (uploading) return;
+        imagePicker.show();
     }
 
     private void setUploading(boolean u) {

@@ -1,399 +1,293 @@
 package com.UngDung.ThucPhamXanh.View.Admin;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatImageView;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import android.app.Dialog;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.UngDung.ThucPhamXanh.Models.Shipper;
+import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.UngDung.ThucPhamXanh.Helper.FirestoreMapper;
+import com.UngDung.ThucPhamXanh.Helper.ShipperForm;
+import com.UngDung.ThucPhamXanh.Models.OrderStatus;
 import com.UngDung.ThucPhamXanh.R;
-import com.UngDung.ThucPhamXanh.my_interface.IClickCTHD;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class AdminShipperActivity extends AppCompatActivity {
+/**
+ * Shipper trang admin. Đọc (gỡ ở onStop): 1 listener "Shipper" + 1 listener "HoaDon" để biết mỗi shipper
+ * đang giao / đã giao bao nhiêu đơn. Thêm / sửa / xóa theo ID document (không còn xóa theo vị trí cũ).
+ * Sửa: để trống mật khẩu = giữ mật khẩu cũ. Không xóa shipper đang có đơn "Đang giao".
+ */
+public class AdminShipperActivity extends BaseAdminActivity {
 
     private static final String TAG = "AdminShipperActivity";
-    private ImageView imgBackShipper;
-    private RecyclerView rcvShippers;
-    private TextView tvEmptyShippers;
-    private AppCompatImageView imageAddShipper;
+
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    private MaterialToolbar toolbar;
+    private RecyclerView rcv;
+    private View emptyView, progress;
     private AdminShipperAdapter adapter;
-    private ArrayList<Shipper> mlistShipper;
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    private final List<DocumentSnapshot> shipperDocs = new ArrayList<>();
+    private final Map<String, int[]> counts = new HashMap<>(); // shipperId -> {đang giao, đã giao}
+    private boolean shippersLoaded;
+    private List<AdminShipperAdapter.Row> rows = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_shipper);
+        toolbar = setupAdminToolbar("Shipper", null);
 
-        Init();
-        InitWidget();
-        Event();
+        rcv = findViewById(R.id.rcv_shippers);
+        emptyView = findViewById(R.id.admin_empty);
+        progress = findViewById(R.id.progress_shippers);
+        ExtendedFloatingActionButton fab = findViewById(R.id.fab_add_shipper);
+        applySystemBarInsets(null, rcv);
+        applySystemBarInsets(null, findViewById(R.id.fab_container_shipper));
+
+        adapter = new AdminShipperAdapter(this::showSheet);
+        rcv.setLayoutManager(new LinearLayoutManager(this));
+        rcv.setAdapter(adapter);
+        fab.setOnClickListener(v -> showForm(null));
     }
 
-    private void Event() {
-        imgBackShipper.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
+    @Override
+    protected void onStartListening() {
+        listen(db.collection("Shipper").addSnapshotListener((snap, e) -> {
+            if (e != null) {
+                Log.e(TAG, "Lỗi đọc Shipper", e);
+                progress.setVisibility(View.GONE);
+                Toast.makeText(this, "Không tải được danh sách shipper", Toast.LENGTH_SHORT).show();
+                return;
             }
-        });
-
-        imageAddShipper.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showAddShipperDialog(null);
+            if (snap == null) return;
+            shipperDocs.clear();
+            shipperDocs.addAll(snap.getDocuments());
+            shippersLoaded = true;
+            rebuild();
+        }));
+        listen(db.collection("HoaDon").addSnapshotListener((snap, e) -> {
+            if (e != null || snap == null) return;
+            counts.clear();
+            for (DocumentSnapshot d : snap.getDocuments()) {
+                String sid = FirestoreMapper.str(d, "shipperId").trim();
+                if (sid.isEmpty()) continue;
+                long st = FirestoreMapper.num(d, "trangthai");
+                int[] c = counts.get(sid);
+                if (c == null) {
+                    c = new int[2];
+                    counts.put(sid, c);
+                }
+                if (st == OrderStatus.DANG_GIAO) c[0]++;
+                else if (st == OrderStatus.DA_GIAO) c[1]++;
             }
-        });
+            rebuild();
+        }));
     }
 
-    private void showAddShipperDialog(Shipper shipperToEdit) {
-        Dialog dialog = new Dialog(AdminShipperActivity.this);
-        dialog.setContentView(R.layout.dialog_add_shipper);
-        dialog.show();
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        
-        EditText edtUsername = dialog.findViewById(R.id.edt_shipper_username);
-        EditText edtPassword = dialog.findViewById(R.id.edt_shipper_password);
-        EditText edtName = dialog.findViewById(R.id.edt_shipper_name);
-        EditText edtPhone = dialog.findViewById(R.id.edt_shipper_phone);
-        Button btnSave = dialog.findViewById(R.id.btn_save_shipper);
-        Button btnCancel = dialog.findViewById(R.id.btn_cancel_shipper);
-        TextView tvTitle = dialog.findViewById(R.id.tv_dialog_title);
-        
-        dialog.setCanceledOnTouchOutside(true);
+    private void rebuild() {
+        if (!shippersLoaded) return;
+        List<AdminShipperAdapter.Row> list = new ArrayList<>();
+        for (DocumentSnapshot d : shipperDocs) {
+            String username = FirestoreMapper.str(d, "username").trim();
+            if (username.isEmpty()) continue;
+            int[] c = counts.get(username);
+            list.add(new AdminShipperAdapter.Row(d.getId(), username, FirestoreMapper.str(d, "name"),
+                    FirestoreMapper.str(d, "phone"), c == null ? 0 : c[0], c == null ? 0 : c[1]));
+        }
+        Collections.sort(list, (a, b) -> a.displayName().compareToIgnoreCase(b.displayName()));
+        rows = list;
+        adapter.submitList(list);
+        progress.setVisibility(View.GONE);
+        showEmpty(emptyView, list.isEmpty(), "Chưa có shipper nào.\nBấm \"Thêm shipper\" để tạo tài khoản giao hàng.");
+        toolbar.setSubtitle(list.isEmpty() ? null : list.size() + " shipper");
+    }
 
-        // Nếu là edit mode, điền dữ liệu
-        if (shipperToEdit != null) {
-            tvTitle.setText("Sửa thông tin shipper");
-            edtUsername.setText(shipperToEdit.getUsername());
-            edtUsername.setEnabled(false); // Không cho sửa username
-            edtPassword.setText(shipperToEdit.getPassword());
-            edtName.setText(shipperToEdit.getName());
-            edtPhone.setText(shipperToEdit.getPhone());
-            btnSave.setText("Cập nhật");
+    // ------------------------------------------------------------------ chi tiết
+
+    private void showSheet(AdminShipperAdapter.Row r) {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View v = LayoutInflater.from(this).inflate(R.layout.sheet_admin_shipper, null);
+        dialog.setContentView(v);
+
+        ((TextView) v.findViewById(R.id.tv_sheet_shipper_name)).setText(r.displayName());
+        ((TextView) v.findViewById(R.id.tv_sheet_shipper_user)).setText("Tên đăng nhập: " + r.username);
+        ((TextView) v.findViewById(R.id.tv_sheet_delivering)).setText(String.valueOf(r.delivering));
+        ((TextView) v.findViewById(R.id.tv_sheet_delivered)).setText(String.valueOf(r.delivered));
+
+        LinearLayout box = v.findViewById(R.id.box_shipper_rows);
+        addRow(box, "Số điện thoại", r.phone);
+
+        MaterialButton btnCall = v.findViewById(R.id.btn_shipper_call);
+        String phone = ShipperForm.cleanPhone(r.phone);
+        if (phone.isEmpty()) {
+            btnCall.setEnabled(false);
         } else {
-            tvTitle.setText("Thêm shipper mới");
-            edtUsername.setEnabled(true);
-            btnSave.setText("Thêm");
+            btnCall.setOnClickListener(x -> startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phone))));
         }
-
-        btnSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String username = edtUsername.getText().toString().trim();
-                String password = edtPassword.getText().toString().trim();
-                String name = edtName.getText().toString().trim();
-                String phone = edtPhone.getText().toString().trim();
-
-                if (username.isEmpty()) {
-                    edtUsername.setError("Vui lòng nhập username");
-                    edtUsername.requestFocus();
-                    return;
-                }
-
-                if (password.isEmpty()) {
-                    edtPassword.setError("Vui lòng nhập mật khẩu");
-                    edtPassword.requestFocus();
-                    return;
-                }
-
-                if (password.length() < 6) {
-                    edtPassword.setError("Mật khẩu phải có ít nhất 6 ký tự");
-                    edtPassword.requestFocus();
-                    return;
-                }
-
-                if (name.isEmpty()) {
-                    edtName.setError("Vui lòng nhập tên");
-                    edtName.requestFocus();
-                    return;
-                }
-
-                if (phone.isEmpty()) {
-                    edtPhone.setError("Vui lòng nhập số điện thoại");
-                    edtPhone.requestFocus();
-                    return;
-                }
-
-                // Lưu vào Firestore
-                Map<String, Object> shipperData = new HashMap<>();
-                shipperData.put("username", username);
-                shipperData.put("password", password);
-                shipperData.put("name", name);
-                shipperData.put("phone", phone);
-                shipperData.put("createdAt", System.currentTimeMillis());
-
-                if (shipperToEdit != null) {
-                    // Update existing shipper
-                    db.collection("Shipper")
-                            .whereEqualTo("username", username)
-                            .get()
-                            .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                                @Override
-                                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                                    if (queryDocumentSnapshots.size() > 0) {
-                                        String docId = queryDocumentSnapshots.getDocuments().get(0).getId();
-                                        db.collection("Shipper")
-                                                .document(docId)
-                                                .update(shipperData)
-                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                    @Override
-                                                    public void onSuccess(Void aVoid) {
-                                                        Toast.makeText(AdminShipperActivity.this, "Cập nhật shipper thành công", Toast.LENGTH_SHORT).show();
-                                                        dialog.cancel();
-                                                        LoadShippers(); // Reload danh sách
-                                                    }
-                                                })
-                                                .addOnFailureListener(new OnFailureListener() {
-                                                    @Override
-                                                    public void onFailure(@NonNull Exception e) {
-                                                        Log.e(TAG, "Lỗi cập nhật shipper: " + e.getMessage());
-                                                        Toast.makeText(AdminShipperActivity.this, "Lỗi cập nhật shipper", Toast.LENGTH_SHORT).show();
-                                                    }
-                                                });
-                                    }
-                                }
-                            });
-                } else {
-                    // Check if username already exists
-                    db.collection("Shipper")
-                            .whereEqualTo("username", username)
-                            .get()
-                            .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                                @Override
-                                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                                    if (queryDocumentSnapshots.size() > 0) {
-                                        Toast.makeText(AdminShipperActivity.this, "Username đã tồn tại", Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        // Add new shipper
-                                        db.collection("Shipper")
-                                                .add(shipperData)
-                                                .addOnSuccessListener(new OnSuccessListener<com.google.firebase.firestore.DocumentReference>() {
-                                                    @Override
-                                                    public void onSuccess(com.google.firebase.firestore.DocumentReference documentReference) {
-                                                        Toast.makeText(AdminShipperActivity.this, "Thêm shipper thành công", Toast.LENGTH_SHORT).show();
-                                                        dialog.cancel();
-                                                        LoadShippers(); // Reload danh sách
-                                                    }
-                                                })
-                                                .addOnFailureListener(new OnFailureListener() {
-                                                    @Override
-                                                    public void onFailure(@NonNull Exception e) {
-                                                        Log.e(TAG, "Lỗi thêm shipper: " + e.getMessage());
-                                                        Toast.makeText(AdminShipperActivity.this, "Lỗi thêm shipper", Toast.LENGTH_SHORT).show();
-                                                    }
-                                                });
-                                    }
-                                }
-                            });
-                }
-            }
+        v.findViewById(R.id.btn_shipper_edit).setOnClickListener(x -> {
+            dialog.dismiss();
+            showForm(r);
         });
-
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dialog.cancel();
-            }
+        v.findViewById(R.id.btn_shipper_delete).setOnClickListener(x -> {
+            dialog.dismiss();
+            askDelete(r);
         });
-    }
-
-    private void Init() {
-        mlistShipper = new ArrayList<>();
-    }
-
-    private void LoadShippers() {
-        if (mlistShipper == null) {
-            mlistShipper = new ArrayList<>();
-        }
-        mlistShipper.clear();
-        if (adapter != null) {
-            adapter.notifyDataSetChanged();
-        }
-        updateEmptyState();
-        
-        db.collection("Shipper")
-                .get()
-                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                    @Override
-                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                        mlistShipper.clear();
-                        for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                            String username = doc.getString("username");
-                            String password = doc.getString("password");
-                            String name = doc.getString("name");
-                            String phone = doc.getString("phone");
-                            
-                            if (username != null && !username.isEmpty()) {
-                                Shipper shipper = new Shipper(username, password, name, phone);
-                                mlistShipper.add(shipper);
-                            }
-                        }
-                        if (adapter != null) {
-                            adapter.notifyDataSetChanged();
-                        }
-                        updateEmptyState();
-                        Log.d(TAG, "✅ Đã load " + mlistShipper.size() + " shipper");
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.e(TAG, "❌ Lỗi load shipper: " + e.getMessage());
-                        Toast.makeText(AdminShipperActivity.this, "Lỗi tải danh sách shipper", Toast.LENGTH_SHORT).show();
-                        updateEmptyState();
-                    }
-                });
-    }
-    
-    private void updateEmptyState() {
-        if (tvEmptyShippers != null && rcvShippers != null) {
-            if (mlistShipper == null || mlistShipper.isEmpty()) {
-                tvEmptyShippers.setVisibility(View.VISIBLE);
-                rcvShippers.setVisibility(View.GONE);
-            } else {
-                tvEmptyShippers.setVisibility(View.GONE);
-                rcvShippers.setVisibility(View.VISIBLE);
-            }
-        }
-    }
-
-    private void InitWidget() {
-        imgBackShipper = findViewById(R.id.img_back_shipper_admin);
-        rcvShippers = findViewById(R.id.rcv_shippers);
-        tvEmptyShippers = findViewById(R.id.tv_empty_shippers);
-        imageAddShipper = findViewById(R.id.image_add_shipper);
-
-        adapter = new AdminShipperAdapter(AdminShipperActivity.this, mlistShipper, new IClickCTHD() {
-            @Override
-            public void onClickCTHD(int pos) {
-                if (pos >= 0 && pos < mlistShipper.size()) {
-                    Shipper shipper = mlistShipper.get(pos);
-                    showShipperOptionsDialog(shipper, pos);
-                }
-            }
-        });
-        rcvShippers.setLayoutManager(new GridLayoutManager(AdminShipperActivity.this, 2));
-        rcvShippers.setAdapter(adapter);
-        
-        // Load dữ liệu sau khi adapter đã được setup
-        LoadShippers();
-    }
-
-    private void showShipperOptionsDialog(Shipper shipper, int position) {
-        Dialog dialog = new Dialog(AdminShipperActivity.this);
-        dialog.setContentView(R.layout.dialog_info_shipper);
         dialog.show();
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        
-        TextView tvUsername = dialog.findViewById(R.id.tv_shipper_username_info);
-        TextView tvName = dialog.findViewById(R.id.tv_shipper_name_info);
-        TextView tvPhone = dialog.findViewById(R.id.tv_shipper_phone_info);
-        Button btnEdit = dialog.findViewById(R.id.btn_edit_shipper);
-        Button btnDelete = dialog.findViewById(R.id.btn_delete_shipper);
-        ImageView btnCancel = dialog.findViewById(R.id.btn_cancel_shipper_info);
-        
-        dialog.setCanceledOnTouchOutside(true);
+    }
 
-        tvUsername.setText("Username: " + shipper.getUsername());
-        tvName.setText("Tên: " + (shipper.getName() != null && !shipper.getName().isEmpty() ? shipper.getName() : "Chưa có"));
-        tvPhone.setText("SĐT: " + (shipper.getPhone() != null && !shipper.getPhone().isEmpty() ? shipper.getPhone() : "Chưa có"));
+    private void addRow(LinearLayout box, String label, String value) {
+        if (value == null || value.trim().isEmpty()) return;
+        View row = LayoutInflater.from(this).inflate(R.layout.item_admin_kv, box, false);
+        ((TextView) row.findViewById(R.id.tv_kv_label)).setText(label);
+        ((TextView) row.findViewById(R.id.tv_kv_value)).setText(value.trim());
+        box.addView(row);
+    }
 
-        btnEdit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dialog.cancel();
-                showAddShipperDialog(shipper);
-            }
-        });
+    // ------------------------------------------------------------------ thêm / sửa
 
-        btnDelete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dialog.cancel();
-                new AlertDialog.Builder(AdminShipperActivity.this)
-                        .setTitle("Xác nhận xóa")
-                        .setMessage("Bạn có chắc chắn muốn xóa shipper " + shipper.getUsername() + "?")
-                        .setPositiveButton("Xóa", new android.content.DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(android.content.DialogInterface dialogInterface, int which) {
-                                deleteShipper(shipper.getUsername(), position);
-                            }
+    /** editing == null → thêm mới. */
+    private void showForm(AdminShipperAdapter.Row editing) {
+        View form = LayoutInflater.from(this).inflate(R.layout.dialog_admin_shipper_form, null);
+        TextInputLayout tilUser = form.findViewById(R.id.til_shipper_username);
+        TextInputLayout tilPass = form.findViewById(R.id.til_shipper_password);
+        TextInputLayout tilName = form.findViewById(R.id.til_shipper_name);
+        TextInputLayout tilPhone = form.findViewById(R.id.til_shipper_phone);
+        TextInputEditText edtUser = form.findViewById(R.id.edt_shipper_username);
+        TextInputEditText edtPass = form.findViewById(R.id.edt_shipper_password);
+        TextInputEditText edtName = form.findViewById(R.id.edt_shipper_name);
+        TextInputEditText edtPhone = form.findViewById(R.id.edt_shipper_phone);
+
+        final boolean isEdit = editing != null;
+        if (isEdit) {
+            edtUser.setText(editing.username);
+            edtUser.setEnabled(false); // tên đăng nhập là khóa để shipper đăng nhập và gắn đơn → không đổi
+            edtName.setText(editing.name);
+            edtPhone.setText(editing.phone);
+            tilPass.setHint("Mật khẩu mới (để trống nếu không đổi)");
+        }
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(isEdit ? "Sửa shipper" : "Thêm shipper")
+                .setView(form)
+                .setNegativeButton("Hủy", null)
+                .setPositiveButton(isEdit ? "Lưu" : "Thêm", null)
+                .create();
+        dialog.show();
+
+        final android.widget.Button btnSave = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        btnSave.setOnClickListener(x -> {
+            tilUser.setError(null);
+            tilPass.setError(null);
+            tilName.setError(null);
+            tilPhone.setError(null);
+
+            String username = ShipperForm.cleanUsername(text(edtUser));
+            String password = text(edtPass);
+            String name = text(edtName);
+            String phone = text(edtPhone);
+
+            List<String> existing = new ArrayList<>();
+            for (AdminShipperAdapter.Row r : rows) existing.add(r.username);
+            ShipperForm.Errors err = ShipperForm.validate(username, password, name, phone, existing,
+                    isEdit ? editing.username : null);
+            tilUser.setError(err.username);
+            tilPass.setError(err.password);
+            tilName.setError(err.name);
+            tilPhone.setError(err.phone);
+            if (err.any()) return;
+
+            btnSave.setEnabled(false);
+            if (isEdit) {
+                Map<String, Object> update = new HashMap<>();
+                update.put("name", name.trim());
+                update.put("phone", ShipperForm.cleanPhone(phone));
+                if (!password.isEmpty()) update.put("password", password);
+                db.collection("Shipper").document(editing.docId).update(update)
+                        .addOnSuccessListener(v -> {
+                            Toast.makeText(this, "Đã cập nhật shipper", Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
                         })
-                        .setNegativeButton("Hủy", null)
-                        .show();
-            }
-        });
-
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dialog.cancel();
+                        .addOnFailureListener(e -> onSaveFailed(e, btnSave));
+            } else {
+                Map<String, Object> data = new HashMap<>();
+                data.put("username", username);
+                data.put("password", password);
+                data.put("name", name.trim());
+                data.put("phone", ShipperForm.cleanPhone(phone));
+                data.put("createdAt", System.currentTimeMillis());
+                // kiểm tra lại trên máy chủ phòng khi có người vừa tạo cùng tên đăng nhập
+                db.collection("Shipper").whereEqualTo("username", username).get()
+                        .addOnSuccessListener(found -> {
+                            if (!found.isEmpty()) {
+                                btnSave.setEnabled(true);
+                                tilUser.setError("Tên đăng nhập đã tồn tại");
+                                return;
+                            }
+                            db.collection("Shipper").add(data)
+                                    .addOnSuccessListener(ref -> {
+                                        Toast.makeText(this, "Đã thêm shipper", Toast.LENGTH_SHORT).show();
+                                        dialog.dismiss();
+                                    })
+                                    .addOnFailureListener(e -> onSaveFailed(e, btnSave));
+                        })
+                        .addOnFailureListener(e -> onSaveFailed(e, btnSave));
             }
         });
     }
 
-    private void deleteShipper(String username, int position) {
-        db.collection("Shipper")
-                .whereEqualTo("username", username)
-                .get()
-                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                    @Override
-                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                        if (queryDocumentSnapshots.size() > 0) {
-                            String docId = queryDocumentSnapshots.getDocuments().get(0).getId();
-                            db.collection("Shipper")
-                                    .document(docId)
-                                    .delete()
-                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                        @Override
-                                        public void onSuccess(Void aVoid) {
-                                            Toast.makeText(AdminShipperActivity.this, "Đã xóa shipper", Toast.LENGTH_SHORT).show();
-                                            mlistShipper.remove(position);
-                                            adapter.notifyDataSetChanged();
-                                            updateEmptyState();
-                                        }
-                                    })
-                                    .addOnFailureListener(new OnFailureListener() {
-                                        @Override
-                                        public void onFailure(@NonNull Exception e) {
-                                            Log.e(TAG, "Lỗi xóa shipper: " + e.getMessage());
-                                            Toast.makeText(AdminShipperActivity.this, "Lỗi xóa shipper", Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
-                        }
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.e(TAG, "Lỗi tìm shipper: " + e.getMessage());
-                        Toast.makeText(AdminShipperActivity.this, "Lỗi xóa shipper", Toast.LENGTH_SHORT).show();
-                    }
-                });
+    private void onSaveFailed(Exception e, android.widget.Button btn) {
+        Log.e(TAG, "Lưu shipper thất bại", e);
+        btn.setEnabled(true);
+        Toast.makeText(this, "Lưu thất bại, vui lòng thử lại", Toast.LENGTH_SHORT).show();
+    }
+
+    private static String text(TextInputEditText e) {
+        return e.getText() == null ? "" : e.getText().toString().trim();
+    }
+
+    // ------------------------------------------------------------------ xóa
+
+    private void askDelete(AdminShipperAdapter.Row r) {
+        if (r.delivering > 0) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Không thể xóa shipper")
+                    .setMessage(r.displayName() + " đang giao " + r.delivering
+                            + " đơn. Hãy đợi giao xong hoặc gán các đơn đó cho shipper khác trước.")
+                    .setPositiveButton("Đã hiểu", null)
+                    .show();
+            return;
+        }
+        confirm("Xóa shipper?", "Bạn có chắc muốn xóa shipper " + r.displayName() + " (" + r.username
+                + ")? Họ sẽ không đăng nhập được nữa.", "Xóa", () ->
+                db.collection("Shipper").document(r.docId).delete()
+                        .addOnSuccessListener(v -> Toast.makeText(this, "Đã xóa shipper", Toast.LENGTH_SHORT).show())
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "Lỗi xóa shipper", e);
+                            Toast.makeText(this, "Xóa shipper thất bại, vui lòng thử lại", Toast.LENGTH_SHORT).show();
+                        }));
     }
 }
-
