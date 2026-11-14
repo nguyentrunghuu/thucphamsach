@@ -163,7 +163,7 @@ public class Product implements Serializable{
             public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                 if(queryDocumentSnapshots.size()>0){
                     for(QueryDocumentSnapshot d : queryDocumentSnapshots){
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                         callback.getDataProduct(d.getId(),d.getString("tensp"),
                                 d.getLong("giatien"),d.getString("hinhanh"),
                                 d.getString("loaisp"),d.getString("mota"),

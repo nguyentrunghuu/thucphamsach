@@ -21,7 +21,7 @@
             android:layout_marginTop="16dp"
             app:cardCornerRadius="20dp"
             app:cardElevation="4dp"
-            app:cardBackgroundColor="#FFFFFF">
+            app:cardBackgroundColor="@color/ui_surface">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -62,7 +62,7 @@
                 android:layout_marginTop="32dp"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="8dp"
-                app:cardBackgroundColor="#FFFFFF">
+                app:cardBackgroundColor="@color/ui_surface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -75,7 +75,7 @@
                         android:layout_width="120dp"
                         android:layout_height="120dp"
                         android:src="@drawable/ic_baseline_favorite_border_24"
-                        android:tint="#BDBDBD"
+                        android:tint="@color/ui_text_hint"
                         android:contentDescription="Empty Favorite Icon" />
 
                     <TextView
@@ -84,7 +84,7 @@
                         android:layout_marginTop="24dp"
                         android:text="Chưa có sản phẩm yêu thích"
                         android:textSize="18sp"
-                        android:textColor="#757575"
+                        android:textColor="@color/ui_text_secondary"
                         android:textStyle="bold"
                         android:gravity="center" />
 
@@ -94,7 +94,7 @@
                         android:layout_marginTop="8dp"
                         android:text="Hãy thêm các sản phẩm bạn yêu thích vào đây"
                         android:textSize="14sp"
-                        android:textColor="#9E9E9E"
+                        android:textColor="@color/ui_text_hint"
                         android:gravity="center" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

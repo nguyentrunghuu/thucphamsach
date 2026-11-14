@@ -82,6 +82,8 @@ public class MessageActivity extends AppCompatActivity {
     private QuickReplyAdapter quickReplyAdapter;
     private List<String> quickReplyList;
     private boolean shouldShowQuickReplies = true;
+    /** Bàn phím đang mở → ẩn gợi ý nhanh để nhường chỗ cho tin nhắn. */
+    private boolean keyboardVisible;
 
     ValueEventListener seenListener;
     private ChatFirestoreHelper chatHelper;
@@ -124,6 +126,7 @@ public class MessageActivity extends AppCompatActivity {
         // Quick Replies - Setup sau khi có whomess
         rcvQuickReplies = findViewById(R.id.rcv_quick_replies);
         cardQuickReplies = findViewById(R.id.card_quick_replies);
+        setupInsets();
 
         intent = getIntent();
         userid = intent.getStringExtra("userid");
@@ -450,41 +453,53 @@ public class MessageActivity extends AppCompatActivity {
      * Đồng thời cập nhật padding của RecyclerView tin nhắn để không bị che
      */
     private void updateQuickRepliesVisibility() {
-        if (cardQuickReplies == null || edtSendMessage == null || rcvMessage == null) return;
-        
-        // Hiển thị quick replies khi EditText trống (bất kể có tin nhắn hay không)
+        if (cardQuickReplies == null || edtSendMessage == null) return;
+
+        // Gợi ý chỉ hiện khi ô nhập trống VÀ bàn phím đang đóng (bàn phím mở thì cần chỗ cho tin nhắn).
+        // Khung gợi ý nằm trong dòng chảy của bố cục nên danh sách tin nhắn tự co lại, không cần chỉnh đệm.
         String text = edtSendMessage.getText() != null ? edtSendMessage.getText().toString().trim() : "";
-        boolean shouldShow = shouldShowQuickReplies && text.isEmpty();
-        
+        boolean shouldShow = shouldShowQuickReplies && text.isEmpty() && !keyboardVisible;
+
         if (shouldShow) {
-            if (cardQuickReplies.getVisibility() != View.VISIBLE) {
-                showQuickReplies();
-            }
-            // Tăng paddingBottom của RecyclerView tin nhắn để không bị che bởi quick replies
-            rcvMessage.post(() -> {
-                rcvMessage.setPadding(
-                    rcvMessage.getPaddingLeft(),
-                    rcvMessage.getPaddingTop(),
-                    rcvMessage.getPaddingRight(),
-                    200 // Đủ không gian cho quick replies (88dp margin + ~112dp height)
-                );
-            });
-        } else {
-            if (cardQuickReplies.getVisibility() == View.VISIBLE) {
-                hideQuickReplies();
-            }
-            // Giảm paddingBottom khi ẩn quick replies
-            rcvMessage.post(() -> {
-                rcvMessage.setPadding(
-                    rcvMessage.getPaddingLeft(),
-                    rcvMessage.getPaddingTop(),
-                    rcvMessage.getPaddingRight(),
-                    160 // Padding mặc định
-                );
-            });
+            if (cardQuickReplies.getVisibility() != View.VISIBLE) showQuickReplies();
+        } else if (cardQuickReplies.getVisibility() == View.VISIBLE) {
+            hideQuickReplies();
         }
     }
-    
+
+    /**
+     * Màn hình vẽ tràn viền (targetSdk 35) nên tự chừa chỗ: status bar cho phần đầu, và cho phần đáy
+     * là chiều cao lớn hơn giữa bàn phím và thanh điều hướng. Khi bàn phím mở thì cuộn xuống tin mới nhất.
+     */
+    private void setupInsets() {
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        final View root = findViewById(R.id.message_root);
+        final View header = findViewById(R.id.bar_layout);
+        final View bottom = findViewById(R.id.bottom_container);
+        final int headerTop = header.getPaddingTop();
+        final int bottomBase = bottom.getPaddingBottom();
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            androidx.core.graphics.Insets bars = insets.getInsets(
+                    androidx.core.view.WindowInsetsCompat.Type.systemBars());
+            androidx.core.graphics.Insets ime = insets.getInsets(
+                    androidx.core.view.WindowInsetsCompat.Type.ime());
+            header.setPadding(header.getPaddingLeft(), headerTop + bars.top,
+                    header.getPaddingRight(), header.getPaddingBottom());
+            bottom.setPadding(bottom.getPaddingLeft(), bottom.getPaddingTop(), bottom.getPaddingRight(),
+                    bottomBase + Math.max(ime.bottom, bars.bottom));
+            boolean visible = insets.isVisible(androidx.core.view.WindowInsetsCompat.Type.ime());
+            if (visible != keyboardVisible) {
+                keyboardVisible = visible;
+                updateQuickRepliesVisibility();
+                if (visible && rcvMessage != null && mChat != null && !mChat.isEmpty()) {
+                    rcvMessage.post(() -> rcvMessage.scrollToPosition(mChat.size() - 1));
+                }
+            }
+            return insets;
+        });
+        androidx.core.view.ViewCompat.requestApplyInsets(root);
+    }
+
     /**
      * Hiển thị Quick Replies với animation
      */
@@ -531,7 +546,22 @@ public class MessageActivity extends AppCompatActivity {
     }
 
 
+    private String lastReadMyId, lastReadUserId, lastReadImage;
+    private boolean listenersPaused;
+
+    private void removeMessageListeners() {
+        if (messageListeners == null) return;
+        for (ListenerRegistration l : messageListeners) if (l != null) l.remove();
+        messageListeners = null;
+    }
+
     private void readMessage(String myid, String userid, String imageurl) {
+        // Có thể được gọi nhiều lần (mỗi lần dữ liệu người dùng đổi) → gỡ listener cũ để không bị trùng
+        removeMessageListeners();
+        lastReadMyId = myid;
+        lastReadUserId = userid;
+        lastReadImage = imageurl;
+        listenersPaused = false;
         // Clear existing messages
                 mChat.clear();
 
@@ -765,32 +795,27 @@ public class MessageActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         status("online");
+        // Đang mở đúng cuộc trò chuyện này → không báo thông báo cho người đó, và xóa thông báo đang hiện
+        com.UngDung.ThucPhamXanh.Helper.ChatNotifier.setOpenPeer(this, userid);
+        // onPause đã gỡ listener tin nhắn → gắn lại, nếu không tin mới sẽ không hiện khi quay lại màn hình
+        if (listenersPaused && lastReadMyId != null) {
+            readMessage(lastReadMyId, lastReadUserId, lastReadImage);
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         status("offline");
-        // Remove listeners khi activity pause
-        if (messageListeners != null) {
-            for (ListenerRegistration listener : messageListeners) {
-                if (listener != null) {
-                    listener.remove();
-                }
-            }
-        }
+        com.UngDung.ThucPhamXanh.Helper.ChatNotifier.setOpenPeer(this, null);
+        // Gỡ listener khi màn hình bị che (onResume sẽ gắn lại)
+        if (messageListeners != null) listenersPaused = true;
+        removeMessageListeners();
     }
     
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Remove listeners khi activity destroy
-        if (messageListeners != null) {
-            for (ListenerRegistration listener : messageListeners) {
-                if (listener != null) {
-                    listener.remove();
-                }
-            }
-        }
+        removeMessageListeners();
     }
 }

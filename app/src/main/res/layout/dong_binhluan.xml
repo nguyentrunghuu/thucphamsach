@@ -9,7 +9,7 @@
     android:layout_marginBottom="8dp"
     app:cardCornerRadius="20dp"
     app:cardElevation="4dp"
-    app:cardBackgroundColor="#FFFFFF"
+    app:cardBackgroundColor="@color/ui_surface"
     android:id="@+id/relative_item_binhluan">
 
     <LinearLayout
@@ -32,7 +32,7 @@
                 android:layout_height="48dp"
                 android:src="@drawable/ic_user"
                 app:civ_border_width="2dp"
-                app:civ_border_color="#E0E0E0" />
+                app:civ_border_color="@color/ui_stroke" />
 
             <TextView
                 android:id="@+id/tv_binhluan"
@@ -41,7 +41,7 @@
                 android:layout_weight="1"
                 android:layout_marginStart="12dp"
                 android:text="Đồ ăn rất ngon, sẽ quay lại ăn nhiều lần nữa :)))"
-                android:textColor="#212121"
+                android:textColor="@color/ui_text"
                 android:textSize="14sp"
                 android:maxLines="3"
                 android:ellipsize="end"
@@ -78,7 +78,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
                 android:text="•"
-                android:textColor="#9E9E9E"
+                android:textColor="@color/ui_text_hint"
                 android:textSize="14sp" />
 
             <TextView
@@ -86,7 +86,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Nguyễn Văn Chính"
-                android:textColor="#757575"
+                android:textColor="@color/ui_text_secondary"
                 android:textSize="13sp" />
         </LinearLayout>
     </LinearLayout>

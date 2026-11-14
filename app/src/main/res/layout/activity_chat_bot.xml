@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F6F8F5">
+    android:background="@color/ui_bg">
 
     <!-- THANH TIÊU ĐỀ -->
     <com.google.android.material.appbar.AppBarLayout
@@ -42,9 +42,9 @@
                     android:layout_width="46dp"
                     android:layout_height="46dp"
                     android:src="@drawable/logo_new"
-                    app:civ_border_color="#FFFFFF"
+                    app:civ_border_color="@color/ui_surface"
                     app:civ_border_width="2dp"
-                    app:civ_circle_background_color="#FFFFFF" />
+                    app:civ_circle_background_color="@color/ui_surface" />
 
                 <!-- Chấm xanh "đang hoạt động" -->
                 <View
@@ -161,8 +161,8 @@
                 android:minHeight="48dp"
                 android:paddingHorizontal="18dp"
                 android:paddingVertical="12dp"
-                android:textColor="#1A1A1A"
-                android:textColorHint="#9AA39A"
+                android:textColor="@color/ui_text"
+                android:textColorHint="@color/ui_text_hint"
                 android:textSize="15sp" />
 
             <ImageButton

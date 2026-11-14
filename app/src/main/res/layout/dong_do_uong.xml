@@ -8,7 +8,7 @@
     android:id="@+id/layout_product"
     app:cardCornerRadius="20dp"
     app:cardElevation="8dp"
-    app:cardBackgroundColor="#FFFFFF">
+    app:cardBackgroundColor="@color/ui_surface">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -28,7 +28,7 @@
                 android:layout_height="140dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="#F5F5F5">
+                app:cardBackgroundColor="@color/ui_surface_alt">
 
                 <ImageView
                     android:id="@+id/img_product"
@@ -68,7 +68,7 @@
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
             android:text="PC 2021 Asus"
-            android:textColor="#212121"
+            android:textColor="@color/ui_text"
             android:textSize="15sp"
             android:textStyle="bold"
             android:maxLines="2"
@@ -85,10 +85,10 @@
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
             android:text="Rau củ"
-            android:textColor="#757575"
+            android:textColor="@color/ui_text_secondary"
             android:textSize="12sp"
             android:gravity="center"
-            android:background="#F5F5F5"
+            android:background="@color/ui_surface_alt"
             android:padding="4dp"
             android:visibility="gone" />
 

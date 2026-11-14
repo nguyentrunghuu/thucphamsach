@@ -59,7 +59,7 @@ public class CategoryActivity extends AppCompatActivity {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if(queryDocumentSnapshots.size()>0){
                             for(QueryDocumentSnapshot d : queryDocumentSnapshots){
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 // lấy id trên firebase
                                 arr_khac.add(new Product(d.getId(),d.getString("tensp"),
                                         d.getLong("giatien"),d.getString("hinhanh"),
@@ -94,7 +94,7 @@ public class CategoryActivity extends AppCompatActivity {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if(queryDocumentSnapshots.size()>0){
                             for(QueryDocumentSnapshot d : queryDocumentSnapshots){
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 // lấy id trên firebase
                                 arr_micay.add(new Product(d.getId(),d.getString("tensp"),
                                         d.getLong("giatien"),d.getString("hinhanh"),
@@ -129,7 +129,7 @@ public class CategoryActivity extends AppCompatActivity {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if(queryDocumentSnapshots.size()>0){
                             for(QueryDocumentSnapshot d : queryDocumentSnapshots){
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 // lấy id trên firebase
                                 arr_chaosup.add(new Product(d.getId(),d.getString("tensp"),
                                         d.getLong("giatien"),d.getString("hinhanh"),
@@ -163,7 +163,7 @@ public class CategoryActivity extends AppCompatActivity {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if(queryDocumentSnapshots.size()>0){
                             for(QueryDocumentSnapshot d : queryDocumentSnapshots){
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 // lấy id trên firebase
                                 arr_pizza.add(new Product(d.getId(),d.getString("tensp"),
                                         d.getLong("giatien"),d.getString("hinhanh"),
@@ -197,7 +197,7 @@ public class CategoryActivity extends AppCompatActivity {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if(queryDocumentSnapshots.size()>0){
                             for(QueryDocumentSnapshot d : queryDocumentSnapshots){
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 // lấy id trên firebase
                                 arr_sandwich.add(new Product(d.getId(),d.getString("tensp"),
                                         d.getLong("giatien"),d.getString("hinhanh"),
@@ -231,7 +231,7 @@ public class CategoryActivity extends AppCompatActivity {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if(queryDocumentSnapshots.size()>0){
                             for(QueryDocumentSnapshot d : queryDocumentSnapshots){
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 // lấy id trên firebase
                                 arr_douong.add(new Product(d.getId(),d.getString("tensp"),
                                         d.getLong("giatien"),d.getString("hinhanh"),
@@ -265,7 +265,7 @@ public class CategoryActivity extends AppCompatActivity {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if(queryDocumentSnapshots.size()>0){
                             for(QueryDocumentSnapshot d : queryDocumentSnapshots){
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 // lấy id trên firebase
                                 arr_lau.add(new Product(d.getId(),d.getString("tensp"),
                                         d.getLong("giatien"),d.getString("hinhanh"),
@@ -300,7 +300,7 @@ public class CategoryActivity extends AppCompatActivity {
                     public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
                         if(queryDocumentSnapshots.size()>0){
                             for(QueryDocumentSnapshot d : queryDocumentSnapshots){
-                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHidden(d)) continue; // sản phẩm đã bị ẩn
+                                if (com.UngDung.ThucPhamXanh.Helper.ProductVisibility.isHiddenFromShop(d)) continue; // đã xóa mềm hoặc hết hạn
                                 // lấy id trên firebase
                                 arr_doannhanh.add(new Product(d.getId(),d.getString("tensp"),
                                         d.getLong("giatien"),d.getString("hinhanh"),

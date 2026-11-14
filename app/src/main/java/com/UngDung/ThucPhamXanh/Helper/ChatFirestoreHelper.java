@@ -191,52 +191,37 @@ public class ChatFirestoreHelper {
     }
     
     /**
-     * Lấy tin nhắn cuối cùng giữa 2 người
+     * Dòng xem trước tin nhắn cuối giữa hai người (cả hai chiều), vd. "Bạn: xin chào".
+     *
+     * Chỉ dùng điều kiện bằng nhau (sender + receiver) rồi chọn tin mới nhất trong bộ nhớ, nên KHÔNG cần
+     * composite index (sender + receiver + timestamp). Trước đây thiếu index này nên truy vấn lỗi và
+     * mọi cuộc trò chuyện đều hiện "No Message".
      */
-    public void getLastMessage(String userId1, String userId2, 
-                               OnSuccessListener<String> listener) {
-        // Thử lấy từ cả 2 hướng
-        Task<QuerySnapshot> task1 = db.collection(COLLECTION_CHATS)
-                .whereEqualTo("sender", userId1)
-                .whereEqualTo("receiver", userId2)
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(1)
-                .get();
-        
-        Task<QuerySnapshot> task2 = db.collection(COLLECTION_CHATS)
-                .whereEqualTo("sender", userId2)
-                .whereEqualTo("receiver", userId1)
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(1)
-                .get();
-        
-        // Kết hợp kết quả từ cả 2 task
-        com.google.android.gms.tasks.Tasks.whenAllSuccess(task1, task2)
+    public void getLastMessagePreview(String myId, String peerId, OnSuccessListener<String> listener) {
+        Task<QuerySnapshot> mine = db.collection(COLLECTION_CHATS)
+                .whereEqualTo("sender", myId).whereEqualTo("receiver", peerId).get();
+        Task<QuerySnapshot> theirs = db.collection(COLLECTION_CHATS)
+                .whereEqualTo("sender", peerId).whereEqualTo("receiver", myId).get();
+
+        com.google.android.gms.tasks.Tasks.whenAllSuccess(mine, theirs)
                 .addOnSuccessListener(results -> {
-                    String lastMessage = "No Message";
-                    Timestamp lastTime = null;
-                    
+                    java.util.List<ChatPreview.Msg> all = new java.util.ArrayList<>();
                     for (Object result : results) {
-                        if (result instanceof QuerySnapshot) {
-                            QuerySnapshot snapshot = (QuerySnapshot) result;
-                            for (QueryDocumentSnapshot doc : snapshot) {
-                                Timestamp timestamp = doc.getTimestamp("timestamp");
-                                if (lastTime == null || (timestamp != null && timestamp.compareTo(lastTime) > 0)) {
-                                    lastTime = timestamp;
-                                    lastMessage = doc.getString("message");
-                                }
-                            }
+                        if (!(result instanceof QuerySnapshot)) continue;
+                        for (QueryDocumentSnapshot doc : (QuerySnapshot) result) {
+                            Timestamp ts = doc.getTimestamp("timestamp");
+                            all.add(new ChatPreview.Msg(ts == null ? 0 : ts.toDate().getTime(),
+                                    doc.getString("sender"), doc.getString("message")));
                         }
                     }
-                    
-                    listener.onSuccess(lastMessage);
+                    listener.onSuccess(ChatPreview.format(ChatPreview.latest(all), myId));
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error getting last message: " + e.getMessage());
-                    listener.onSuccess("No Message");
+                    listener.onSuccess(ChatPreview.EMPTY);
                 });
     }
-    
+
     /**
      * Đánh dấu tin nhắn đã đọc
      */

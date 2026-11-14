@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bottom sheet thông tin shipper (AdminShipperActivity) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/admin_surface"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/admin_space_xl"
+    android:paddingTop="@dimen/admin_space_l"
+    android:paddingEnd="@dimen/admin_space_xl"
+    android:paddingBottom="@dimen/admin_space_l">
+
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/bg_admin_badge"
+        android:backgroundTint="@color/admin_outline" />
+
+    <TextView
+        android:id="@+id/tv_sheet_shipper_name"
+        style="@style/Admin.Text.Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/admin_space_l"
+        tools:text="Đặng Khoa" />
+
+    <TextView
+        android:id="@+id/tv_sheet_shipper_user"
+        style="@style/Admin.Text.Caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        tools:text="Tên đăng nhập: shipper1" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/admin_space_l"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_admin_icon_box"
+            android:backgroundTint="@color/admin_info_soft"
+            android:orientation="vertical"
+            android:padding="@dimen/admin_space_m">
+
+            <TextView
+                android:id="@+id/tv_sheet_delivering"
+                style="@style/Admin.Text.Section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/admin_info"
+                tools:text="2" />
+
+            <TextView
+                style="@style/Admin.Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Đang giao" />
+        </LinearLayout>
+
+        <Space
+            android:layout_width="@dimen/admin_space_s"
+            android:layout_height="0dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_admin_icon_box"
+            android:orientation="vertical"
+            android:padding="@dimen/admin_space_m">
+
+            <TextView
+                android:id="@+id/tv_sheet_delivered"
+                style="@style/Admin.Text.Section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/admin_accent_text"
+                tools:text="14" />
+
+            <TextView
+                style="@style/Admin.Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Đã giao" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/box_shipper_rows"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/admin_space_m"
+        android:orientation="vertical" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/admin_space_l"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_shipper_delete"
+            style="@style/Admin.Button.Outlined"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/admin_space_xs"
+            android:text="Xóa"
+            android:textColor="@color/admin_danger"
+            app:icon="@drawable/ic_ui_delete"
+            app:iconTint="@color/admin_danger"
+            app:strokeColor="@color/admin_danger" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_shipper_call"
+            style="@style/Admin.Button.Outlined"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/admin_space_xs"
+            android:layout_marginEnd="@dimen/admin_space_xs"
+            android:layout_weight="1"
+            android:text="Gọi"
+            app:icon="@drawable/ic_ui_call"
+            app:iconTint="@color/admin_primary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_shipper_edit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/admin_space_xs"
+            android:layout_weight="1"
+            android:text="Sửa" />
+    </LinearLayout>
+</LinearLayout>

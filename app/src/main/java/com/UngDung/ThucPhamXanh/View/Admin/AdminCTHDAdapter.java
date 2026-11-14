@@ -9,67 +9,61 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.UngDung.ThucPhamXanh.Models.Product;
+import com.UngDung.ThucPhamXanh.Helper.MoneyUtil;
+import com.UngDung.ThucPhamXanh.Helper.OrderMath;
 import com.UngDung.ThucPhamXanh.R;
 import com.squareup.picasso.Picasso;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.List;
 
+/** Các sản phẩm trong chi tiết đơn admin. Giá lấy từ {@link OrderMath.Line} (giá lúc đặt nếu có). */
 public class AdminCTHDAdapter extends RecyclerView.Adapter<AdminCTHDAdapter.ViewHolder> {
-    private ArrayList<Product> list;
 
-    public void setData(ArrayList<Product> list){
-        this.list = list;
+    private final List<OrderMath.Line> lines = new ArrayList<>();
+
+    public void setLines(List<OrderMath.Line> data) {
+        lines.clear();
+        if (data != null) lines.addAll(data);
         notifyDataSetChanged();
     }
 
-    @NotNull
+    @NonNull
     @Override
-    public AdminCTHDAdapter.ViewHolder onCreateViewHolder(@NonNull @NotNull ViewGroup parent, int viewType) {
-        View view;
-        view = LayoutInflater.from(parent.getContext()).inflate(R.layout.dong_chitiet_hoadon,parent,false);
-        return new AdminCTHDAdapter.ViewHolder(view);
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        return new ViewHolder(LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_admin_order_line, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(@NonNull @NotNull AdminCTHDAdapter.ViewHolder holder, int position) {
-        Product product = list.get(position);
-        holder.tvTenCTHD.setText(product.getTensp());
-        holder.tvHansudungCTHD.setText(product.getHansudung());
-        holder.tvSoluongCTHD.setText(product.getSoluong()+"");
-        holder.tvDongiaCTHD.setText(NumberFormat.getInstance().format(product.getGiatien()));
-        holder.tvTotalCTHD.setText(NumberFormat.getInstance().format(product.getGiatien() * product.getSoluong()));
-        
-        // Kiểm tra hình ảnh trước khi load
-        if (product.getHinhanh() != null && !product.getHinhanh().isEmpty()) {
-            Picasso.get().load(product.getHinhanh()).into(holder.imgCTHD);
+    public void onBindViewHolder(@NonNull ViewHolder h, int position) {
+        OrderMath.Line l = lines.get(position);
+        h.name.setText(l.name);
+        h.qty.setText(l.quantity + " × " + MoneyUtil.formatVnd(l.unitPrice) + (l.priceIsCurrent ? " *" : ""));
+        h.total.setText(MoneyUtil.formatVnd(l.lineTotal()));
+        if (l.image == null || l.image.trim().isEmpty()) {
+            Picasso.get().cancelRequest(h.image);
+            h.image.setImageDrawable(null);
         } else {
-            holder.imgCTHD.setImageResource(R.drawable.logo_new);
+            Picasso.get().load(l.image).fit().centerCrop().into(h.image);
         }
     }
 
     @Override
     public int getItemCount() {
-        return list.size();
+        return lines.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder{
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        final ImageView image;
+        final TextView name, qty, total;
 
-        private TextView tvTenCTHD, tvHansudungCTHD, tvSoluongCTHD, tvDongiaCTHD, tvTotalCTHD;
-        private ImageView imgCTHD;
-        public ViewHolder(@NonNull @NotNull View itemView) {
-            super(itemView);
-
-            tvTenCTHD = itemView.findViewById(R.id.tv_ten_cthd);
-            tvHansudungCTHD = itemView.findViewById(R.id.tv_hansudung_cthd);
-            tvSoluongCTHD = itemView.findViewById(R.id.tv_number_cthd);
-            tvDongiaCTHD = itemView.findViewById(R.id.tv_giatien_cthd);
-            tvTotalCTHD = itemView.findViewById(R.id.tv_total_cthd);
-            imgCTHD = itemView.findViewById(R.id.img_cthd);
+        ViewHolder(@NonNull View v) {
+            super(v);
+            image = v.findViewById(R.id.img_order_line);
+            name = v.findViewById(R.id.tv_order_line_name);
+            qty = v.findViewById(R.id.tv_order_line_qty);
+            total = v.findViewById(R.id.tv_order_line_total);
         }
     }
-
 }

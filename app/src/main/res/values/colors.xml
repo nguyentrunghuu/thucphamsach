@@ -59,4 +59,23 @@
     <color name="success_green">#388E3C</color>
     <color name="warning_orange">#F57C00</color>
 
+    <!-- ===== Trang ADMIN: xanh lá tự nhiên + trắng + be/nâu đất (dùng qua Theme.ThucPhamXanh.Admin) ===== -->
+    <color name="admin_primary">#2E7D32</color>        <!-- toolbar, nút chính -->
+    <color name="admin_primary_dark">#1B5E20</color>   <!-- status bar, chữ nhấn -->
+    <color name="admin_primary_soft">#E8F5E9</color>   <!-- nền icon, chip đang chọn -->
+    <color name="admin_secondary">#8D6E63</color>      <!-- nâu đất: điểm nhấn phụ -->
+    <color name="admin_secondary_soft">#EFE7DF</color>
+    <color name="admin_beige">#F5F0E6</color>          <!-- nền màn hình -->
+    <color name="admin_surface">#FFFFFF</color>        <!-- nền card -->
+    <color name="admin_outline">#E0DCD3</color>        <!-- viền card / ô nhập -->
+    <color name="admin_text">#1F2A1F</color>
+    <color name="admin_text_muted">#6B7468</color>
+    <color name="admin_warning">#E69A28</color>        <!-- sắp hết hàng / sắp hết hạn -->
+    <color name="admin_warning_soft">#FFF4E0</color>
+    <color name="admin_warning_text">#8A5300</color>   <!-- chữ trên nền warning_soft (đủ tương phản) -->
+    <color name="admin_danger">#C62828</color>         <!-- hủy, xóa, hết hàng -->
+    <color name="admin_danger_soft">#FDECEA</color>
+    <color name="admin_info">#3E7CB1</color>           <!-- đang giao -->
+    <color name="admin_info_soft">#E6F0F8</color>
+
 </resources>

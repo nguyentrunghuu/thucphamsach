@@ -1,410 +1,611 @@
 package com.UngDung.ThucPhamXanh.View;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.app.Dialog;
-import android.content.Intent;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.InsetDrawable;
 import android.os.Bundle;
-import android.os.Looper;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.RadioButton;
+import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.UngDung.ThucPhamXanh.Adapter.HoaDonDaGiaoAdapter;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.UngDung.ThucPhamXanh.Helper.AdminOrder;
+import com.UngDung.ThucPhamXanh.Helper.CustomerOrders;
+import com.UngDung.ThucPhamXanh.Helper.FirestoreMapper;
+import com.UngDung.ThucPhamXanh.Helper.MoneyUtil;
+import com.UngDung.ThucPhamXanh.Helper.OrderLineMapper;
+import com.UngDung.ThucPhamXanh.Helper.OrderMath;
 import com.UngDung.ThucPhamXanh.Models.HoaDon;
 import com.UngDung.ThucPhamXanh.Models.OrderStatus;
-import com.UngDung.ThucPhamXanh.Models.Product;
-import com.UngDung.ThucPhamXanh.Presenter.GioHangPresenter;
-import com.UngDung.ThucPhamXanh.Presenter.HoaDonPreSenter;
 import com.UngDung.ThucPhamXanh.R;
-import com.UngDung.ThucPhamXanh.my_interface.GioHangView;
-import com.UngDung.ThucPhamXanh.my_interface.HoaDonView;
-import com.UngDung.ThucPhamXanh.my_interface.IClickCTHD;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class CTHDActivity extends AppCompatActivity implements GioHangView, HoaDonView {
+/**
+ * Chi tiết đơn hàng của khách. Cập nhật trực tiếp: tiến trình đơn, shipper, lý do hủy tự đổi khi
+ * cửa hàng / shipper xử lý. Có hủy đơn (chọn lý do), mua lại, đánh giá từng sản phẩm của đơn đã giao.
+ *
+ * Mở bằng {@link #EXTRA_ORDER_ID} (id document HoaDon).
+ */
+public class CTHDActivity extends AppCompatActivity {
 
-    private ImageView imgBackCTHD;
-    private TextView tvMaCTHD, tvNgaydatCTHD, tvHotenCTHD, tvDiachiCTHD, tvSdtCTHD, tvTongtienCTHD, tvTrangthaiCTHD;
-    private RecyclerView rcvCTHD;
-    private Button btnCapnhat;
-    private HoaDon hoaDon;
-    private ArrayList<Product> mlist;
-    private HoaDonDaGiaoAdapter hoaDonDaGiaoAdapter;
-    private GioHangPresenter gioHangPresenter;
-    private HoaDonPreSenter hoaDonPreSenter;
-    boolean cm;
+    public static final String EXTRA_ORDER_ID = "order_id";
+    private static final String TAG = "CTHDActivity";
 
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+    private TextView tvStatusBig, tvStatusMessage, tvCode, tvItemsTitle, tvItemsEmpty, tvTotal, tvPaymentNote;
+    private TextView tvCancelTitle, tvCancelDetail;
+    private View header, cardProgress, cardCancelled, progressItems, barActions;
+    private LinearLayout stepper, boxDelivery, boxItems, boxPayment;
+    private MaterialButton btnCancel, btnReorder;
 
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private String orderId;
+    private AdminOrder order;
+    private List<OrderMath.Line> lines = new ArrayList<>();
+    private boolean linesRequested = false;
+    private boolean linesLoaded = false;
+    private ListenerRegistration orderReg;
+
+    private final Set<String> reviewed = new HashSet<>();
+    private final Set<String> reviewChecked = new HashSet<>();
+    private final Map<String, MaterialButton> reviewButtons = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cthdactivity);
 
-        InitWidget();
-        Init();
+        orderId = getIntent().getStringExtra(EXTRA_ORDER_ID);
+        if (orderId == null) { // tương thích Intent cũ (extra "HD" là Models/HoaDon)
+            Object hd = getIntent().getSerializableExtra("HD");
+            if (hd instanceof HoaDon) orderId = ((HoaDon) hd).getId();
+        }
+        if (orderId == null || orderId.isEmpty()) {
+            Toast.makeText(this, "Không tìm thấy đơn hàng", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
-        imgBackCTHD.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+        bindViews();
+        applyInsets();
+
+        findViewById(R.id.img_back_cthd).setOnClickListener(v -> finish());
+        findViewById(R.id.row_code).setOnClickListener(v -> copyCode());
+        btnCancel.setOnClickListener(v -> {
+            if (order != null) OrderUi.confirmCancel(this, order.id, null); // trang tự cập nhật (live)
+        });
+        btnReorder.setOnClickListener(v -> {
+            if (!linesLoaded || lines.isEmpty()) {
+                Toast.makeText(this, "Đang tải sản phẩm, vui lòng thử lại sau giây lát", Toast.LENGTH_SHORT).show();
+            } else {
+                OrderUi.reorder(this, lines);
+            }
+        });
+    }
+
+    private void bindViews() {
+        tvStatusBig = findViewById(R.id.tv_status_big);
+        tvStatusMessage = findViewById(R.id.tv_status_message);
+        tvCode = findViewById(R.id.tv_ma_cthd);
+        tvItemsTitle = findViewById(R.id.tv_items_title);
+        tvItemsEmpty = findViewById(R.id.tv_items_empty);
+        tvTotal = findViewById(R.id.tv_total_cthd);
+        tvPaymentNote = findViewById(R.id.tv_payment_note);
+        tvCancelTitle = findViewById(R.id.tv_cancel_title);
+        tvCancelDetail = findViewById(R.id.tv_cancel_detail);
+        header = findViewById(R.id.header_cthd);
+        cardProgress = findViewById(R.id.card_progress);
+        cardCancelled = findViewById(R.id.card_cancelled);
+        progressItems = findViewById(R.id.progress_items);
+        barActions = findViewById(R.id.bar_actions);
+        stepper = findViewById(R.id.stepper);
+        boxDelivery = findViewById(R.id.box_delivery_rows);
+        boxItems = findViewById(R.id.box_items);
+        boxPayment = findViewById(R.id.box_payment_rows);
+        btnCancel = findViewById(R.id.btn_capnhat_cthd);
+        btnReorder = findViewById(R.id.btn_reorder_cthd);
+    }
+
+    /** targetSdk 35: màn hình tràn viền → chừa chỗ cho thanh điều hướng ở thanh nút phía dưới. */
+    private void applyInsets() {
+        final int pad = dp(14);
+        ViewCompat.setOnApplyWindowInsetsListener(barActions, (v, insets) -> {
+            int nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            v.setPadding(pad, pad, pad, pad + nav);
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(barActions);
+    }
+
+    // ---------------------------------------------------------------- dữ liệu
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        orderReg = db.collection("HoaDon").document(orderId).addSnapshotListener((doc, e) -> {
+            if (isFinishing()) return;
+            if (e != null) {
+                Log.e(TAG, "Không đọc được đơn " + orderId, e);
+                Toast.makeText(this, "Không tải được đơn hàng, vui lòng kiểm tra mạng", Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (doc == null || !doc.exists()) {
+                Toast.makeText(this, "Không tìm thấy đơn hàng", Toast.LENGTH_SHORT).show();
                 finish();
+                return;
             }
+            order = FirestoreMapper.toAdminOrder(doc);
+            bindOrder();
+            if (!linesRequested) loadLines();
         });
-
-        btnCapnhat.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Kiểm tra trạng thái trước khi hủy
-                if (OrderStatus.customerCanCancel(hoaDon.getType())) {
-                    Log.d("CTHDActivity", "🔄 User hủy đơn hàng - Trạng thái hiện tại: " + hoaDon.getType());
-                    hoaDonPreSenter.CapNhatTrangThai(OrderStatus.DA_HUY, hoaDon.getId());
-                    mlist.clear();
-                    hoaDonDaGiaoAdapter.notifyDataSetChanged();
-                    Toast.makeText(CTHDActivity.this, "Đã hủy đơn hàng", Toast.LENGTH_SHORT).show();
-                    Log.d("CTHDActivity", "✅ Đã hủy đơn hàng thành công");
-                    finish();
-                } else {
-                    Log.w("CTHDActivity", "⚠️ Không thể hủy đơn hàng - Trạng thái: " + hoaDon.getType());
-                    Toast.makeText(CTHDActivity.this, "Không thể hủy đơn hàng ở trạng thái này", Toast.LENGTH_SHORT)
-                            .show();
-                }
-            }
-        });
-    }
-
-    private void Init() {
-        Log.d("CTHDActivity", "🚀 Init: Khởi tạo CTHDActivity");
-        mlist = new ArrayList<>();
-        Intent intent = getIntent();
-        hoaDon = (HoaDon) intent.getSerializableExtra("HD");
-        cm = intent.getBooleanExtra("CM", false);
-
-        Log.d("CTHDActivity", "📋 Thông tin hóa đơn:");
-        Log.d("CTHDActivity", "📋 ID: " + hoaDon.getId());
-        Log.d("CTHDActivity", "📋 UID: " + hoaDon.getUid());
-        Log.d("CTHDActivity", "📋 CM: " + cm);
-
-        tvMaCTHD.setText(hoaDon.getId());
-        tvNgaydatCTHD.setText(hoaDon.getNgaydat());
-        tvHotenCTHD.setText(hoaDon.getHoten());
-        tvDiachiCTHD.setText(hoaDon.getDiachi());
-        tvSdtCTHD.setText(hoaDon.getSdt());
-        tvTongtienCTHD.setText(hoaDon.getTongtien());
-        // Trạng thái theo quy ước chung (Models/OrderStatus)
-        long status = hoaDon.getType();
-        tvTrangthaiCTHD.setText(OrderStatus.label(status));
-        if (OrderStatus.customerCanCancel(status)) {
-            btnCapnhat.setVisibility(View.VISIBLE);
-            btnCapnhat.setText("Hủy đơn hàng");
-        } else {
-            btnCapnhat.setVisibility(View.GONE);
-        }
-        applyStatusStyle(status);
-        // Ẩn/hiện cả thanh chứa nút hủy theo nút
-        if (btnCapnhat.getParent() instanceof View) {
-            ((View) btnCapnhat.getParent()).setVisibility(btnCapnhat.getVisibility());
-        }
-        hoaDonPreSenter = new HoaDonPreSenter(this);
-        gioHangPresenter = new GioHangPresenter(this);
-
-        // Khởi tạo adapter và RecyclerView ngay từ đầu
-        rcvCTHD.setLayoutManager(new LinearLayoutManager(this));
-        rcvCTHD.setAdapter(hoaDonDaGiaoAdapter);
-        
-        // Set adapter với danh sách rỗng ban đầu
-        if (cm) {
-            hoaDonDaGiaoAdapter.setDataHoaDonDaGiao(this, mlist, 1, new IClickCTHD() {
-                @Override
-                public void onClickCTHD(int pos) {
-                    if (cm) {
-                        ShowDialog(pos);
-                    }
-                }
-            });
-        } else {
-            hoaDonDaGiaoAdapter.setDataHoaDonDaGiao(this, mlist, 0, new IClickCTHD() {
-                @Override
-                public void onClickCTHD(int pos) {
-                }
-            });
-        }
-
-        Log.d("CTHDActivity", "═══════════════════════════════════════");
-        Log.d("CTHDActivity", "📦 Bắt đầu load dữ liệu chi tiết hóa đơn...");
-        Log.d("CTHDActivity", "📦 ID hóa đơn: " + hoaDon.getId());
-        Log.d("CTHDActivity", "📦 UID: " + hoaDon.getUid());
-        Log.d("CTHDActivity", "📦 GioHangPresenter: " + (gioHangPresenter != null ? "NOT NULL" : "NULL"));
-        Log.d("CTHDActivity", "═══════════════════════════════════════");
-        
-        if (hoaDon.getUid() == null || hoaDon.getUid().isEmpty()) {
-            Log.e("CTHDActivity", "❌ UID là null hoặc rỗng, không thể load dữ liệu");
-            Toast.makeText(this, "Lỗi: Không tìm thấy thông tin người dùng", Toast.LENGTH_SHORT).show();
-        } else if (gioHangPresenter == null) {
-            Log.e("CTHDActivity", "❌ GioHangPresenter là NULL!");
-            Toast.makeText(this, "Lỗi: Không thể khởi tạo presenter", Toast.LENGTH_SHORT).show();
-        } else {
-            Log.d("CTHDActivity", "📦 Gọi gioHangPresenter.HandlegetDataCTHD...");
-            gioHangPresenter.HandlegetDataCTHD(hoaDon.getId(), hoaDon.getUid());
-            Log.d("CTHDActivity", "📦 Đã gọi gioHangPresenter.HandlegetDataCTHD");
-            
-            // Debug: Query trực tiếp để kiểm tra
-            debugQueryFirestore(hoaDon.getId(), hoaDon.getUid());
-        }
-
-    }
-    
-    private void debugQueryFirestore(String hoaDonId, String uid) {
-        Log.d("CTHDActivity", "═══════════════════════════════════════");
-        Log.d("CTHDActivity", "🔍 DEBUG: Query Firestore trực tiếp");
-        Log.d("CTHDActivity", "🔍 Path: ChitietHoaDon/" + uid + "/ALL");
-        Log.d("CTHDActivity", "🔍 Query: where id_hoadon = " + hoaDonId);
-        Log.d("CTHDActivity", "═══════════════════════════════════════");
-        
-        db.collection("ChitietHoaDon").document(uid)
-                .collection("ALL").whereEqualTo("id_hoadon", hoaDonId).get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Log.d("CTHDActivity", "🔍 Query thành công! Tìm thấy: " + queryDocumentSnapshots.size() + " chi tiết");
-                    
-                    if (queryDocumentSnapshots.isEmpty()) {
-                        Log.w("CTHDActivity", "⚠️ Không tìm thấy chi tiết hóa đơn nào!");
-                        Log.w("CTHDActivity", "⚠️ Có thể dữ liệu chưa được lưu hoặc đường dẫn sai");
-                        runOnUiThread(() -> {
-                            Toast.makeText(this, "Không tìm thấy sản phẩm trong hóa đơn này", Toast.LENGTH_LONG).show();
-                        });
-                    } else {
-                        Log.d("CTHDActivity", "🔍 Danh sách chi tiết hóa đơn:");
-                        for (com.google.firebase.firestore.QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                            Log.d("CTHDActivity", "  - ID: " + doc.getId() + ", id_product: " + doc.getString("id_product") + ", soluong: " + doc.getLong("soluong"));
-                        }
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("CTHDActivity", "❌ Lỗi query Firestore: " + e.getMessage());
-                    e.printStackTrace();
-                    runOnUiThread(() -> {
-                        Toast.makeText(this, "Lỗi khi tải dữ liệu: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    });
-                });
-    }
-
-    /** Tô màu nhãn trạng thái theo quy ước chung (Models/OrderStatus). */
-    private void applyStatusStyle(long status) {
-        tvTrangthaiCTHD.setTextColor(OrderStatus.textColor(status));
-        android.graphics.drawable.GradientDrawable pill = new android.graphics.drawable.GradientDrawable();
-        pill.setColor(OrderStatus.backgroundColor(status));
-        pill.setCornerRadius(100 * getResources().getDisplayMetrics().density);
-        tvTrangthaiCTHD.setBackground(pill);
-    }
-
-    private void InitWidget() {
-        imgBackCTHD = findViewById(R.id.img_back_cthd);
-        tvMaCTHD = findViewById(R.id.tv_ma_cthd);
-        tvNgaydatCTHD = findViewById(R.id.tv_ngaydat_cthd);
-        tvHotenCTHD = findViewById(R.id.tv_hoten_cthd);
-        tvDiachiCTHD = findViewById(R.id.tv_diachi_cthd);
-        tvSdtCTHD = findViewById(R.id.tv_sdt_cthd);
-        tvTongtienCTHD = findViewById(R.id.tv_tongtien_cthd);
-        tvTrangthaiCTHD = findViewById(R.id.tv_trangthai_cthd);
-        rcvCTHD = findViewById(R.id.rcv_cthd);
-        btnCapnhat = findViewById(R.id.btn_capnhat_cthd);
-        hoaDonDaGiaoAdapter = new HoaDonDaGiaoAdapter();
     }
 
     @Override
-    public void getDataSanPham(String id, String idsp, String tensp, Long giatien, String hinhanh, String loaisp,
-            String mota, Long soluong, String hansudung, Long type, String trongluong) {
-        Log.d("CTHDActivity", "═══════════════════════════════════════");
-        Log.d("CTHDActivity", "📦 getDataSanPham: CALLBACK ĐƯỢC GỌI!");
-        Log.d("CTHDActivity", "📦 Thêm sản phẩm vào danh sách");
-        Log.d("CTHDActivity", "📦 ID: " + id);
-        Log.d("CTHDActivity", "📦 IDSP: " + idsp);
-        Log.d("CTHDActivity", "📦 Tên SP: " + tensp);
-        Log.d("CTHDActivity", "📦 Số lượng: " + soluong);
-        Log.d("CTHDActivity", "📦 Giá: " + giatien);
-        Log.d("CTHDActivity", "═══════════════════════════════════════");
-
-        // Kiểm tra null để tránh crash
-        if (tensp == null || idsp == null) {
-            Log.e("CTHDActivity", "❌ Dữ liệu sản phẩm không hợp lệ");
-            return;
-        }
-
-        mlist.add(new Product(id, idsp, tensp, giatien, hinhanh, loaisp, mota, soluong, hansudung, type, trongluong));
-        Log.d("CTHDActivity", "📦 Danh sách hiện có " + mlist.size() + " sản phẩm");
-
-        // Update adapter mỗi khi có sản phẩm mới - đảm bảo chạy trên UI thread
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            // Đã ở UI thread
-            updateAdapter();
-        } else {
-            // Chưa ở UI thread, chuyển sang UI thread
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    updateAdapter();
-                }
-            });
+    protected void onStop() {
+        super.onStop();
+        if (orderReg != null) {
+            orderReg.remove();
+            orderReg = null;
         }
     }
-    
-    private void updateAdapter() {
-        Log.d("CTHDActivity", "📦 updateAdapter: Danh sách có " + mlist.size() + " sản phẩm");
-        Log.d("CTHDActivity", "📦 cm: " + cm);
-        
-        if (hoaDonDaGiaoAdapter == null) {
-            Log.e("CTHDActivity", "❌ Adapter là NULL!");
+
+    /** Chi tiết đơn nằm ở ChitietHoaDon/{uid}/ALL (uid của chủ đơn). */
+    private void loadLines() {
+        String uid = order.uid;
+        if (uid == null || uid.isEmpty()) {
+            FirebaseAuth auth = FirebaseAuth.getInstance();
+            uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "";
+        }
+        if (uid.isEmpty()) {
+            showItemsFailed();
             return;
         }
-        
-        if (rcvCTHD == null) {
-            Log.e("CTHDActivity", "❌ RecyclerView là NULL!");
-            return;
-        }
-        
-        int typeValue = cm ? 1 : 0;
-        Log.d("CTHDActivity", "📦 Update adapter với type=" + typeValue);
-        
-        hoaDonDaGiaoAdapter.setDataHoaDonDaGiao(this, mlist, typeValue, new IClickCTHD() {
-            @Override
-            public void onClickCTHD(int pos) {
-                if (cm && pos >= 0 && pos < mlist.size()) {
-                    ShowDialog(pos);
-                }
+        linesRequested = true;
+        db.collection("ChitietHoaDon").document(uid).collection("ALL")
+                .whereEqualTo("id_hoadon", orderId).get()
+                .addOnSuccessListener(snap -> {
+                    if (isFinishing()) return;
+                    List<DocumentSnapshot> docs = new ArrayList<>();
+                    Set<String> pids = new LinkedHashSet<>();
+                    for (QueryDocumentSnapshot d : snap) {
+                        docs.add(d);
+                        String pid = FirestoreMapper.str(d, "id_product");
+                        if (!pid.isEmpty()) pids.add(pid);
+                    }
+                    loadProductsThenBind(docs, new ArrayList<>(pids));
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Không đọc được chi tiết đơn", e);
+                    linesRequested = false;
+                    showItemsFailed();
+                });
+    }
+
+    private void loadProductsThenBind(List<DocumentSnapshot> lineDocs, List<String> pids) {
+        List<Task<DocumentSnapshot>> tasks = new ArrayList<>();
+        for (String pid : pids) tasks.add(db.collection("SanPham").document(pid).get());
+        Tasks.whenAllComplete(tasks).addOnCompleteListener(t -> {
+            if (isFinishing()) return;
+            Map<String, DocumentSnapshot> products = new HashMap<>();
+            for (int i = 0; i < pids.size(); i++) {
+                Task<DocumentSnapshot> task = tasks.get(i);
+                if (task.isSuccessful() && task.getResult() != null) products.put(pids.get(i), task.getResult());
             }
+            List<OrderMath.Line> built = new ArrayList<>();
+            for (DocumentSnapshot d : lineDocs) {
+                built.add(OrderLineMapper.toLine(d, products.get(FirestoreMapper.str(d, "id_product"))));
+            }
+            lines = built;
+            linesLoaded = true;
+            progressItems.setVisibility(View.GONE);
+            bindItems();
+            bindPayment();
         });
-        
-        // Đảm bảo RecyclerView có adapter
-        if (rcvCTHD.getAdapter() == null) {
-            Log.d("CTHDActivity", "📦 Set adapter cho RecyclerView");
-            rcvCTHD.setAdapter(hoaDonDaGiaoAdapter);
-        }
-        
-        // Force refresh
-        hoaDonDaGiaoAdapter.notifyDataSetChanged();
-        Log.d("CTHDActivity", "✅ Adapter đã được update với " + mlist.size() + " sản phẩm");
-
     }
 
-    private void ShowDialog(int pos) {
-        Product product = mlist.get(pos);
-        Dialog dialog = new Dialog(CTHDActivity.this);
+    private void showItemsFailed() {
+        progressItems.setVisibility(View.GONE);
+        tvItemsEmpty.setVisibility(View.VISIBLE);
+    }
+
+    // ---------------------------------------------------------------- hiển thị đơn
+
+    private void bindOrder() {
+        AdminOrder o = order;
+        boolean cancelled = o.status == OrderStatus.DA_HUY;
+
+        tvStatusBig.setText(OrderStatus.label(o.status));
+        tvStatusMessage.setText(CustomerOrders.statusMessage(o));
+        tvCode.setText("Mã đơn: " + o.displayCode());
+        tintHeader(cancelled);
+
+        cardProgress.setVisibility(cancelled ? View.GONE : View.VISIBLE);
+        cardCancelled.setVisibility(cancelled ? View.VISIBLE : View.GONE);
+        if (cancelled) {
+            boolean byAdmin = "admin".equals(o.cancelledBy);
+            tvCancelTitle.setText(byAdmin ? "Cửa hàng đã hủy đơn này" : "Bạn đã hủy đơn này");
+            tvCancelDetail.setText(o.cancelReason.trim().isEmpty()
+                    ? "Sản phẩm trong đơn đã được hoàn lại kho."
+                    : "Lý do: " + o.cancelReason.trim());
+        } else {
+            bindStepper(o.status);
+        }
+
+        bindDelivery();
+        bindPayment();
+        bindActions();
+        refreshReviewButtons();
+    }
+
+    /** Đơn hủy → đầu trang đỏ; còn lại xanh lá. */
+    private void tintHeader(boolean cancelled) {
+        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                cancelled ? new int[]{0xFF8E1B1B, 0xFFD32F2F} : new int[]{0xFF1B5E20, 0xFF43A047});
+        float r = dp(28);
+        g.setCornerRadii(new float[]{0, 0, 0, 0, r, r, r, r});
+        header.setBackground(g);
+    }
+
+    private void bindStepper(long status) {
+        stepper.removeAllViews();
+        int[] states = CustomerOrders.stageStates(status);
+        for (int i = 0; i < states.length; i++) {
+            stepper.addView(buildStep(i, states));
+        }
+    }
+
+    private View buildStep(int i, int[] states) {
+        int green = 0xFF2E7D32, grey = c(R.color.ui_stroke);
+        int greenText = c(R.color.ui_green_text);
+        int state = states[i];
+
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setGravity(Gravity.CENTER_HORIZONTAL);
+        col.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        col.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(30)));
+
+        View left = new View(this);
+        left.setLayoutParams(new LinearLayout.LayoutParams(0, dp(3), 1f));
+        left.setBackgroundColor(i == 0 ? Color.TRANSPARENT : (state != CustomerOrders.STAGE_TODO ? green : grey));
+        row.addView(left);
+
+        TextView dot = new TextView(this);
+        LinearLayout.LayoutParams dotLp = new LinearLayout.LayoutParams(dp(30), dp(30));
+        dot.setLayoutParams(dotLp);
+        dot.setGravity(Gravity.CENTER);
+        dot.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        dot.setTypeface(dot.getTypeface(), android.graphics.Typeface.BOLD);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setShape(GradientDrawable.OVAL);
+        if (state == CustomerOrders.STAGE_DONE) {
+            bg.setColor(green);
+            dot.setText("✓");
+            dot.setTextColor(Color.WHITE);
+        } else if (state == CustomerOrders.STAGE_CURRENT) {
+            bg.setColor(c(R.color.ui_surface));
+            bg.setStroke(dp(3), greenText);
+            dot.setText(String.valueOf(i + 1));
+            dot.setTextColor(greenText);
+        } else {
+            bg.setColor(c(R.color.ui_surface_alt));
+            bg.setStroke(dp(2), grey);
+            dot.setText(String.valueOf(i + 1));
+            dot.setTextColor(c(R.color.ui_text_hint));
+        }
+        dot.setBackground(bg);
+        row.addView(dot);
+
+        View right = new View(this);
+        right.setLayoutParams(new LinearLayout.LayoutParams(0, dp(3), 1f));
+        right.setBackgroundColor(i == states.length - 1 ? Color.TRANSPARENT
+                : (state == CustomerOrders.STAGE_DONE ? green : grey));
+        row.addView(right);
+
+        TextView label = new TextView(this);
+        label.setText(CustomerOrders.STAGE_LABELS[i]);
+        label.setGravity(Gravity.CENTER);
+        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        label.setPadding(0, dp(8), 0, 0);
+        boolean active = state != CustomerOrders.STAGE_TODO;
+        label.setTextColor(active ? c(R.color.ui_text) : c(R.color.ui_text_hint));
+        if (state == CustomerOrders.STAGE_CURRENT) label.setTypeface(label.getTypeface(), android.graphics.Typeface.BOLD);
+        col.addView(label);
+        return col;
+    }
+
+    private void bindDelivery() {
+        AdminOrder o = order;
+        boxDelivery.removeAllViews();
+        String who = o.name.trim();
+        if (!o.phone.trim().isEmpty()) who = who.isEmpty() ? o.phone.trim() : who + " · " + o.phone.trim();
+        addInfoRow(R.drawable.ic_admin_users, "Người nhận", who);
+        addInfoRow(R.drawable.ic_admin_calendar, "Ngày đặt hàng", o.date);
+        addInfoRow(R.drawable.ic_ui_location, "Địa chỉ nhận hàng", o.address);
+        addInfoRow(R.drawable.ic_admin_calendar, "Thời gian giao dự kiến", CustomerOrders.deliverySchedule(o));
+        if (o.status == OrderStatus.DANG_GIAO || o.status == OrderStatus.DA_GIAO) {
+            addInfoRow(R.drawable.ic_ui_truck, "Shipper", o.shipperName);
+        }
+        addInfoRow(R.drawable.ic_admin_order, "Ghi chú", o.note);
+    }
+
+    private void addInfoRow(int icon, String label, String value) {
+        if (value == null || value.trim().isEmpty()) return;
+        View row = LayoutInflater.from(this).inflate(R.layout.item_order_info_row, boxDelivery, false);
+        ((ImageView) row.findViewById(R.id.img_info_icon)).setImageResource(icon);
+        ((TextView) row.findViewById(R.id.tv_info_label)).setText(label);
+        ((TextView) row.findViewById(R.id.tv_info_value)).setText(value.trim());
+        boxDelivery.addView(row);
+    }
+
+    // ---------------------------------------------------------------- sản phẩm & thanh toán
+
+    private void bindItems() {
+        boxItems.removeAllViews();
+        reviewButtons.clear();
+        tvItemsEmpty.setVisibility(lines.isEmpty() ? View.VISIBLE : View.GONE);
+        long qty = OrderMath.totalQuantity(lines);
+        tvItemsTitle.setText(lines.isEmpty() ? "Sản phẩm" : "Sản phẩm (" + qty + ")");
+
+        for (int i = 0; i < lines.size(); i++) {
+            OrderMath.Line l = lines.get(i);
+            View row = LayoutInflater.from(this).inflate(R.layout.item_order_line, boxItems, false);
+            ((TextView) row.findViewById(R.id.tv_line_name)).setText(l.name);
+            ((TextView) row.findViewById(R.id.tv_line_unit)).setText(
+                    MoneyUtil.formatVnd(l.unitPrice) + " × " + l.quantity + (l.priceIsCurrent ? " *" : ""));
+            ((TextView) row.findViewById(R.id.tv_line_total)).setText(MoneyUtil.formatVnd(l.lineTotal()));
+            ImageView img = row.findViewById(R.id.img_line);
+            if (l.image != null && !l.image.trim().isEmpty()) Picasso.get().load(l.image.trim()).into(img);
+
+            MaterialButton btn = row.findViewById(R.id.btn_line_review);
+            if (!l.productId.isEmpty()) {
+                reviewButtons.put(l.productId, btn);
+                btn.setOnClickListener(v -> showReviewDialog(l));
+            }
+            if (i == lines.size() - 1) {
+                // dòng cuối không cần khoảng đệm dưới
+                row.setPadding(row.getPaddingLeft(), row.getPaddingTop(), row.getPaddingRight(), 0);
+            }
+            boxItems.addView(row);
+            if (i < lines.size() - 1) boxItems.addView(divider());
+        }
+        refreshReviewButtons();
+    }
+
+    private View divider() {
+        View v = new View(this);
+        v.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+        v.setBackgroundColor(c(R.color.ui_divider));
+        return v;
+    }
+
+    private void bindPayment() {
+        if (order == null) return;
+        AdminOrder o = order;
+        boxPayment.removeAllViews();
+        addPayRow("Phương thức", o.payment.trim().isEmpty() ? "Thanh toán khi nhận hàng" : o.payment.trim(), c(R.color.ui_text));
+
+        boolean anyCurrentPrice = false;
+        for (OrderMath.Line l : lines) if (l.priceIsCurrent) anyCurrentPrice = true;
+        if (linesLoaded && !lines.isEmpty()) {
+            long sub = OrderMath.subtotal(lines);
+            addPayRow("Tạm tính", MoneyUtil.formatVnd(sub) + (anyCurrentPrice ? " *" : ""), c(R.color.ui_text));
+            addPayRow("Phí vận chuyển", o.shippingFee > 0 ? MoneyUtil.formatVnd(o.shippingFee) : "Miễn phí",
+                    o.shippingFee > 0 ? c(R.color.ui_text) : c(R.color.ui_green_text));
+            long discount = OrderMath.discount(sub, o.shippingFee, o.total);
+            if (discount > 0 && !anyCurrentPrice) {
+                addPayRow("Khuyến mãi", "-" + MoneyUtil.formatVnd(discount), c(R.color.ui_green_text));
+            }
+        }
+        tvTotal.setText(MoneyUtil.formatVnd(o.total));
+        tvPaymentNote.setVisibility(anyCurrentPrice ? View.VISIBLE : View.GONE);
+        tvPaymentNote.setText("* Đơn cũ chưa lưu giá lúc đặt nên hiển thị theo giá hiện tại.");
+    }
+
+    private void addPayRow(String label, String value, int valueColor) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(0, dp(5), 0, dp(5));
+
+        TextView l = new TextView(this);
+        l.setText(label);
+        l.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        l.setTextColor(c(R.color.ui_text_secondary));
+        row.addView(l, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        TextView v = new TextView(this);
+        v.setText(value);
+        v.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        v.setTextColor(valueColor);
+        v.setGravity(Gravity.END);
+        LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        vlp.setMarginStart(dp(16));
+        row.addView(v, vlp);
+        boxPayment.addView(row);
+    }
+
+    private void bindActions() {
+        boolean canCancel = OrderStatus.customerCanCancel(order.status);
+        boolean canReorder = CustomerOrders.canReorder(order.status);
+        btnCancel.setVisibility(canCancel ? View.VISIBLE : View.GONE);
+        btnReorder.setVisibility(canReorder ? View.VISIBLE : View.GONE);
+        barActions.setVisibility(canCancel || canReorder ? View.VISIBLE : View.GONE);
+    }
+
+    // ---------------------------------------------------------------- đánh giá
+
+    /** Nút "Đánh giá" chỉ hiện với đơn đã giao; sản phẩm đã đánh giá thì khóa lại. */
+    private void refreshReviewButtons() {
+        if (order == null) return;
+        boolean can = CustomerOrders.canReview(order.status);
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        for (Map.Entry<String, MaterialButton> en : reviewButtons.entrySet()) {
+            String pid = en.getKey();
+            MaterialButton btn = en.getValue();
+            btn.setVisibility(can ? View.VISIBLE : View.GONE);
+            if (!can) continue;
+            boolean done = reviewed.contains(pid);
+            btn.setEnabled(!done);
+            btn.setText(done ? "Đã đánh giá" : "★  Đánh giá");
+            if (!done && auth.getCurrentUser() != null && !reviewChecked.contains(pid)) {
+                reviewChecked.add(pid);
+                db.collection("BinhLuan")
+                        .whereEqualTo("iduser", auth.getCurrentUser().getUid())
+                        .whereEqualTo("idproduct", pid).limit(1).get()
+                        .addOnSuccessListener(s -> {
+                            if (!s.isEmpty() && !isFinishing()) {
+                                reviewed.add(pid);
+                                refreshReviewButtons();
+                            }
+                        });
+            }
+        }
+    }
+
+    private void showReviewDialog(OrderMath.Line line) {
+        Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_danhgia);
         dialog.show();
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        CustomDialog(dialog, product);
+        Window window = dialog.getWindow();
+        if (window != null) {
+            // Rộng theo màn hình (lề 20dp mỗi bên), co lại khi bàn phím mở → nút Gửi/Hủy luôn thấy được
+            int margin = dp(20);
+            window.setBackgroundDrawable(new InsetDrawable(new ColorDrawable(Color.TRANSPARENT),
+                    margin, margin, margin, margin));
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
+        bindReviewDialog(dialog, line);
     }
 
-    private void CustomDialog(Dialog dialog, Product product) {
-        ImageView imgDanhgia = dialog.findViewById(R.id.img_danhgia);
-        TextView tvNameDanhgia = dialog.findViewById(R.id.tv_name_danhgia);
-        TextView tvNumberDanhgia = dialog.findViewById(R.id.tv_number_danhgia);
-        RadioGroup rdgDanhgia = dialog.findViewById(R.id.rdg_danhgia);
-        RadioButton rdoDanhgiaTot = dialog.findViewById(R.id.rdo_danhgia_tot);
-        RadioButton rdoDanhgiaKhongTot = dialog.findViewById(R.id.rdo_danhgia_khongtot);
-        RadioButton rdoDanhgiaKhac = dialog.findViewById(R.id.rdo_danhgia_khac);
-        EditText edtDanhgiaKhac = dialog.findViewById(R.id.edt_danhgia_khac);
-        RatingBar ratingDanhgia = dialog.findViewById(R.id.rating_danhgia);
-        Button btnGuiDanhgia = dialog.findViewById(R.id.btn_danhgia_gui);
-        Button btnHuyDanhgia = dialog.findViewById(R.id.btn_danhgia_huy);
+    private void bindReviewDialog(Dialog dialog, OrderMath.Line line) {
+        ImageView img = dialog.findViewById(R.id.img_danhgia);
+        TextView tvName = dialog.findViewById(R.id.tv_name_danhgia);
+        TextView tvNumber = dialog.findViewById(R.id.tv_number_danhgia);
+        RadioGroup group = dialog.findViewById(R.id.rdg_danhgia);
+        EditText edtOther = dialog.findViewById(R.id.edt_danhgia_khac);
+        RatingBar rating = dialog.findViewById(R.id.rating_danhgia);
+        MaterialButton btnSend = dialog.findViewById(R.id.btn_danhgia_gui);
+        MaterialButton btnCancelDialog = dialog.findViewById(R.id.btn_danhgia_huy);
 
-        Picasso.get().load(product.getHinhanh()).into(imgDanhgia);
-        tvNameDanhgia.setText(product.getTensp());
-        tvNumberDanhgia.setText(product.getSoluong() + "");
-        rdgDanhgia.clearCheck();
-        edtDanhgiaKhac.setEnabled(false);
-        ratingDanhgia.setRating(5f);
-        // Đọc trạng thái trực tiếp từ các view khi bấm Gửi, không dùng biến dùng chung giữa các lần mở dialog
-        // (trước đây số sao / nội dung của lần đánh giá trước bị gửi lại cho sản phẩm sau).
-        rdgDanhgia.setOnCheckedChangeListener((group, checkedId) -> {
-            boolean khac = checkedId == R.id.rdo_danhgia_khac;
-            edtDanhgiaKhac.setEnabled(khac);
-            if (khac) edtDanhgiaKhac.requestFocus();
+        if (line.image != null && !line.image.trim().isEmpty()) Picasso.get().load(line.image.trim()).into(img);
+        tvName.setText(line.name);
+        tvNumber.setText(String.valueOf(line.quantity));
+        group.clearCheck();
+        edtOther.setEnabled(false);
+        rating.setRating(5f);
+
+        // Đọc trạng thái trực tiếp từ các view khi bấm Gửi (không dùng biến dùng chung giữa các lần mở)
+        group.setOnCheckedChangeListener((g, checkedId) -> {
+            boolean other = checkedId == R.id.rdo_danhgia_khac;
+            edtOther.setEnabled(other);
+            if (other) edtOther.requestFocus();
         });
 
-        btnGuiDanhgia.setOnClickListener(view -> {
-            String noidung;
-            int checked = rdgDanhgia.getCheckedRadioButtonId();
+        btnSend.setOnClickListener(v -> {
+            String content;
+            int checked = group.getCheckedRadioButtonId();
             if (checked == R.id.rdo_danhgia_tot) {
-                noidung = "Sản phẩm rất tốt";
+                content = "Sản phẩm rất tốt";
             } else if (checked == R.id.rdo_danhgia_khongtot) {
-                noidung = "Không hài lòng";
+                content = "Không hài lòng";
             } else if (checked == R.id.rdo_danhgia_khac) {
-                noidung = edtDanhgiaKhac.getText().toString().trim();
-                if (noidung.isEmpty()) {
-                    edtDanhgiaKhac.setError("Vui lòng nhập nhận xét");
+                content = edtOther.getText().toString().trim();
+                if (content.isEmpty()) {
+                    edtOther.setError("Vui lòng nhập nhận xét");
                     return;
                 }
             } else {
-                Toast.makeText(CTHDActivity.this, "Vui lòng chọn nhận xét", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Vui lòng chọn nhận xét", Toast.LENGTH_SHORT).show();
                 return;
             }
-            float rating = ratingDanhgia.getRating();
-            if (rating <= 0f) {
-                Toast.makeText(CTHDActivity.this, "Vui lòng chọn số sao", Toast.LENGTH_SHORT).show();
+            float stars = rating.getRating();
+            if (stars <= 0f) {
+                Toast.makeText(this, "Vui lòng chọn số sao", Toast.LENGTH_SHORT).show();
                 return;
             }
             if (FirebaseAuth.getInstance().getCurrentUser() == null) {
-                Toast.makeText(CTHDActivity.this, "Vui lòng đăng nhập lại", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Vui lòng đăng nhập lại", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             HashMap<String, String> map = new HashMap<>();
-            map.put("idproduct", product.getIdsp());
+            map.put("idproduct", line.productId);
             map.put("iduser", FirebaseAuth.getInstance().getCurrentUser().getUid());
-            map.put("noidung", noidung);
-            map.put("rate", String.valueOf(rating));
-            btnGuiDanhgia.setEnabled(false); // chống bấm nhiều lần tạo đánh giá trùng
+            map.put("noidung", content);
+            map.put("rate", String.valueOf(stars));
+            btnSend.setEnabled(false); // chống bấm nhiều lần tạo đánh giá trùng
             db.collection("BinhLuan").add(map)
-                    .addOnSuccessListener(documentReference -> {
-                        hoaDonDaGiaoAdapter.notifyDataSetChanged();
-                        Toast.makeText(CTHDActivity.this, "Đánh giá thành công", Toast.LENGTH_SHORT).show();
+                    .addOnSuccessListener(ref -> {
+                        reviewed.add(line.productId);
+                        refreshReviewButtons();
+                        Toast.makeText(this, "Cảm ơn bạn đã đánh giá!", Toast.LENGTH_SHORT).show();
                         dialog.cancel();
                     })
                     .addOnFailureListener(e -> {
-                        btnGuiDanhgia.setEnabled(true);
-                        Toast.makeText(CTHDActivity.this, "Gửi đánh giá thất bại, vui lòng thử lại", Toast.LENGTH_SHORT).show();
+                        btnSend.setEnabled(true);
+                        Toast.makeText(this, "Gửi đánh giá thất bại, vui lòng thử lại", Toast.LENGTH_SHORT).show();
                     });
         });
-
-        btnHuyDanhgia.setOnClickListener(view -> dialog.cancel());
+        btnCancelDialog.setOnClickListener(v -> dialog.cancel());
     }
 
-    @Override
-    public void getDataHD(String id, String uid, String ghichu, String diachi, String hoten, String ngaydat,
-            String phuongthuc, String sdt, String tongtien, Long type) {
+    // ---------------------------------------------------------------- tiện ích
 
+    private void copyCode() {
+        if (order == null) return;
+        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        if (cm != null) {
+            cm.setPrimaryClip(ClipData.newPlainText("Mã đơn", order.displayCode()));
+            Toast.makeText(this, "Đã sao chép mã đơn", Toast.LENGTH_SHORT).show();
+        }
     }
 
-    @Override
-    public void OnSucess() {
-
+    private int c(int colorRes) {
+        return androidx.core.content.ContextCompat.getColor(this, colorRes);
     }
 
-    @Override
-    public void OnFail() {
-
+    private int dp(int v) {
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics());
     }
 }

@@ -1,347 +1,304 @@
 package com.UngDung.ThucPhamXanh.View.Admin;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatImageView;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import android.app.Dialog;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.UngDung.ThucPhamXanh.Models.User;
-import com.UngDung.ThucPhamXanh.Presenter.UserPresenter;
-import com.UngDung.ThucPhamXanh.R;
-import com.UngDung.ThucPhamXanh.my_interface.IClickCTHD;
-import com.UngDung.ThucPhamXanh.my_interface.UserView;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import org.jetbrains.annotations.NotNull;
+import com.UngDung.ThucPhamXanh.Helper.AdminOrder;
+import com.UngDung.ThucPhamXanh.Helper.AdminUserCreator;
+import com.UngDung.ThucPhamXanh.Helper.AdminUsers;
+import com.UngDung.ThucPhamXanh.Helper.FirestoreMapper;
+import com.UngDung.ThucPhamXanh.Helper.MoneyUtil;
+import com.UngDung.ThucPhamXanh.R;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-public class AdminUsersActivity extends AppCompatActivity implements UserView {
+import de.hdodenhof.circleimageview.CircleImageView;
 
-    private ImageView imgBackUsers;
-    private RecyclerView rcvUsers;
-    private AppCompatImageView imageAddUsers;
+/**
+ * Khách hàng trang admin. Đọc (gỡ ở onStop): IDUser (uid + email), nhóm collection "Profile" (tên, SĐT, địa chỉ…
+ * — 1 listener thay cho N lần đọc theo từng khách), HoaDon (thống kê số đơn / chi tiêu theo UID).
+ * Tìm kiếm và sắp xếp làm trên máy bằng {@link AdminUsers}.
+ */
+public class AdminUsersActivity extends BaseAdminActivity {
+
+    private static final String TAG = "AdminUsersActivity";
+
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    private MaterialToolbar toolbar;
+    private RecyclerView rcv;
+    private TextView tvResult;
+    private View emptyView, progress;
     private AdminUsersAdapter adapter;
-    private ArrayList<User> mlistUser;
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private ListenerRegistration usersListener;
 
-    private UserPresenter userPresenter;
+    private String query = "";
+    private int sort = AdminUsers.SORT_NAME;
 
-    DatabaseReference reference1, reference2;
+    private final Map<String, String> emails = new LinkedHashMap<>();        // uid -> email (theo IDUser)
+    private final Map<String, DocumentSnapshot> profiles = new HashMap<>();  // uid -> Profile
+    private final List<AdminOrder> orders = new ArrayList<>();
+    private boolean usersLoaded;
+    private List<AdminUsers.Row> allRows = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_users);
+        toolbar = setupAdminToolbar("Khách hàng", null);
 
-        Init();
-        InitWidget();
-        Event();
-        setupRealtimeListener();
-    }
+        rcv = findViewById(R.id.rcv_users);
+        tvResult = findViewById(R.id.tv_user_result);
+        emptyView = findViewById(R.id.admin_empty);
+        progress = findViewById(R.id.progress_users);
+        ExtendedFloatingActionButton fab = findViewById(R.id.fab_add_user);
+        applySystemBarInsets(null, rcv);
+        applySystemBarInsets(null, findViewById(R.id.fab_container_users));
 
-    private void Event() {
-        imgBackUsers.setOnClickListener(new View.OnClickListener() {
+        adapter = new AdminUsersAdapter(this::showUserSheet);
+        rcv.setLayoutManager(new LinearLayoutManager(this));
+        rcv.setAdapter(adapter);
+
+        TextInputEditText search = findViewById(R.id.edt_search_user);
+        search.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
+            @Override public void onTextChanged(CharSequence s, int a, int b, int c) { }
+
             @Override
-            public void onClick(View view) {
-                finish();
+            public void afterTextChanged(Editable s) {
+                query = s == null ? "" : s.toString();
+                render(true);
             }
         });
-        imageAddUsers.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Dialog dialog = new Dialog(AdminUsersActivity.this);
-                dialog.setContentView(R.layout.dialog_add_users);
-                dialog.show();
-                dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                EditText edtAddEmailUsers = dialog.findViewById(R.id.edt_add_email_users);
-                EditText edtAddPassUsers = dialog.findViewById(R.id.edt_add_pass_users);
-                EditText edtAddConfirmUsers = dialog.findViewById(R.id.edt_add_confirm_users);
-                Button btnAddUsers = dialog.findViewById(R.id.btn_add_users);
-                Button btnHuyUsers = dialog.findViewById(R.id.btn_huy_users);
-                dialog.setCanceledOnTouchOutside(true);
-
-                btnAddUsers.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        String strEmail = edtAddEmailUsers.getText().toString().trim();
-                        String strPass = edtAddPassUsers.getText().toString().trim();
-                        String strConfirm = edtAddConfirmUsers.getText().toString().trim();
-                        if (strEmail.length() > 0){
-                            if (strPass.length() > 0) {
-                                if (strPass.equals(strConfirm)){
-                                    createUserAccount(strEmail, strPass, dialog);
-                                } else {
-                                    Toast.makeText(AdminUsersActivity.this, "Mật khẩu xác nhận không khớp.\nVui lòng nhập lại!", Toast.LENGTH_SHORT).show();
-                                }
-                            } else {
-                                Toast.makeText(AdminUsersActivity.this, "Bạn chưa nhập mật khẩu", Toast.LENGTH_SHORT).show();
-                            }
-
-                        } else{
-                            Toast.makeText(AdminUsersActivity.this, "Bạn chưa nhập Email", Toast.LENGTH_SHORT).show();
-                        }
-
-
-                    }
-                });
-                btnHuyUsers.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        dialog.cancel();
-                    }
-                });
-            }
+        ChipGroup sortGroup = findViewById(R.id.chip_group_user_sort);
+        sortGroup.setOnCheckedChangeListener((g, id) -> {
+            if (id == R.id.chip_sort_spent) sort = AdminUsers.SORT_SPENT;
+            else if (id == R.id.chip_sort_orders) sort = AdminUsers.SORT_ORDERS;
+            else sort = AdminUsers.SORT_NAME;
+            render(true);
         });
+        fab.setOnClickListener(v -> showAddDialog());
     }
 
-    private void Init() {
-        mlistUser = new ArrayList<>();
-    }
-
-    /**
-     * Tạo tài khoản khách hàng mới.
-     * Dùng một FirebaseApp PHỤ để tạo tài khoản -> phiên đăng nhập chính trên máy không bị
-     * chuyển sang tài khoản vừa tạo (createUserWithEmailAndPassword tự đăng nhập tài khoản mới).
-     */
-    private void createUserAccount(String email, String password, Dialog dialog) {
-        if (!isEmailValid(email)) {
-            Toast.makeText(this, "Email định dạng không đúng", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (password.length() < 6) {
-            Toast.makeText(this, "Mật khẩu phải có ít nhất 6 ký tự", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        com.google.firebase.FirebaseApp secondaryApp;
-        try {
-            secondaryApp = com.google.firebase.FirebaseApp.getInstance("AdminCreateUser");
-        } catch (IllegalStateException notCreatedYet) {
-            secondaryApp = com.google.firebase.FirebaseApp.initializeApp(this,
-                    com.google.firebase.FirebaseApp.getInstance().getOptions(), "AdminCreateUser");
-        }
-        FirebaseAuth secondaryAuth = FirebaseAuth.getInstance(secondaryApp);
-
-        secondaryAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
-            if (!task.isSuccessful() || task.getResult() == null || task.getResult().getUser() == null) {
-                Exception e = task.getException();
-                String msg;
-                if (e instanceof com.google.firebase.auth.FirebaseAuthUserCollisionException) {
-                    msg = "Email này đã được đăng ký";
-                } else if (e instanceof com.google.firebase.auth.FirebaseAuthWeakPasswordException) {
-                    msg = "Mật khẩu quá yếu (tối thiểu 6 ký tự)";
-                } else {
-                    msg = "Tạo tài khoản thất bại" + (e != null ? ": " + e.getMessage() : "");
-                }
-                Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+    @Override
+    protected void onStartListening() {
+        listen(db.collection("IDUser").addSnapshotListener((snap, e) -> {
+            if (e != null) {
+                Log.e(TAG, "Lỗi đọc IDUser", e);
+                progress.setVisibility(View.GONE);
+                Toast.makeText(this, "Không tải được danh sách khách hàng", Toast.LENGTH_SHORT).show();
                 return;
             }
-
-            String newUid = task.getResult().getUser().getUid();
-            secondaryAuth.signOut(); // không giữ phiên của tài khoản mới
-
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            HashMap<String, String> idUser = new HashMap<>();
-            idUser.put("iduser", newUid);
-            idUser.put("email", email);
-            db.collection("IDUser").add(idUser);
-
-            Map<String, Object> profile = new HashMap<>();
-            profile.put("iduser", newUid);
-            profile.put("hoten", "");
-            profile.put("diachi", "");
-            profile.put("sdt", "");
-            profile.put("ngaysinh", "");
-            profile.put("gioitinh", "");
-            profile.put("avatar", "");
-            db.collection("User").document(newUid).collection("Profile").add(profile);
-
-            String username = "any name";
-            HashMap<String, String> realtimeUser = new HashMap<>();
-            realtimeUser.put("iduser", newUid);
-            realtimeUser.put("name", username);
-            realtimeUser.put("avatar", "default");
-            realtimeUser.put("status", "offline");
-            realtimeUser.put("search", username.toLowerCase());
-            FirebaseDatabase.getInstance().getReference("Users").child(newUid).setValue(realtimeUser);
-
-            HashMap<String, String> chatList = new HashMap<>();
-            chatList.put("id", newUid);
-            FirebaseDatabase.getInstance().getReference("Chatlist")
-                    .child(com.UngDung.ThucPhamXanh.Helper.AppConstants.ADMIN_ID).child(newUid).setValue(chatList);
-
-            Toast.makeText(this, "Đã tạo tài khoản " + email, Toast.LENGTH_SHORT).show();
-            dialog.cancel();
-        });
-    }
-
-    private void InitWidget() {
-        imgBackUsers = findViewById(R.id.img_back_users);
-        rcvUsers = findViewById(R.id.rcv_users);
-        imageAddUsers = findViewById(R.id.image_add_users);
-
-        userPresenter = new UserPresenter(AdminUsersActivity.this);
-        adapter = new AdminUsersAdapter(AdminUsersActivity.this, mlistUser, new IClickCTHD() {
-            @Override
-            public void onClickCTHD(int pos) {
-                User user = mlistUser.get(pos);
-                showUserInfoDialog(user);
+            if (snap == null) return;
+            emails.clear();
+            for (DocumentSnapshot d : snap.getDocuments()) {
+                String uid = FirestoreMapper.str(d, "iduser");
+                if (uid.isEmpty() || emails.containsKey(uid)) continue; // IDUser có thể ghi trùng một uid
+                emails.put(uid, FirestoreMapper.str(d, "email"));
             }
-        });
-        rcvUsers.setLayoutManager(new GridLayoutManager(AdminUsersActivity.this, 2));
-        rcvUsers.setAdapter(adapter);
-    }
-    
-    private void setupRealtimeListener() {
-        if (usersListener != null) {
-            usersListener.remove();
-        }
-        
-        usersListener = db.collection("IDUser")
-                .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                    @Override
-                    public void onEvent(QuerySnapshot snapshots, FirebaseFirestoreException e) {
-                        if (e != null) {
-                            return;
-                        }
-                        
-                        if (snapshots != null) {
-                            for (DocumentChange dc : snapshots.getDocumentChanges()) {
-                                QueryDocumentSnapshot doc = dc.getDocument();
-                                String iduser = doc.getString("iduser");
-                                String email = doc.getString("email");
-                                
-                                int index = findUserIndex(iduser);
-                                
-                                switch (dc.getType()) {
-                                    case ADDED:
-                                        if (index == -1) {
-                                            userPresenter.HandleGetUsers(iduser, email);
-                                        }
-                                        break;
-                                    case MODIFIED:
-                                        if (index != -1) {
-                                            mlistUser.remove(index);
-                                            adapter.notifyItemRemoved(index);
-                                            userPresenter.HandleGetUsers(iduser, email);
-                                        }
-                                        break;
-                                    case REMOVED:
-                                        if (index != -1) {
-                                            mlistUser.remove(index);
-                                            adapter.notifyItemRemoved(index);
-                                        }
-                                        break;
-                                }
-                            }
-                        }
-                    }
-                });
-    }
-    
-    private int findUserIndex(String iduser) {
-        for (int i = 0; i < mlistUser.size(); i++) {
-            if (mlistUser.get(i).getIduser().equals(iduser)) {
-                return i;
+            usersLoaded = true;
+            rebuild();
+        }));
+        listen(db.collectionGroup("Profile").addSnapshotListener((snap, e) -> {
+            if (e != null) {
+                Log.e(TAG, "Lỗi đọc Profile", e);
+                return;
             }
-        }
-        return -1;
-    }
-    
-    private void showUserInfoDialog(User user) {
-        Dialog dialog = new Dialog(AdminUsersActivity.this);
-        dialog.setContentView(R.layout.dialog_info_users);
-        dialog.show();
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        TextView tvIdusers = dialog.findViewById(R.id.tv_id_users);
-        TextView tvEmailUsers = dialog.findViewById(R.id.tv_email_users);
-        TextView tvNameUsers = dialog.findViewById(R.id.tv_name_users);
-        TextView tvAddressUsers = dialog.findViewById(R.id.tv_address_users);
-        TextView tvSDTUsers = dialog.findViewById(R.id.tv_sdt_users);
-        TextView tvDateUsers = dialog.findViewById(R.id.tv_date_users);
-        TextView tvGenderUsers = dialog.findViewById(R.id.tv_gender_users);
-        ImageView btnCancelUsers = dialog.findViewById(R.id.btn_cancel_users);
-        dialog.setCanceledOnTouchOutside(true);
-
-        tvIdusers.setText(user.getIduser());
-        tvEmailUsers.setText(user.getEmail());
-        tvNameUsers.setText(user.getName());
-        tvAddressUsers.setText(user.getAddress());
-        tvSDTUsers.setText(user.getPhone());
-        tvDateUsers.setText(user.getDate());
-        tvGenderUsers.setText(user.getSex());
-
-        btnCancelUsers.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dialog.cancel();
+            if (snap == null) return;
+            profiles.clear();
+            for (DocumentSnapshot d : snap.getDocuments()) {
+                // User/{uid}/Profile/{id}: uid là document cha
+                if (d.getReference().getParent().getParent() == null) continue;
+                String uid = d.getReference().getParent().getParent().getId();
+                if (!profiles.containsKey(uid)) profiles.put(uid, d);
             }
-        });
+            rebuild();
+        }));
+        listen(db.collection("HoaDon").addSnapshotListener((snap, e) -> {
+            if (e != null || snap == null) return;
+            orders.clear();
+            for (DocumentSnapshot d : snap.getDocuments()) orders.add(FirestoreMapper.toAdminOrder(d));
+            rebuild();
+        }));
     }
-    
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (usersListener != null) {
-            usersListener.remove();
+
+    private void rebuild() {
+        if (!usersLoaded) return;
+        List<AdminUsers.Row> rows = new ArrayList<>();
+        for (Map.Entry<String, String> en : emails.entrySet()) {
+            AdminUsers.Row r = new AdminUsers.Row();
+            r.uid = en.getKey();
+            r.email = en.getValue();
+            DocumentSnapshot p = profiles.get(r.uid);
+            if (p != null) {
+                r.name = FirestoreMapper.str(p, "hoten");
+                r.phone = FirestoreMapper.str(p, "sdt");
+                r.address = FirestoreMapper.str(p, "diachi");
+                r.birth = FirestoreMapper.str(p, "ngaysinh");
+                r.gender = FirestoreMapper.str(p, "gioitinh");
+                r.avatar = FirestoreMapper.str(p, "avatar");
+            }
+            rows.add(r);
         }
+        AdminUsers.applyStats(rows, AdminUsers.statsByUser(orders));
+        allRows = rows;
+        render(false);
     }
 
-    private boolean isEmailValid(CharSequence email) {
-        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
+    private void render(boolean scrollTop) {
+        progress.setVisibility(View.GONE);
+        List<AdminUsers.Row> shown = AdminUsers.filterAndSort(allRows, query, sort);
+        adapter.submitList(shown, () -> {
+            if (scrollTop) rcv.scrollToPosition(0);
+        });
+        boolean searching = !query.trim().isEmpty();
+        showEmpty(emptyView, shown.isEmpty(),
+                allRows.isEmpty() ? "Chưa có khách hàng nào.\nBấm \"Thêm khách hàng\" để tạo tài khoản."
+                        : "Không có khách hàng nào khớp \"" + query.trim() + "\"");
+        tvResult.setText(searching ? shown.size() + " / " + allRows.size() + " khách hàng"
+                : allRows.size() + " khách hàng");
+        toolbar.setSubtitle(allRows.isEmpty() ? null : allRows.size() + " tài khoản");
     }
 
-    @Override
-    public void OnSucess() {
+    // ------------------------------------------------------------------ chi tiết
 
-    }
+    private void showUserSheet(AdminUsers.Row u) {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View v = LayoutInflater.from(this).inflate(R.layout.sheet_admin_user, null);
+        dialog.setContentView(v);
 
-    @Override
-    public void OnFail() {
+        CircleImageView avatar = v.findViewById(R.id.cir_sheet_user);
+        ((TextView) v.findViewById(R.id.tv_sheet_user_name)).setText(u.displayName());
+        ((TextView) v.findViewById(R.id.tv_sheet_user_email)).setText(u.email.isEmpty() ? "(chưa có email)" : u.email);
+        ((TextView) v.findViewById(R.id.tv_sheet_orders)).setText(String.valueOf(u.orders));
+        ((TextView) v.findViewById(R.id.tv_sheet_spent)).setText(MoneyUtil.formatVnd(u.spent));
+        String a = u.avatar == null ? "" : u.avatar.trim();
+        if (a.startsWith("http")) Picasso.get().load(a).placeholder(R.drawable.ic_user).error(R.drawable.ic_user).into(avatar);
 
-    }
+        LinearLayout box = v.findViewById(R.id.box_user_rows);
+        addRow(box, "Số điện thoại", u.phone);
+        addRow(box, "Địa chỉ", u.address);
+        addRow(box, "Ngày sinh", u.birth);
+        addRow(box, "Giới tính", u.gender);
+        addRow(box, "Mã người dùng", u.uid);
+        if (box.getChildCount() == 0) {
+            addRow(box, "Hồ sơ", "Khách chưa cập nhật thông tin cá nhân");
+        }
 
-    @Override
-    public void getDataUser(String id, String email, String name, String address, String phone, String date, String gender, String avatar) {
-        // Check if user already exists
-        int index = findUserIndex(id);
-        User newUser = new User(id, email, name, address, phone, date, gender, avatar);
-        
-        if (index == -1) {
-            mlistUser.add(newUser);
-            adapter.notifyItemInserted(mlistUser.size() - 1);
+        MaterialButton btnCall = v.findViewById(R.id.btn_user_call);
+        String phone = u.phone == null ? "" : u.phone.replaceAll("[^0-9+]", "");
+        if (phone.isEmpty()) {
+            btnCall.setEnabled(false);
         } else {
-            mlistUser.set(index, newUser);
-            adapter.notifyItemChanged(index);
+            btnCall.setOnClickListener(x -> startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phone))));
         }
+        MaterialButton btnCopy = v.findViewById(R.id.btn_user_copy);
+        if (u.email.isEmpty()) {
+            btnCopy.setEnabled(false);
+        } else {
+            btnCopy.setOnClickListener(x -> {
+                ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (cm != null) {
+                    cm.setPrimaryClip(ClipData.newPlainText("Email", u.email));
+                    Toast.makeText(this, "Đã sao chép email", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+        dialog.show();
     }
 
+    private void addRow(LinearLayout box, String label, String value) {
+        if (value == null || value.trim().isEmpty()) return;
+        View row = LayoutInflater.from(this).inflate(R.layout.item_admin_kv, box, false);
+        ((TextView) row.findViewById(R.id.tv_kv_label)).setText(label);
+        ((TextView) row.findViewById(R.id.tv_kv_value)).setText(value.trim());
+        box.addView(row);
+    }
+
+    // ------------------------------------------------------------------ thêm khách hàng
+
+    private void showAddDialog() {
+        View form = LayoutInflater.from(this).inflate(R.layout.dialog_admin_add_user, null);
+        TextInputLayout tilEmail = form.findViewById(R.id.til_add_email);
+        TextInputLayout tilPass = form.findViewById(R.id.til_add_pass);
+        TextInputLayout tilConfirm = form.findViewById(R.id.til_add_confirm);
+        TextInputEditText edtEmail = form.findViewById(R.id.edt_add_email_users);
+        TextInputEditText edtPass = form.findViewById(R.id.edt_add_pass_users);
+        TextInputEditText edtConfirm = form.findViewById(R.id.edt_add_confirm_users);
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle("Thêm khách hàng")
+                .setView(form)
+                .setNegativeButton("Hủy", null)
+                .setPositiveButton("Tạo tài khoản", null) // gắn sau để không tự đóng khi có lỗi
+                .create();
+        dialog.show();
+
+        final android.widget.Button btnCreate = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE);
+        btnCreate.setOnClickListener(x -> {
+            tilEmail.setError(null);
+            tilPass.setError(null);
+            tilConfirm.setError(null);
+            String email = text(edtEmail);
+            String pass = text(edtPass);
+            String confirm = text(edtConfirm);
+            if (email.isEmpty()) { tilEmail.setError("Vui lòng nhập email"); return; }
+            if (!AdminUserCreator.isEmailValid(email)) { tilEmail.setError("Email không đúng định dạng"); return; }
+            if (pass.length() < 6) { tilPass.setError("Mật khẩu tối thiểu 6 ký tự"); return; }
+            if (!pass.equals(confirm)) { tilConfirm.setError("Mật khẩu nhập lại không khớp"); return; }
+
+            btnCreate.setEnabled(false);
+            btnCreate.setText("Đang tạo...");
+            AdminUserCreator.create(this, email, pass, new AdminUserCreator.Callback() {
+                @Override
+                public void onCreated(String createdEmail) {
+                    if (isFinishing()) return;
+                    Toast.makeText(AdminUsersActivity.this, "Đã tạo tài khoản " + createdEmail, Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                }
+
+                @Override
+                public void onError(String message) {
+                    if (isFinishing()) return;
+                    btnCreate.setEnabled(true);
+                    btnCreate.setText("Tạo tài khoản");
+                    tilEmail.setError(message.startsWith("Email") ? message : null);
+                    if (!message.startsWith("Email")) Toast.makeText(AdminUsersActivity.this, message, Toast.LENGTH_LONG).show();
+                }
+            });
+        });
+    }
+
+    private static String text(TextInputEditText e) {
+        return e.getText() == null ? "" : e.getText().toString().trim();
+    }
 }

@@ -145,7 +145,7 @@
         <item name="android:paddingBottom">8dp</item>
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
-        <item name="android:textColor">#1B5E20</item>
+        <item name="android:textColor">@color/ui_green_text</item>
         <item name="android:textSize">13sp</item>
         <item name="android:textFontWeight">500</item>
     </style>
@@ -157,7 +157,7 @@
         <item name="android:layout_marginTop">14dp</item>
         <item name="android:layout_marginBottom">6dp</item>
         <item name="android:textSize">13sp</item>
-        <item name="android:textColor">#7A847A</item>
+        <item name="android:textColor">@color/ui_text_secondary</item>
         <item name="android:textFontWeight">500</item>
     </style>
 
@@ -195,8 +195,8 @@
         <item name="android:paddingStart">14dp</item>
         <item name="android:paddingEnd">12dp</item>
         <item name="android:drawablePadding">6dp</item>
-        <item name="android:drawableTint">#2E7D32</item>
-        <item name="android:textColor">#1A1A1A</item>
+        <item name="android:drawableTint">@color/ui_green_text</item>
+        <item name="android:textColor">@color/ui_text</item>
         <item name="android:textSize">13sp</item>
         <item name="android:textFontWeight">600</item>
     </style>
@@ -207,7 +207,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginTop">12dp</item>
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">#7A847A</item>
+        <item name="android:textColor">@color/ui_text_secondary</item>
     </style>
 
     <style name="OrderValue">
@@ -216,7 +216,7 @@
         <item name="android:layout_marginTop">2dp</item>
         <item name="android:lineSpacingMultiplier">1.15</item>
         <item name="android:textSize">15sp</item>
-        <item name="android:textColor">#1A1A1A</item>
+        <item name="android:textColor">@color/ui_text</item>
         <item name="android:textFontWeight">600</item>
     </style>
 
@@ -229,7 +229,7 @@
         <item name="android:fontFamily">@font/be_vietnam_pro</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">#1A1A1A</item>
+        <item name="android:textColor">@color/ui_text</item>
     </style>
 
     <style name="DialogInput">
@@ -242,8 +242,8 @@
         <item name="android:paddingTop">12dp</item>
         <item name="android:paddingBottom">12dp</item>
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">#1A1A1A</item>
-        <item name="android:textColorHint">#9AA39A</item>
+        <item name="android:textColor">@color/ui_text</item>
+        <item name="android:textColorHint">@color/ui_text_hint</item>
         <item name="android:importantForAutofill">no</item>
     </style>
 
@@ -260,14 +260,14 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_weight">1</item>
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">#7A847A</item>
+        <item name="android:textColor">@color/ui_text_secondary</item>
     </style>
 
     <style name="DialogRowValue">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">#1A1A1A</item>
+        <item name="android:textColor">@color/ui_text</item>
         <item name="android:textFontWeight">600</item>
     </style>
 
@@ -276,6 +276,155 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:text">" đ"</item>
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">#1A1A1A</item>
+        <item name="android:textColor">@color/ui_text</item>
+    </style>
+
+    <!-- =====================================================================
+         TRANG ADMIN — theme + style dùng chung (gán cho các activity View.Admin.* trong Manifest).
+         Màu ở colors.xml (admin_*), kích thước ở dimens_admin.xml.
+         ===================================================================== -->
+    <style name="Theme.ThucPhamXanh.Admin" parent="Theme.DoAn_TMDT">
+        <item name="colorPrimary">@color/admin_primary</item>
+        <item name="colorPrimaryVariant">@color/admin_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/admin_secondary</item>
+        <item name="colorSecondaryVariant">@color/admin_secondary</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorAccent">@color/admin_primary</item>
+        <item name="android:colorBackground">@color/admin_beige</item>
+        <item name="android:windowBackground">@color/admin_beige</item>
+        <item name="colorSurface">@color/admin_surface</item>
+        <item name="android:statusBarColor">@color/admin_primary_dark</item>
+        <item name="android:textColorPrimary">@color/admin_text</item>
+        <item name="android:textColorSecondary">@color/admin_text_muted</item>
+        <item name="colorError">@color/admin_danger</item>
+
+        <item name="materialCardViewStyle">@style/Admin.Card</item>
+        <item name="textInputStyle">@style/Admin.TextField</item>
+        <item name="chipStyle">@style/Admin.Chip.Filter</item>
+        <item name="materialButtonStyle">@style/Admin.Button</item>
+        <!-- Toolbar: dùng style="@style/Admin.Toolbar" trực tiếp trong layout (không gán toàn theme
+             để các toolbar cũ chưa làm lại giữ nguyên màu của chúng). -->
+    </style>
+
+    <!-- Gốc rỗng để các style "Admin.*" kế thừa theo tên -->
+    <style name="Admin" />
+
+    <style name="Admin.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="cardCornerRadius">@dimen/admin_radius_card</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/admin_outline</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cardBackgroundColor">@color/admin_surface</item>
+    </style>
+
+    <style name="Admin.Toolbar" parent="Widget.MaterialComponents.Toolbar.Primary">
+        <item name="android:background">@color/admin_primary</item>
+        <item name="titleTextColor">@color/white</item>
+        <item name="titleTextAppearance">@style/Admin.Text.ToolbarTitle</item>
+    </style>
+
+    <style name="Admin.TextField" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">@dimen/admin_radius_field</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/admin_radius_field</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/admin_radius_field</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/admin_radius_field</item>
+        <item name="boxStrokeColor">@color/admin_primary</item>
+        <item name="hintTextColor">@color/admin_primary</item>
+        <item name="boxBackgroundColor">@color/admin_surface</item>
+    </style>
+
+    <!-- Ô chọn từ danh sách (AutoCompleteTextView bên trong, inputType="none") -->
+    <style name="Admin.TextField.Dropdown" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        <item name="boxCornerRadiusTopStart">@dimen/admin_radius_field</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/admin_radius_field</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/admin_radius_field</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/admin_radius_field</item>
+        <item name="boxStrokeColor">@color/admin_primary</item>
+        <item name="hintTextColor">@color/admin_primary</item>
+        <item name="boxBackgroundColor">@color/admin_surface</item>
+    </style>
+
+    <style name="Admin.Chip.Filter" parent="Widget.MaterialComponents.Chip.Filter">
+        <item name="chipBackgroundColor">@color/admin_chip_bg</item>
+        <item name="chipStrokeColor">@color/admin_outline</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="android:textColor">@color/admin_chip_text</item>
+        <item name="checkedIconTint">@color/admin_accent_text</item>
+        <item name="android:fontFamily">@font/be_vietnam_pro</item>
+    </style>
+
+    <style name="Admin.Button" parent="Widget.MaterialComponents.Button">
+        <item name="cornerRadius">@dimen/admin_radius_field</item>
+        <item name="android:minHeight">@dimen/admin_touch_min</item>
+        <item name="android:fontFamily">@font/be_vietnam_pro</item>
+        <item name="android:textFontWeight">600</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!-- Nút viền (hủy, thao tác phụ) -->
+    <style name="Admin.Button.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="cornerRadius">@dimen/admin_radius_field</item>
+        <item name="android:minHeight">@dimen/admin_touch_min</item>
+        <item name="strokeColor">@color/admin_primary</item>
+        <item name="android:textColor">@color/admin_primary</item>
+        <item name="android:fontFamily">@font/be_vietnam_pro</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!-- Kiểu chữ trang admin -->
+    <style name="Admin.Text">
+        <item name="android:fontFamily">@font/be_vietnam_pro</item>
+        <item name="android:textColor">@color/admin_text</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="Admin.Text.ToolbarTitle">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="Admin.Text.Title">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Admin.Text.Section">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Admin.Text.StatValue">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/admin_accent_text</item>
+    </style>
+
+    <style name="Admin.Text.Body" />
+
+    <style name="Admin.Text.Caption">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/admin_text_muted</item>
+    </style>
+
+    <!-- Bo góc ảnh (ShapeableImageView app:shapeAppearanceOverlay) -->
+    <style name="Admin.Shape.Rounded" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">10dp</item>
+    </style>
+
+    <!-- Nhãn nhỏ dạng "viên thuốc" (tồn kho, hạn dùng, trạng thái) — đặt màu nền bằng backgroundTint -->
+    <style name="Admin.Badge">
+        <item name="android:fontFamily">@font/be_vietnam_pro</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+        <item name="android:background">@drawable/bg_admin_badge</item>
     </style>
 </resources>

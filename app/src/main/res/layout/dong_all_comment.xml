@@ -9,7 +9,7 @@
     android:layout_marginBottom="12dp"
     app:cardCornerRadius="20dp"
     app:cardElevation="4dp"
-    app:cardBackgroundColor="#FFFFFF">
+    app:cardBackgroundColor="@color/ui_surface">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -31,7 +31,7 @@
                 android:layout_height="48dp"
                 android:src="@drawable/ic_user"
                 app:civ_border_width="2dp"
-                app:civ_border_color="#E0E0E0" />
+                app:civ_border_color="@color/ui_stroke" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -46,7 +46,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Nguyễn Văn Chính"
-                    android:textColor="#212121"
+                    android:textColor="@color/ui_text"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -61,7 +61,7 @@
                     android:rating="0"
                     android:progressTint="#FFC107"
                     android:secondaryProgressTint="#FFC107"
-                    android:progressBackgroundTint="#E0E0E0"
+                    android:progressBackgroundTint="@color/ui_stroke"
                     android:saveEnabled="false" />
             </LinearLayout>
         </LinearLayout>
@@ -72,7 +72,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Gà ngon, có mùi đặc sắc. Canh lòng gà cũng ngon, gan gà mịn và tươi. Khẩu phần to đủ ăn"
-            android:textColor="#757575"
+            android:textColor="@color/ui_text_secondary"
             android:textSize="14sp"
             android:lineSpacingMultiplier="1.3"
             android:layout_marginBottom="12dp" />
@@ -81,6 +81,6 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#E0E0E0" />
+            android:background="@color/ui_divider" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

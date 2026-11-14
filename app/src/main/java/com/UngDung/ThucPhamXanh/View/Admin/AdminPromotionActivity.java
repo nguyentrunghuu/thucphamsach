@@ -1,236 +1,257 @@
 package com.UngDung.ThucPhamXanh.View.Admin;
 
-import androidx.appcompat.app.AppCompatActivity;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.Toast;
-
-import com.UngDung.ThucPhamXanh.Adapter.CategoryDiscountAdapter;
-import com.UngDung.ThucPhamXanh.Models.CategoryDiscount;
+import com.UngDung.ThucPhamXanh.Helper.FirestoreMapper;
+import com.UngDung.ThucPhamXanh.Helper.PromotionRules;
+import com.UngDung.ThucPhamXanh.Helper.TextNormalizer;
 import com.UngDung.ThucPhamXanh.R;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-public class AdminPromotionActivity extends AppCompatActivity {
+/**
+ * Khuyến mãi theo loại sản phẩm (Promotions/current_promotion.categoryDiscounts). Dữ liệu đọc/ghi qua
+ * {@link PromotionRules}. Chỉnh sửa nằm trên máy cho đến khi bấm "Lưu khuyến mãi" (nút chỉ bật khi có thay đổi);
+ * được phép lưu bộ trống để tắt toàn bộ khuyến mãi. Quy tắc của loại không còn tồn tại được đánh dấu để xóa.
+ */
+public class AdminPromotionActivity extends BaseAdminActivity {
 
     private static final String TAG = "AdminPromotionActivity";
-    private Button btnSavePromotion;
-    private ImageView imgBackPromotion;
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private static final String PROMOTION_DOC_ID = "current_promotion";
-    
-    // Category discounts
-    private RecyclerView rcvCategoryDiscounts;
-    private CategoryDiscountAdapter categoryDiscountAdapter;
-    private ArrayList<String> categoryList;
+
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    private MaterialToolbar toolbar;
+    private RecyclerView rcv;
+    private View emptyView, progress;
+    private MaterialButton btnSave, btnReset;
+    private AdminPromotionAdapter adapter;
+
+    private final List<String> categories = new ArrayList<>();
+    private Map<String, PromotionRules.Rule> saved = new LinkedHashMap<>();    // đang lưu trên Firestore
+    private Map<String, PromotionRules.Rule> working = new LinkedHashMap<>();  // đang chỉnh trên máy
+    private boolean categoriesLoaded, rulesLoaded, saving;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_promotion);
+        toolbar = setupAdminToolbar("Khuyến mãi", null);
+        toolbar.setNavigationOnClickListener(v -> attemptClose());
 
-        InitWidget();
-        // LoadCurrentPromotion() sẽ được gọi sau khi loadCategories() hoàn thành
-        Event();
-    }
+        rcv = findViewById(R.id.rcv_category_discounts);
+        emptyView = findViewById(R.id.admin_empty);
+        progress = findViewById(R.id.progress_promotion);
+        btnSave = findViewById(R.id.btn_save_promotion);
+        btnReset = findViewById(R.id.btn_reset_promotion);
+        applySystemBarInsets(null, findViewById(R.id.bottom_bar_promotion));
 
-    private void InitWidget() {
-        btnSavePromotion = findViewById(R.id.btn_save_promotion);
-        imgBackPromotion = findViewById(R.id.img_back_promotion);
-        rcvCategoryDiscounts = findViewById(R.id.rcv_category_discounts);
-        
-        // Initialize category discounts
-        categoryList = new ArrayList<>();
-        categoryDiscountAdapter = new CategoryDiscountAdapter(this, categoryList);
-        rcvCategoryDiscounts.setLayoutManager(new LinearLayoutManager(this));
-        rcvCategoryDiscounts.setAdapter(categoryDiscountAdapter);
-        
-        // Load categories trước, sau đó load promotions
-        loadCategories();
-    }
+        adapter = new AdminPromotionAdapter(this::showRuleDialog);
+        rcv.setLayoutManager(new LinearLayoutManager(this));
+        rcv.setAdapter(adapter);
 
-    private void LoadCurrentPromotion() {
-        if (categoryDiscountAdapter == null) {
-            Log.e(TAG, "❌ Adapter chưa được khởi tạo");
-            return;
-        }
-        
-        db.collection("Promotions")
-                .document(PROMOTION_DOC_ID)
-                .get()
-                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                    @Override
-                    public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        if (documentSnapshot.exists()) {
-                            // Load category discounts
-                            Map<String, Object> categoryDiscountsMap = (Map<String, Object>) documentSnapshot.get("categoryDiscounts");
-                            if (categoryDiscountsMap != null && !categoryDiscountsMap.isEmpty()) {
-                                HashMap<String, CategoryDiscount> categoryDiscounts = new HashMap<>();
-                                for (Map.Entry<String, Object> entry : categoryDiscountsMap.entrySet()) {
-                                    String categoryName = entry.getKey();
-                                    Object discountObj = entry.getValue();
-                                    
-                                    // Có thể là Map (mới) hoặc Number (cũ - để tương thích)
-                                    if (discountObj instanceof Map) {
-                                        Map<String, Object> discountMap = (Map<String, Object>) discountObj;
-                                        Integer minProducts = discountMap.get("minProducts") != null 
-                                                ? ((Number) discountMap.get("minProducts")).intValue() : 0;
-                                        Integer discountPercent = discountMap.get("discountPercent") != null 
-                                                ? ((Number) discountMap.get("discountPercent")).intValue() : 0;
-                                        if (minProducts > 0 && discountPercent > 0) {
-                                            categoryDiscounts.put(categoryName, new CategoryDiscount(minProducts, discountPercent));
-                                            Log.d(TAG, "✅ Loaded discount for " + categoryName + ": " + minProducts + " SP -> " + discountPercent + "%");
-                                        }
-                                    } else if (discountObj instanceof Number) {
-                                        // Tương thích với dữ liệu cũ (chỉ có discountPercent)
-                                        int discountPercent = ((Number) discountObj).intValue();
-                                        if (discountPercent > 0) {
-                                            categoryDiscounts.put(categoryName, new CategoryDiscount(1, discountPercent));
-                                            Log.d(TAG, "✅ Loaded discount for " + categoryName + ": 1 SP -> " + discountPercent + "%");
-                                        }
-                                    }
-                                }
-                                
-                                // Set discounts vào adapter và cập nhật UI
-                                if (categoryDiscountAdapter != null) {
-                                    categoryDiscountAdapter.setCategoryDiscounts(categoryDiscounts);
-                                    Log.d(TAG, "✅ Đã load khuyến mãi theo loại: " + categoryDiscounts.size() + " loại");
-                                } else {
-                                    Log.e(TAG, "❌ Adapter is null when trying to set discounts");
-                                }
-                            } else {
-                                Log.d(TAG, "ℹ️ Chưa có khuyến mãi theo loại (categoryDiscountsMap is null or empty)");
-                            }
-                        } else {
-                            Log.d(TAG, "ℹ️ Chưa có chương trình khuyến mãi (document không tồn tại)");
-                        }
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(Exception e) {
-                        Log.e(TAG, "❌ Lỗi load khuyến mãi: " + e.getMessage(), e);
-                        Toast.makeText(AdminPromotionActivity.this, "Lỗi tải dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-    
-    private void loadCategories() {
-        db.collection("LoaiProduct")
-                .get()
-                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                    @Override
-                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                        categoryList.clear();
-                        for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                            String categoryName = doc.getString("tenloai");
-                            if (categoryName != null && !categoryName.trim().isEmpty()) {
-                                categoryList.add(categoryName);
-                            }
-                        }
-                        // Cập nhật adapter với danh sách categories mới
-                        if (categoryDiscountAdapter != null) {
-                            // Cập nhật categoryList trong adapter
-                            categoryDiscountAdapter.updateCategoryList(categoryList);
-                        } else {
-                            categoryDiscountAdapter = new CategoryDiscountAdapter(AdminPromotionActivity.this, categoryList);
-                            rcvCategoryDiscounts.setAdapter(categoryDiscountAdapter);
-                        }
-                        categoryDiscountAdapter.notifyDataSetChanged();
-                        Log.d(TAG, "✅ Đã load " + categoryList.size() + " loại sản phẩm");
-                        
-                        // Sau khi load xong categories, mới load promotions
-                        LoadCurrentPromotion();
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(Exception e) {
-                        Log.e(TAG, "❌ Lỗi load danh sách loại sản phẩm: " + e.getMessage());
-                        Toast.makeText(AdminPromotionActivity.this, "Lỗi tải danh sách loại sản phẩm", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-    private void Event() {
-        imgBackPromotion.setOnClickListener(new View.OnClickListener() {
+        btnSave.setOnClickListener(v -> save());
+        btnReset.setOnClickListener(v -> {
+            working = new LinkedHashMap<>(saved);
+            render();
+        });
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
-            public void onClick(View view) {
-                finish();
+            public void handleOnBackPressed() {
+                attemptClose();
             }
         });
 
-        btnSavePromotion.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                SavePromotion();
-            }
+        loadRules();
+    }
+
+    @Override
+    protected void onStartListening() {
+        listen(db.collection("LoaiProduct").orderBy("tenloai", Query.Direction.ASCENDING)
+                .addSnapshotListener((snap, e) -> {
+                    if (e != null) {
+                        Log.e(TAG, "Lỗi đọc LoaiProduct", e);
+                        Toast.makeText(this, "Không tải được danh mục", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (snap == null) return;
+                    categories.clear();
+                    Set<String> seen = new HashSet<>();
+                    for (DocumentSnapshot d : snap.getDocuments()) {
+                        String name = FirestoreMapper.str(d, "tenloai").trim();
+                        if (!name.isEmpty() && seen.add(name)) categories.add(name); // bỏ tên trùng hệt nhau
+                    }
+                    categoriesLoaded = true;
+                    render();
+                }));
+    }
+
+    /** Chỉ đọc một lần: không nghe liên tục để không ghi đè những gì admin đang chỉnh dở. */
+    private void loadRules() {
+        db.collection("Promotions").document(PROMOTION_DOC_ID).get().addOnSuccessListener(doc -> {
+            if (isFinishing()) return;
+            saved = doc.exists() ? PromotionRules.parse(doc.get("categoryDiscounts")) : new LinkedHashMap<>();
+            working = new LinkedHashMap<>(saved);
+            rulesLoaded = true;
+            render();
+        }).addOnFailureListener(e -> {
+            Log.e(TAG, "Lỗi đọc khuyến mãi", e);
+            progress.setVisibility(View.GONE);
+            Toast.makeText(this, "Không tải được khuyến mãi", Toast.LENGTH_SHORT).show();
         });
     }
 
-    private void SavePromotion() {
-        // Lưu khuyến mãi theo loại sản phẩm
-        HashMap<String, CategoryDiscount> categoryDiscountsToSave = categoryDiscountAdapter.getCategoryDiscounts();
-        Map<String, Object> categoryDiscountsMap = new HashMap<>();
-        int activeDiscounts = 0;
-        
-        for (Map.Entry<String, CategoryDiscount> entry : categoryDiscountsToSave.entrySet()) {
-            CategoryDiscount discount = entry.getValue();
-            if (discount != null && discount.getMinProducts() > 0 && discount.getDiscountPercent() > 0) {
-                Map<String, Object> discountMap = new HashMap<>();
-                discountMap.put("minProducts", discount.getMinProducts());
-                discountMap.put("discountPercent", discount.getDiscountPercent());
-                categoryDiscountsMap.put(entry.getKey(), discountMap);
-                activeDiscounts++;
-            }
+    private void render() {
+        if (!categoriesLoaded || !rulesLoaded) return;
+        progress.setVisibility(View.GONE);
+
+        List<AdminPromotionAdapter.Row> rows = new ArrayList<>();
+        // quy tắc của loại không còn tồn tại (đã xóa / đổi tên) lên đầu để admin thấy và xóa
+        Set<String> known = new HashSet<>(categories);
+        List<String> orphans = new ArrayList<>();
+        for (String name : working.keySet()) if (!known.contains(name)) orphans.add(name);
+        Collections.sort(orphans, (a, b) -> TextNormalizer.normalize(a).compareTo(TextNormalizer.normalize(b)));
+        for (String name : orphans) rows.add(new AdminPromotionAdapter.Row(name, working.get(name), true));
+        for (String name : categories) rows.add(new AdminPromotionAdapter.Row(name, working.get(name), false));
+
+        adapter.submitList(rows);
+        showEmpty(emptyView, rows.isEmpty(), "Chưa có danh mục nào để đặt khuyến mãi.");
+
+        int active = working.size();
+        toolbar.setSubtitle(active == 0 ? "Chưa có khuyến mãi nào" : active + " loại đang giảm giá");
+
+        boolean dirty = isDirty();
+        btnSave.setEnabled(dirty && !saving);
+        btnSave.setText(saving ? "Đang lưu..." : (dirty ? "Lưu khuyến mãi" : "Đã lưu"));
+        btnReset.setVisibility(dirty ? View.VISIBLE : View.GONE);
+    }
+
+    private boolean isDirty() {
+        return !PromotionRules.same(saved, working);
+    }
+
+    // ------------------------------------------------------------------ chỉnh quy tắc
+
+    private void showRuleDialog(AdminPromotionAdapter.Row row) {
+        View form = LayoutInflater.from(this).inflate(R.layout.dialog_admin_promotion_rule, null);
+        TextInputLayout tilMin = form.findViewById(R.id.til_promo_min);
+        TextInputLayout tilPercent = form.findViewById(R.id.til_promo_percent);
+        TextInputEditText edtMin = form.findViewById(R.id.edt_promo_min);
+        TextInputEditText edtPercent = form.findViewById(R.id.edt_promo_percent);
+        TextView preview = form.findViewById(R.id.tv_promo_preview);
+
+        if (row.rule != null) {
+            edtMin.setText(String.valueOf(row.rule.minProducts));
+            edtPercent.setText(String.valueOf(row.rule.percent));
         }
-        
-        if (activeDiscounts == 0) {
-            Toast.makeText(this, "Vui lòng thiết lập khuyến mãi cho ít nhất 1 loại sản phẩm", Toast.LENGTH_SHORT).show();
+        TextWatcher watcher = new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
+            @Override public void onTextChanged(CharSequence s, int a, int b, int c) { }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                tilMin.setError(null);
+                tilPercent.setError(null);
+                String[] err = PromotionRules.validate(text(edtMin), text(edtPercent));
+                preview.setText(PromotionRules.hasError(err) ? "" : PromotionRules.describe(
+                        new PromotionRules.Rule(Integer.parseInt(text(edtMin)), Integer.parseInt(text(edtPercent)))));
+            }
+        };
+        edtMin.addTextChangedListener(watcher);
+        edtPercent.addTextChangedListener(watcher);
+        watcher.afterTextChanged(null);
+
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
+                .setTitle(row.category)
+                .setView(form)
+                .setNegativeButton("Hủy", null)
+                .setPositiveButton("Áp dụng", null);
+        if (row.rule != null) {
+            builder.setNeutralButton(row.orphan ? "Xóa quy tắc" : "Tắt khuyến mãi", (d, w) -> {
+                working.remove(row.category);
+                render();
+            });
+        }
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(x -> {
+            String[] err = PromotionRules.validate(text(edtMin), text(edtPercent));
+            tilMin.setError(err[0]);
+            tilPercent.setError(err[1]);
+            if (PromotionRules.hasError(err)) return;
+            working.put(row.category, new PromotionRules.Rule(
+                    Integer.parseInt(text(edtMin)), Integer.parseInt(text(edtPercent))));
+            render();
+            dialog.dismiss();
+        });
+    }
+
+    private static String text(TextInputEditText e) {
+        return e.getText() == null ? "" : e.getText().toString().trim();
+    }
+
+    // ------------------------------------------------------------------ lưu
+
+    private void save() {
+        if (saving || !isDirty()) return;
+        saving = true;
+        render();
+        Map<String, Object> data = new HashMap<>();
+        data.put("categoryDiscounts", PromotionRules.toFirestore(working));
+        data.put("updatedAt", System.currentTimeMillis());
+        db.collection("Promotions").document(PROMOTION_DOC_ID).set(data)
+                .addOnSuccessListener(v -> {
+                    saving = false;
+                    saved = new LinkedHashMap<>(working);
+                    Toast.makeText(this, working.isEmpty() ? "Đã tắt toàn bộ khuyến mãi"
+                            : "Đã lưu khuyến mãi cho " + working.size() + " loại", Toast.LENGTH_SHORT).show();
+                    render();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Lỗi lưu khuyến mãi", e);
+                    saving = false;
+                    Toast.makeText(this, "Lưu khuyến mãi thất bại, vui lòng thử lại", Toast.LENGTH_SHORT).show();
+                    render();
+                });
+    }
+
+    private void attemptClose() {
+        if (saving || !isDirty()) {
+            finish();
             return;
         }
-        
-        // Lưu vào Firestore
-        Map<String, Object> promotionData = new HashMap<>();
-        promotionData.put("categoryDiscounts", categoryDiscountsMap);
-        promotionData.put("updatedAt", System.currentTimeMillis());
-
-        int finalActiveDiscounts = activeDiscounts;
-        db.collection("Promotions")
-                .document(PROMOTION_DOC_ID)
-                .set(promotionData)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.d(TAG, "✅ Đã lưu khuyến mãi theo loại thành công: " + finalActiveDiscounts + " loại");
-                        Toast.makeText(AdminPromotionActivity.this, 
-                                "Đã lưu khuyến mãi cho " + finalActiveDiscounts + " loại sản phẩm", 
-                                Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(Exception e) {
-                        Log.e(TAG, "❌ Lỗi lưu khuyến mãi: " + e.getMessage());
-                        Toast.makeText(AdminPromotionActivity.this, 
-                                "Lỗi lưu khuyến mãi", 
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Bỏ thay đổi?")
+                .setMessage("Khuyến mãi bạn vừa chỉnh chưa được lưu.")
+                .setNegativeButton("Tiếp tục chỉnh", null)
+                .setPositiveButton("Bỏ thay đổi", (d, w) -> finish())
+                .show();
     }
 }
-

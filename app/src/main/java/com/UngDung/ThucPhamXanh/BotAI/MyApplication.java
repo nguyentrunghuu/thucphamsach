@@ -16,6 +16,9 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
+        // Giao diện Sáng / Tối / Theo hệ thống người dùng đã chọn (phải đặt trước khi tạo activity)
+        com.UngDung.ThucPhamXanh.Helper.ThemePrefs.apply(this);
+
         // Khởi tạo Firebase
         FirebaseApp.initializeApp(this);
 

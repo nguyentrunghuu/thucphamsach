@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bottom sheet đổi trạng thái đơn (AdminOrderStatusSheet) — dùng chung cho danh sách và chi tiết đơn -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/sheet_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/admin_surface"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/admin_space_xl"
+    android:paddingTop="@dimen/admin_space_l"
+    android:paddingEnd="@dimen/admin_space_xl"
+    android:paddingBottom="@dimen/admin_space_l">
+
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/bg_admin_badge"
+        android:backgroundTint="@color/admin_outline" />
+
+    <TextView
+        style="@style/Admin.Text.Title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/admin_space_l"
+        android:text="Cập nhật trạng thái" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/admin_space_xs"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tv_sheet_order"
+            style="@style/Admin.Text.Caption"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tv_sheet_current"
+            style="@style/Admin.Badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <TextView
+        style="@style/Admin.Text.Section"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/admin_space_l"
+        android:text="Chuyển sang" />
+
+    <RadioGroup
+        android:id="@+id/rg_sheet_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/admin_space_xs" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_sheet_reason"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/admin_space_s"
+        android:hint="Lý do hủy *"
+        android:visibility="gone"
+        app:helperText="Khách sẽ thấy lý do này trong đơn hàng">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edt_sheet_reason"
+            style="@style/Admin.Text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLength="200"
+            android:maxLines="3" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/tv_sheet_hint"
+        style="@style/Admin.Text.Caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/admin_space_s"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/admin_space_l"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_sheet_close"
+            style="@style/Admin.Button.Outlined"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/admin_space_s"
+            android:layout_weight="1"
+            android:text="Đóng" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_sheet_apply"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:enabled="false"
+            android:text="Chọn trạng thái" />
+    </LinearLayout>
+</LinearLayout>

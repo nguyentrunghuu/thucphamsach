@@ -49,12 +49,24 @@
         <activity android:name="com.UngDung.ThucPhamXanh.View.FavoriteActivity" />
         <activity android:name="com.UngDung.ThucPhamXanh.View.CommentActivity" />
         <activity android:name="com.UngDung.ThucPhamXanh.View.DetailSPActivity" />
-        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminUsersActivity" />
-        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminPromotionActivity" />
-        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminShipperActivity" />
-        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminLoaiSPActivity" />
-        <activity android:name="com.UngDung.ThucPhamXanh.View.Shipper.ShipperHomeActivity" />
-        <activity android:name="com.UngDung.ThucPhamXanh.View.Shipper.ShipperUpdateOrderActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminUsersActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminPromotionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminShipperActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminLoaiSPActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Shipper.ShipperHomeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Shipper.ShipperUpdateOrderActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
         <activity android:name="com.UngDung.ThucPhamXanh.View.SearchActivity" />
         
         <!-- VNPay Payment Activity với deep link -->
@@ -70,23 +82,38 @@
         </activity>
         <!-- OpenStreetMap không cần API key -->
 
-        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminCTHDActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminCTHDActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
         <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminAddLoaiSPActivity"
-            android:exported="true">
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" >
 
         </activity>
         <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminAddSPActivity"
-            android:exported="true">
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" >
 
         </activity>
-        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminProductActivity" />
-        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminChartBillActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminProductActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminAiChatActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminChartBillActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
         <activity
             android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminBillMainActivity"
-            android:exported="true" />
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
         <activity
             android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminHomeActivity"
-            android:exported="true" >
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" >
 
         </activity>
         <activity

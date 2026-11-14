@@ -9,11 +9,11 @@
     android:layout_marginBottom="8dp"
     android:clickable="true"
     android:focusable="true"
-    app:cardBackgroundColor="#FFFFFF"
+    app:cardBackgroundColor="@color/ui_surface"
     app:cardCornerRadius="100dp"
     app:cardElevation="0dp"
     app:rippleColor="#1A2E7D32"
-    app:strokeColor="#DDE3DD"
+    app:strokeColor="@color/ui_stroke"
     app:strokeWidth="1dp">
 
     <TextView
@@ -28,6 +28,6 @@
         android:paddingEnd="14dp"
         android:paddingBottom="8dp"
         android:text="đã tìm kiếm"
-        android:textColor="#3A433A"
+        android:textColor="@color/ui_text"
         android:textSize="13sp" />
 </com.google.android.material.card.MaterialCardView>

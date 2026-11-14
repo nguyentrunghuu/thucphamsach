@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Trạng thái trống dùng chung cho danh sách admin; điều khiển bằng BaseAdminActivity.showEmpty(...) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/admin_empty"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="@dimen/admin_space_xl"
+    android:visibility="gone">
+
+    <ImageView
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_ui_leaf"
+        android:tint="@color/admin_outline" />
+
+    <TextView
+        android:id="@+id/admin_empty_text"
+        style="@style/Admin.Text.Caption"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/admin_space_s"
+        android:gravity="center"
+        android:text="Chưa có dữ liệu"
+        android:textSize="14sp" />
+</LinearLayout>

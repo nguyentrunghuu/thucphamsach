@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Thẻ số liệu trên dashboard admin (dùng qua <include>); nội dung gán trong AdminHomeActivity.bindStat -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/admin_card_padding">
+
+        <FrameLayout
+            android:id="@+id/stat_icon_box"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_admin_icon_box">
+
+            <ImageView
+                android:id="@+id/stat_icon"
+                android:layout_width="@dimen/admin_icon"
+                android:layout_height="@dimen/admin_icon"
+                android:layout_gravity="center"
+                android:importantForAccessibility="no" />
+        </FrameLayout>
+
+        <!-- Chiều cao cố định để autoSize thu nhỏ chữ thay vì cắt "..." trên máy màn hình hẹp -->
+        <TextView
+            android:id="@+id/stat_label"
+            style="@style/Admin.Text.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_marginTop="@dimen/admin_space_m"
+            android:autoSizeMaxTextSize="13sp"
+            android:autoSizeMinTextSize="10sp"
+            android:autoSizeTextType="uniform"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/stat_value"
+            style="@style/Admin.Text.StatValue"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_marginTop="2dp"
+            android:autoSizeMaxTextSize="22sp"
+            android:autoSizeMinTextSize="14sp"
+            android:autoSizeTextType="uniform"
+            android:maxLines="1"
+            android:text="—" />
+
+        <TextView
+            android:id="@+id/stat_hint"
+            style="@style/Admin.Text.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="18dp"
+            android:layout_marginTop="2dp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeMinTextSize="10sp"
+            android:autoSizeTextType="uniform"
+            android:maxLines="1" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Một đơn trong "Đơn hàng của tôi" — CustomerOrderAdapter -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="12dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardBackgroundColor="@color/ui_surface"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:rippleColor="#1A2E7D32"
+    app:strokeColor="@color/ui_stroke"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Mã đơn + ngày + trạng thái -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_order_code"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/be_vietnam_pro"
+                    android:maxLines="1"
+                    android:textColor="@color/ui_text"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    tools:text="TPS0512250010TM" />
+
+                <TextView
+                    android:id="@+id/tv_order_date"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/be_vietnam_pro"
+                    android:textColor="@color/ui_text_secondary"
+                    android:textSize="12sp"
+                    tools:text="Đặt ngày 15/12/2025" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_order_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:fontFamily="@font/be_vietnam_pro"
+                android:paddingStart="12dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="5dp"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="Đang giao hàng" />
+        </LinearLayout>
+
+        <!-- Ảnh sản phẩm (tối đa 4 ô, ô cuối là "+N") -->
+        <LinearLayout
+            android:id="@+id/row_thumbs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/img_thumb_1"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_order_thumb"
+                android:clipToOutline="true"
+                android:contentDescription="@null"
+                android:outlineProvider="background"
+                android:scaleType="centerCrop" />
+
+            <ImageView
+                android:id="@+id/img_thumb_2"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_order_thumb"
+                android:clipToOutline="true"
+                android:contentDescription="@null"
+                android:outlineProvider="background"
+                android:scaleType="centerCrop" />
+
+            <ImageView
+                android:id="@+id/img_thumb_3"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_order_thumb"
+                android:clipToOutline="true"
+                android:contentDescription="@null"
+                android:outlineProvider="background"
+                android:scaleType="centerCrop" />
+
+            <TextView
+                android:id="@+id/tv_thumb_more"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_order_thumb_more"
+                android:fontFamily="@font/be_vietnam_pro"
+                android:gravity="center"
+                android:textColor="@color/ui_green_text"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="+2" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_order_items"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/be_vietnam_pro"
+            android:maxLines="2"
+            android:textColor="@color/ui_text"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            tools:text="Củ Sắn, Hành lá và 2 sản phẩm khác" />
+
+        <!-- Tình trạng: đơn đang ở đâu -->
+        <LinearLayout
+            android:id="@+id/box_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingTop="9dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="9dp">
+
+            <ImageView
+                android:id="@+id/img_message"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_ui_truck" />
+
+            <TextView
+                android:id="@+id/tv_order_message"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:fontFamily="@font/be_vietnam_pro"
+                android:textSize="13sp"
+                tools:text="Shipper Dang Khoa đang giao đơn đến bạn" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="14dp"
+            android:background="@color/ui_divider" />
+
+        <!-- Tổng tiền -->
+        <TextView
+            android:id="@+id/tv_order_count"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fontFamily="@font/be_vietnam_pro"
+            android:textColor="@color/ui_text_secondary"
+            android:textSize="13sp"
+            tools:text="3 sản phẩm · Thanh toán khi nhận" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="@font/be_vietnam_pro"
+                android:text="Thành tiền"
+                android:textColor="@color/ui_text"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tv_order_total"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/be_vietnam_pro"
+                android:textColor="@color/ui_price"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="70.000 đ" />
+        </LinearLayout>
+
+        <!-- Hành động -->
+        <LinearLayout
+            android:id="@+id/row_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cancel"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="Hủy đơn"
+                android:textColor="@color/ui_danger"
+                app:cornerRadius="12dp"
+                app:strokeColor="#EF9A9A" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_primary"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginStart="8dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="Mua lại"
+                android:textColor="#FFFFFF"
+                app:backgroundTint="#2E7D32"
+                app:cornerRadius="12dp" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

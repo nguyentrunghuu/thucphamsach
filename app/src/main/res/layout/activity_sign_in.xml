@@ -81,7 +81,7 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="28dp"
                 app:cardElevation="16dp"
-                app:cardBackgroundColor="#FFFFFF">
+                app:cardBackgroundColor="@color/ui_surface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -100,7 +100,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Email"
-                            android:textColor="#757575"
+                            android:textColor="@color/ui_text_secondary"
                             android:textSize="14sp"
                             android:textStyle="bold"
                             android:layout_marginBottom="8dp" />
@@ -128,7 +128,7 @@
                                 android:paddingStart="16dp"
                                 android:paddingEnd="16dp"
                                 android:textSize="15sp"
-                                android:textColorHint="#9E9E9E"
+                                android:textColorHint="@color/ui_text_hint"
                                 android:drawableStart="@drawable/ic_email"
                                 android:drawablePadding="12dp"
                                 android:background="@android:color/transparent" />
@@ -146,7 +146,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Mật khẩu"
-                            android:textColor="#757575"
+                            android:textColor="@color/ui_text_secondary"
                             android:textSize="14sp"
                             android:textStyle="bold"
                             android:layout_marginBottom="8dp" />
@@ -176,7 +176,7 @@
                                 android:paddingStart="16dp"
                                 android:paddingEnd="16dp"
                                 android:textSize="15sp"
-                                android:textColorHint="#9E9E9E"
+                                android:textColorHint="@color/ui_text_hint"
                                 android:background="@android:color/transparent" />
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>

@@ -1,44 +1,43 @@
 package com.UngDung.ThucPhamXanh.View.Admin;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-
-import android.Manifest;
-import android.app.DatePickerDialog;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.os.Bundle;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.DatePicker;
-import android.widget.EditText;
-import android.widget.Spinner;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.UngDung.ThucPhamXanh.Models.HoaDon;
-import com.UngDung.ThucPhamXanh.Presenter.HoaDonPreSenter;
+import androidx.annotation.IdRes;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
+
+import com.UngDung.ThucPhamXanh.BotAI.GeminiClient;
+import com.UngDung.ThucPhamXanh.Helper.AdminAiPrompts;
+import com.UngDung.ThucPhamXanh.Helper.FirestoreMapper;
+import com.UngDung.ThucPhamXanh.Helper.MoneyUtil;
+import com.UngDung.ThucPhamXanh.Helper.RevenueReport;
+import com.UngDung.ThucPhamXanh.Helper.RevenueReport.Range;
+import com.UngDung.ThucPhamXanh.Models.OrderStatus;
 import com.UngDung.ThucPhamXanh.R;
-import com.UngDung.ThucPhamXanh.my_interface.HoaDonView;
 import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.data.PieData;
-import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.formatter.PercentFormatter;
-import com.github.mikephil.charting.utils.ColorTemplate;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -49,503 +48,444 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.text.NumberFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
-public class AdminChartBillActivity extends AppCompatActivity implements HoaDonView {
+/**
+ * Thống kê doanh thu cho admin.
+ *
+ * Chọn kỳ bằng chip (7 ngày / 30 ngày / tháng này / năm nay / tự chọn) → thẻ doanh thu kèm so sánh
+ * với kỳ trước → biểu đồ cột (theo ngày, hoặc theo tháng khi kỳ dài) → số đơn theo trạng thái
+ * → giá trị đơn chưa giao xong → xuất Excel các đơn đã giao trong kỳ.
+ *
+ * Mọi phép tính nằm ở {@link RevenueReport} (có unit test). Màn hình chỉ đọc 1 listener HoaDon
+ * (chỉ khi đang hiện — xem BaseAdminActivity) và vẽ lại khi dữ liệu hoặc kỳ thay đổi.
+ */
+public class AdminChartBillActivity extends BaseAdminActivity {
 
-    private Spinner spinnerDoanhthu;
-    private ArrayList<String> mlistYear;
-    private ArrayList<HoaDon> mlist;
-    private HoaDonPreSenter hoaDonPreSenter;
+    private static final String TAG = "AdminChartBill";
 
-    private Button btnTinhDoanhThu, btnXuatExcel;
-    private EditText edtFromDate, edtToDate;
-    private TextView tvDoanhThu;
-    private Toolbar toolbar;
+    /** Một hóa đơn rút gọn, đủ cho thống kê và xuất Excel. */
+    private static final class OrderRow {
+        String id, uid, hoten, diachi, sdt, ngaydat;
+        Object tongtien;
+        Long status;
+    }
+
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final List<OrderRow> rows = new ArrayList<>();
+    private boolean loaded;
+
+    private Range range;
+    private RevenueReport report;
+    private int lastPresetChip = R.id.chip_period_month;
+
+    private ChipGroup chipGroup;
     private BarChart barChart;
-    private PieChart pieChart;
-    private  float dangxuly = 0,danggiaohang=0,giaohangthanhcong=0,huyhang=0;
-    long total;
-    private Number number;
-    long chonngaytinhtien;
-    private File filePath;
-    private int i = 0;
-    private HSSFRow row;
-    private String day = "";
-    private ArrayList<BarEntry> barEntries;
-    private Number numBarChart;
-    private int chonBarChart;
-    private Date t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12;
+    private TextView tvRange, tvRevenue, tvDelta, tvChartTitle, tvChartHint, tvChartEmpty, tvUnfinished;
+    private View miniDelivered, miniAverage, miniCancelled;
+    private com.google.android.material.button.MaterialButton btnAiInsight;
+    private TextView tvAiInsight;
+    private final List<StatusRow> statusRows = new ArrayList<>();
 
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    /** Dòng trạng thái: các status gộp (vd. 1+2 = "Chờ xác nhận"), nhãn và màu chấm. */
+    private static final class StatusRow {
+        final int[] statuses;
+        final String label;
+        final int color;
+        View view;
+
+        StatusRow(String label, int color, int... statuses) {
+            this.label = label;
+            this.color = color;
+            this.statuses = statuses;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_chart_bill);
 
-        InitWidget();
-        Init();
-        Canculator();
-        Event();
+        setupAdminToolbar("Thống kê doanh thu", null);
+        applySystemBarInsets(null, findViewById(R.id.chart_scroll));
 
+        chipGroup = findViewById(R.id.chip_group_period);
+        barChart = findViewById(R.id.barchart);
+        tvRange = findViewById(R.id.tv_range);
+        tvRevenue = findViewById(R.id.tv_revenue);
+        tvDelta = findViewById(R.id.tv_delta);
+        tvChartTitle = findViewById(R.id.tv_chart_title);
+        tvChartHint = findViewById(R.id.tv_chart_hint);
+        tvChartEmpty = findViewById(R.id.tv_chart_empty);
+        tvUnfinished = findViewById(R.id.tv_unfinished);
+        miniDelivered = findViewById(R.id.mini_delivered);
+        miniAverage = findViewById(R.id.mini_average);
+        miniCancelled = findViewById(R.id.mini_cancelled);
 
+        ((TextView) miniDelivered.findViewById(R.id.mini_label)).setText("Đơn đã giao");
+        ((TextView) miniAverage.findViewById(R.id.mini_label)).setText("TB mỗi đơn");
+        ((TextView) miniCancelled.findViewById(R.id.mini_label)).setText("Đơn hủy");
 
+        range = rangeFor(R.id.chip_period_month);
+        setupChart();
+        setupStatusRows();
+        setupPeriodChips();
+        findViewById(R.id.btn_export).setOnClickListener(v -> exportExcel());
+        btnAiInsight = findViewById(R.id.btn_ai_insight);
+        tvAiInsight = findViewById(R.id.tv_ai_insight);
+        btnAiInsight.setOnClickListener(v -> askAiInsight());
+        render();
     }
 
-    private void Canculator() {
-        total = 0; // Reset total
-        db.collection("HoaDon").whereEqualTo("trangthai", 3)
-                .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-            @Override
-            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                for (QueryDocumentSnapshot q : queryDocumentSnapshots){
-                    // đọc tiền an toàn (không phụ thuộc ngôn ngữ máy, không tràn số)
-                    total += com.UngDung.ThucPhamXanh.Helper.MoneyUtil.parseVnd(q.get("tongtien"));
-                }
-                tvDoanhThu.setText(NumberFormat.getInstance().format(total));
-            }
-        });
+    // ------------------------------------------------------------------ nhận xét AI
+
+    private Range aiRange;
+
+    /** Nhận xét AI chỉ đúng cho kỳ đã phân tích: đổi kỳ thì xóa để khỏi gây hiểu nhầm. */
+    private void resetAiInsightIfRangeChanged() {
+        if (tvAiInsight == null || aiRange == null || aiRange == range) return;
+        aiRange = null;
+        tvAiInsight.setTextColor(ContextCompat.getColor(this, R.color.admin_text_muted));
+        tvAiInsight.setText("Bấm nút bên dưới để AI đọc số liệu của kỳ này và gợi ý việc nên làm.");
+        btnAiInsight.setText("Phân tích kỳ này");
     }
 
-    private void Event() {
-
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
-
-        edtFromDate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Calendar calendar = Calendar.getInstance();
-                int ngay = calendar.get(Calendar.DATE);
-                int thang = calendar.get(Calendar.MONTH);
-                int nam = calendar.get(Calendar.YEAR);
-                DatePickerDialog datePickerDialog = new DatePickerDialog(AdminChartBillActivity.this, new DatePickerDialog.OnDateSetListener() {
+    private void askAiInsight() {
+        if (!loaded) return;
+        final RevenueReport snapshot = report;
+        aiRange = range;
+        btnAiInsight.setEnabled(false);
+        btnAiInsight.setText("AI đang phân tích…");
+        GeminiClient.ask(AdminAiPrompts.insightSystemPrompt(), null,
+                AdminAiPrompts.insightUserMessage(snapshot), new GeminiClient.Result() {
                     @Override
-                    public void onDateSet(DatePicker datePicker, int i, int i1, int i2) {
-                        // i:năm - i1:tháng - i2:ngày
-                        calendar.set(i, i1, i2);
-                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/YYYY");
-                        edtFromDate.setText(simpleDateFormat.format(calendar.getTime()));
-
+                    public void onSuccess(String text) {
+                        if (isFinishing() || isDestroyed()) return;
+                        tvAiInsight.setTextColor(ContextCompat.getColor(AdminChartBillActivity.this, R.color.admin_text));
+                        tvAiInsight.setText(AdminAiPrompts.stripMarkdown(text));
+                        btnAiInsight.setEnabled(true);
+                        btnAiInsight.setText("Phân tích lại");
                     }
-                }, nam, thang, ngay);
-                datePickerDialog.show();
-            }
-        });
 
-        edtToDate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Calendar calendar = Calendar.getInstance();
-                int ngay = calendar.get(Calendar.DATE);
-                int thang = calendar.get(Calendar.MONTH);
-                int nam = calendar.get(Calendar.YEAR);
-                DatePickerDialog datePickerDialog = new DatePickerDialog(AdminChartBillActivity.this, new DatePickerDialog.OnDateSetListener() {
                     @Override
-                    public void onDateSet(DatePicker datePicker, int i, int i1, int i2) {
-                        // i:năm - i1:tháng - i2:ngày
-                        calendar.set(i, i1, i2);
-                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/YYYY");
-                        edtToDate.setText(simpleDateFormat.format(calendar.getTime()));
+                    public void onError(String message) {
+                        if (isFinishing() || isDestroyed()) return;
+                        tvAiInsight.setTextColor(ContextCompat.getColor(AdminChartBillActivity.this, R.color.admin_danger));
+                        tvAiInsight.setText(message);
+                        btnAiInsight.setEnabled(true);
+                        btnAiInsight.setText("Thử lại");
                     }
-                }, nam, thang, ngay);
-                datePickerDialog.show();
+                });
+    }
+
+    @Override
+    protected void onStartListening() {
+        listen(db.collection("HoaDon").addSnapshotListener((snap, e) -> {
+            if (e != null) { Log.e(TAG, "Lỗi đọc HoaDon", e); return; }
+            if (snap != null) onOrders(snap);
+        }));
+    }
+
+    private void onOrders(QuerySnapshot snap) {
+        rows.clear();
+        for (QueryDocumentSnapshot doc : snap) {
+            OrderRow r = new OrderRow();
+            r.id = doc.getId();
+            r.uid = FirestoreMapper.str(doc, "UID");
+            r.hoten = FirestoreMapper.str(doc, "hoten");
+            r.diachi = FirestoreMapper.str(doc, "diachi");
+            r.sdt = FirestoreMapper.str(doc, "sdt");
+            r.ngaydat = FirestoreMapper.str(doc, "ngaydat");
+            r.tongtien = doc.get("tongtien");
+            r.status = FirestoreMapper.numOrNull(doc, "trangthai");
+            rows.add(r);
+        }
+        loaded = true;
+        render();
+    }
+
+    // ------------------------------------------------------------------ chọn kỳ
+
+    private void setupPeriodChips() {
+        chipGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == View.NO_ID) return;
+            if (checkedId == R.id.chip_period_custom) {
+                pickCustomRange();
+                return;
+            }
+            lastPresetChip = checkedId;
+            range = rangeFor(checkedId);
+            ((com.google.android.material.chip.Chip) findViewById(R.id.chip_period_custom)).setText("Chọn ngày…");
+            render();
+        });
+    }
+
+    private static Range rangeFor(@IdRes int chipId) {
+        LocalDate today = LocalDate.now();
+        if (chipId == R.id.chip_period_7) return Range.lastDays(today, 7);
+        if (chipId == R.id.chip_period_30) return Range.lastDays(today, 30);
+        if (chipId == R.id.chip_period_year) return Range.thisYear(today);
+        return Range.thisMonth(today);
+    }
+
+    private void pickCustomRange() {
+        MaterialDatePicker<androidx.core.util.Pair<Long, Long>> picker = MaterialDatePicker.Builder
+                .dateRangePicker()
+                .setTitleText("Chọn khoảng ngày")
+                .build();
+        picker.addOnPositiveButtonClickListener(sel -> {
+            if (sel == null || sel.first == null || sel.second == null) return;
+            LocalDate from = Instant.ofEpochMilli(sel.first).atZone(ZoneOffset.UTC).toLocalDate();
+            LocalDate to = Instant.ofEpochMilli(sel.second).atZone(ZoneOffset.UTC).toLocalDate();
+            range = new Range(from, to);
+            ((com.google.android.material.chip.Chip) findViewById(R.id.chip_period_custom))
+                    .setText(shortDate(range.from) + " – " + shortDate(range.to));
+            render();
+        });
+        // Hủy / đóng hộp thoại: quay về chip đang dùng trước đó
+        picker.addOnNegativeButtonClickListener(v -> chipGroup.check(lastPresetChip));
+        picker.addOnCancelListener(d -> chipGroup.check(lastPresetChip));
+        picker.show(getSupportFragmentManager(), "range");
+    }
+
+    // ------------------------------------------------------------------ vẽ màn hình
+
+    private void render() {
+        resetAiInsightIfRangeChanged();
+        report = new RevenueReport(range);
+        for (OrderRow r : rows) report.addOrder(r.status, r.ngaydat, r.tongtien);
+
+        tvRange.setText(longDate(range.from) + " – " + longDate(range.to) + " · " + range.days() + " ngày");
+
+        tvRevenue.setText(loaded ? MoneyUtil.formatVnd(report.getRevenue()) : "—");
+        bindDelta();
+        setMini(miniDelivered, String.valueOf(report.getDeliveredOrders()));
+        setMini(miniAverage, report.getDeliveredOrders() == 0 ? "—" : MoneyUtil.formatCompact(report.getAverageOrder()) + " đ");
+        setMini(miniCancelled, String.valueOf(report.getCancelledOrders()));
+
+        renderChart();
+        renderStatusRows();
+
+        if (loaded && report.getUnfinishedOrders() > 0) {
+            tvUnfinished.setVisibility(View.VISIBLE);
+            tvUnfinished.setText(report.getUnfinishedOrders() + " đơn trị giá "
+                    + MoneyUtil.formatVnd(report.getUnfinishedValue())
+                    + " chưa giao xong nên chưa tính vào doanh thu.");
+        } else {
+            tvUnfinished.setVisibility(View.GONE);
+        }
+    }
+
+    private void bindDelta() {
+        if (!loaded) { tvDelta.setText(""); return; }
+        Integer delta = report.getDeltaPercent();
+        if (delta == null) {
+            tvDelta.setText("Kỳ trước chưa có doanh thu để so sánh");
+        } else if (delta == 0) {
+            tvDelta.setText("= Bằng kỳ trước (" + MoneyUtil.formatVnd(report.getPreviousRevenue()) + ")");
+        } else {
+            tvDelta.setText((delta > 0 ? "▲ Tăng " : "▼ Giảm ") + Math.abs(delta) + "% so với kỳ trước ("
+                    + MoneyUtil.formatVnd(report.getPreviousRevenue()) + ")");
+        }
+    }
+
+    private static void setMini(View mini, String value) {
+        ((TextView) mini.findViewById(R.id.mini_value)).setText(value);
+    }
+
+    // ------------------------------------------------------------------ biểu đồ
+
+    private void setupChart() {
+        int text = ContextCompat.getColor(this, R.color.admin_text_muted);
+        int grid = ContextCompat.getColor(this, R.color.admin_outline);
+
+        barChart.getDescription().setEnabled(false);
+        barChart.getLegend().setEnabled(false);
+        barChart.setScaleEnabled(false);
+        barChart.setDoubleTapToZoomEnabled(false);
+        barChart.setPinchZoom(false);
+        barChart.setDrawGridBackground(false);
+        barChart.setNoDataText("");
+        barChart.setExtraBottomOffset(4f);
+
+        XAxis x = barChart.getXAxis();
+        x.setPosition(XAxis.XAxisPosition.BOTTOM);
+        x.setDrawGridLines(false);
+        x.setAxisLineColor(grid);
+        x.setTextColor(text);
+        x.setGranularity(1f);
+        x.setGranularityEnabled(true);
+
+        YAxis left = barChart.getAxisLeft();
+        left.setAxisMinimum(0f);
+        left.setTextColor(text);
+        left.setGridColor(grid);
+        left.setDrawAxisLine(false);
+        left.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getAxisLabel(float value, com.github.mikephil.charting.components.AxisBase axis) {
+                return MoneyUtil.formatCompact((long) value);
             }
         });
+        barChart.getAxisRight().setEnabled(false);
 
-        btnTinhDoanhThu.setOnClickListener(new View.OnClickListener() {
+        barChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
             @Override
-            public void onClick(View view) {
-                chonngaytinhtien=0;
-                String startDate = edtFromDate.getText().toString();
-                String endDate = edtToDate.getText().toString();
-                if (startDate.length() == 0 || endDate.length() == 0){
-                    Toast.makeText(AdminChartBillActivity.this, "Vui lòng chọn ngày bắt đầu/kết thúc", Toast.LENGTH_SHORT).show();
-                } else {
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                    try {
-                        Date ngaybatdau = sdf.parse(startDate);
-                        Date ngayketthuc = sdf.parse(endDate);
-                        if (ngaybatdau.compareTo(ngayketthuc) > 0){
-                            Toast.makeText(AdminChartBillActivity.this, "Vui lòng chọn ngày kết thúc sau ngày bắt đầu", Toast.LENGTH_SHORT).show();
-                        } else {
-                            db.collection("HoaDon").whereEqualTo("trangthai", 3)
-                                    .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                                @Override
-                                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                                    for (QueryDocumentSnapshot q : queryDocumentSnapshots){
-                                        String s = q.getString("ngaydat");
-                                        String tien = q.getString("tongtien");
-                                        try {
-                                            Date ngaygiua = sdf.parse(s);
-                                            if (ngaygiua.compareTo(ngaybatdau) > 0 && ngaygiua.compareTo(ngayketthuc) < 0){
-                                                Log.d("sosanhngay", "Bắt đầu < Giữa < Kết thúc");
-                                                chonngaytinhtien += com.UngDung.ThucPhamXanh.Helper.MoneyUtil.parseVnd(tien);
-                                                Log.d("why", "UID: " + q.getString("UID"));
-                                            } else if (ngaygiua.compareTo(ngaybatdau) == 0 && ngaygiua.compareTo(ngayketthuc) < 0){
-                                                Log.d("sosanhngay", "Bắt đầu = Giữa < Kết thúc");
-                                                chonngaytinhtien += com.UngDung.ThucPhamXanh.Helper.MoneyUtil.parseVnd(tien);
-                                                Log.d("why", "UID: " + q.getString("UID"));
-                                            } else if (ngaygiua.compareTo(ngaybatdau) > 0 && ngaygiua.compareTo(ngayketthuc) == 0){
-                                                Log.d("sosanhngay", "Bắt đầu < Giữa = Kết thúc");
-                                                chonngaytinhtien += com.UngDung.ThucPhamXanh.Helper.MoneyUtil.parseVnd(tien);
-                                                Log.d("why", "UID: " + q.getString("UID"));
-                                            } else if (ngaygiua.compareTo(ngaybatdau) == 0 && ngaygiua.compareTo(ngayketthuc) == 0){
-                                                Log.d("sosanhngay", "Bắt đầu = Giữa = Kết thúc");
-                                                chonngaytinhtien += com.UngDung.ThucPhamXanh.Helper.MoneyUtil.parseVnd(tien);
-                                                Log.d("why", "UID: " + q.getString("UID"));
-                                            }
-                                        } catch (ParseException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                    tvDoanhThu.setText(NumberFormat.getInstance().format(chonngaytinhtien));
-                                    btnXuatExcel.setVisibility(View.VISIBLE);
-                                }
-                            });
-                        }
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-
-            }
-        });
-
-
-        btnXuatExcel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Tên file theo ngày giờ xuất (không trùng giữa các lần xuất)
-                String exportFileName = "DoanhThu-" + new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss", Locale.getDefault()).format(new Date()) + ".xls";
-                HSSFWorkbook hssfWorkbook = new HSSFWorkbook();
-                HSSFSheet hssfSheet = hssfWorkbook.createSheet("Doanh thu"); // Tên sheet
-
-                // Dòng đầu tiên của excel
-                HSSFRow rowhead = hssfSheet.createRow((short)0);               // Hàng 1
-                rowhead.createCell(0).setCellValue("STT");              // Cột 0
-                rowhead.createCell(1).setCellValue("UID");              // Cột 1
-                rowhead.createCell(2).setCellValue("Họ tên");           // Cột 2
-                rowhead.createCell(3).setCellValue("Địa chỉ");          // Cột 3
-                rowhead.createCell(4).setCellValue("SĐT");              // Cột 4
-                rowhead.createCell(5).setCellValue("Ngày Đặt");         // Cột 5
-                rowhead.createCell(6).setCellValue("Tổng tiền");        // Cột 6
-                rowhead.createCell(7).setCellValue("ID Hóa đơn");       // Cột 7
-
-
-                String startDate = edtFromDate.getText().toString();
-                String endDate = edtToDate.getText().toString();
-                if (startDate.length() == 0 || endDate.length() == 0){
-                    Toast.makeText(AdminChartBillActivity.this, "Vui lòng chọn ngày bắt đầu/kết thúc", Toast.LENGTH_SHORT).show();
-                } else {
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                    try {
-                        Date ngaybatdau = sdf.parse(startDate);
-                        Date ngayketthuc = sdf.parse(endDate);
-                        if (ngaybatdau.compareTo(ngayketthuc) > 0){
-                            Toast.makeText(AdminChartBillActivity.this, "Vui lòng chọn ngày kết thúc sau ngày bắt đầu", Toast.LENGTH_SHORT).show();
-                        } else {
-                            int rowIndex = 1; // Bắt đầu từ hàng 2 (sau header)
-                            for (int j=0; j < mlist.size(); j++){
-                                HoaDon hoaDon = mlist.get(j);
-                                if (hoaDon == null || hoaDon.getNgaydat() == null) {
-                                    continue;
-                                }
-                                String s = hoaDon.getNgaydat();
-                                try {
-                                    Date ngaygiua = sdf.parse(s);
-                                    // Kiểm tra nếu ngày nằm trong khoảng từ ngaybatdau đến ngayketthuc (bao gồm cả 2 đầu)
-                                    if ((ngaygiua.compareTo(ngaybatdau) >= 0 && ngaygiua.compareTo(ngayketthuc) <= 0)) {
-                                        row = hssfSheet.createRow((short)rowIndex);
-                                        row.createCell(0).setCellValue(rowIndex);
-                                        row.createCell(1).setCellValue(hoaDon.getUid() != null ? hoaDon.getUid() : "");
-                                        row.createCell(2).setCellValue(hoaDon.getHoten() != null ? hoaDon.getHoten() : "");
-                                        row.createCell(3).setCellValue(hoaDon.getDiachi() != null ? hoaDon.getDiachi() : "");
-                                        row.createCell(4).setCellValue(hoaDon.getSdt() != null ? hoaDon.getSdt() : "");
-                                        row.createCell(5).setCellValue(hoaDon.getNgaydat() != null ? hoaDon.getNgaydat() : "");
-                                        row.createCell(6).setCellValue(hoaDon.getTongtien() != null ? hoaDon.getTongtien() : "");
-                                        row.createCell(7).setCellValue(hoaDon.getId() != null ? hoaDon.getId() : "");
-                                        rowIndex++;
-                                    }
-                                } catch (ParseException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-
-
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
-                    saveAndShareWorkbook(hssfWorkbook, exportFileName);
-                }
-
-
-            }
-        });
-
-        spinnerDoanhthu.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
-                chonBarChart = 0;
-                barEntries.clear();
-                String item = adapterView.getItemAtPosition(position).toString();
-                BieuDoDoanhThu(item);
-
+            public void onValueSelected(Entry e, Highlight h) {
+                showBucket((int) e.getX());
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-                BieuDoDoanhThu("2020");
+            public void onNothingSelected() {
+                showDefaultHint();
             }
         });
     }
 
-    private void BieuDoDoanhThu(String item){
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        String thang1 = "01/01/" + item;
-        String thang2 = "01/02/" + item;
-        String thang3 = "01/03/" + item;
-        String thang4 = "01/04/" + item;
-        String thang5 = "01/05/" + item;
-        String thang6 = "01/06/" + item;
-        String thang7 = "01/07/" + item;
-        String thang8 = "01/08/" + item;
-        String thang9 = "01/09/" + item;
-        String thang10 = "01/10/" + item;
-        String thang11 = "01/11/" + item;
-        String thang12 = "01/12/" + item;
-        String thang13 = "01/01/" + (Integer.parseInt(item) + 1); // Tháng 1 năm sau
+    private void renderChart() {
+        tvChartTitle.setText(report.isMonthly() ? "Doanh thu theo tháng" : "Doanh thu theo ngày");
 
-        Date t13;
-        try {
-            t1 = sdf.parse(thang1);
-            t2 = sdf.parse(thang2);
-            t3 = sdf.parse(thang3);
-            t4 = sdf.parse(thang4);
-            t5 = sdf.parse(thang5);
-            t6 = sdf.parse(thang6);
-            t7 = sdf.parse(thang7);
-            t8 = sdf.parse(thang8);
-            t9 = sdf.parse(thang9);
-            t10 = sdf.parse(thang10);
-            t11 = sdf.parse(thang11);
-            t12 = sdf.parse(thang12);
-            t13 = sdf.parse(thang13);
-        } catch (ParseException e) {
-            e.printStackTrace();
+        boolean hasRevenue = loaded && report.getBestBucket() >= 0;
+        tvChartEmpty.setVisibility(loaded && !hasRevenue ? View.VISIBLE : View.GONE);
+        barChart.setVisibility(hasRevenue ? View.VISIBLE : View.INVISIBLE);
+        if (!hasRevenue) {
+            barChart.clear();
+            tvChartHint.setText(loaded ? "" : "Đang tải…");
             return;
         }
-        Log.d("item", "Năm: " + item);
 
-        // Tổng hợp doanh thu theo từng tháng
-        float[] monthlyRevenue = new float[12]; // 12 tháng
-        for (int k = 0; k < mlist.size(); k++){
-            HoaDon hoaDon = mlist.get(k);
-            if (hoaDon == null || hoaDon.getNgaydat() == null || hoaDon.getTongtien() == null) {
-                continue;
-            }
-            day = hoaDon.getNgaydat();
-            try {
-                Date dayHD = sdf.parse(day);
-                String tienBarChart = hoaDon.getTongtien();
-                if (tienBarChart == null || tienBarChart.isEmpty()) {
-                    continue;
-                }
-                long revenue = com.UngDung.ThucPhamXanh.Helper.MoneyUtil.parseVnd(tienBarChart);
-                
-                // Xác định tháng
-                int month = -1;
-                if (dayHD.compareTo(t1) >= 0 && dayHD.compareTo(t2) < 0) {
-                    month = 0; // Tháng 1
-                } else if (dayHD.compareTo(t2) >= 0 && dayHD.compareTo(t3) < 0) {
-                    month = 1; // Tháng 2
-                } else if (dayHD.compareTo(t3) >= 0 && dayHD.compareTo(t4) < 0) {
-                    month = 2; // Tháng 3
-                } else if (dayHD.compareTo(t4) >= 0 && dayHD.compareTo(t5) < 0) {
-                    month = 3; // Tháng 4
-                } else if (dayHD.compareTo(t5) >= 0 && dayHD.compareTo(t6) < 0) {
-                    month = 4; // Tháng 5
-                } else if (dayHD.compareTo(t6) >= 0 && dayHD.compareTo(t7) < 0) {
-                    month = 5; // Tháng 6
-                } else if (dayHD.compareTo(t7) >= 0 && dayHD.compareTo(t8) < 0) {
-                    month = 6; // Tháng 7
-                } else if (dayHD.compareTo(t8) >= 0 && dayHD.compareTo(t9) < 0) {
-                    month = 7; // Tháng 8
-                } else if (dayHD.compareTo(t9) >= 0 && dayHD.compareTo(t10) < 0) {
-                    month = 8; // Tháng 9
-                } else if (dayHD.compareTo(t10) >= 0 && dayHD.compareTo(t11) < 0) {
-                    month = 9; // Tháng 10
-                } else if (dayHD.compareTo(t11) >= 0 && dayHD.compareTo(t12) < 0) {
-                    month = 10; // Tháng 11
-                } else if (dayHD.compareTo(t12) >= 0 && dayHD.compareTo(t13) < 0) {
-                    month = 11; // Tháng 12
-                }
-                
-                if (month >= 0 && month < 12) {
-                    monthlyRevenue[month] += revenue;
-                }
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-        }
-        
-        // Tạo BarEntry cho mỗi tháng
-        barEntries.clear();
-        for (int month = 0; month < 12; month++) {
-            if (monthlyRevenue[month] > 0) {
-                barEntries.add(new BarEntry(month + 1, monthlyRevenue[month] / 1000));
-            } else {
-                barEntries.add(new BarEntry(month + 1, 0));
-            }
-        }
-        
-        // Initialize bar data set
-        BarDataSet barDataSet = new BarDataSet(barEntries, "Doanh thu (nghìn VNĐ)");
-        // Set colors
-        barDataSet.setColors(ColorTemplate.COLORFUL_COLORS);
-        // Show draw value
-        barDataSet.setDrawValues(true);
-        // Set bar data
-        barChart.setData(new BarData(barDataSet));
-        // Set animation
-        barChart.animateY(2000);
-        barChart.getDescription().setText("Biểu đồ thống kê doanh thu năm " + item);
-        barChart.getDescription().setTextColor(Color.WHITE);
-        barChart.invalidate();
-    }
+        final int n = report.getBucketCount();
+        List<BarEntry> entries = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) entries.add(new BarEntry(i, report.getBucketRevenue(i)));
 
-    private void Init() {
-        mlistYear = new ArrayList<>();
-        // Thêm các năm từ 2020 đến năm hiện tại
-        Calendar calendar = Calendar.getInstance();
-        int currentYear = calendar.get(Calendar.YEAR);
-        for (int year = 2020; year <= currentYear; year++) {
-            mlistYear.add(String.valueOf(year));
-        }
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, com.google.android.material.R.layout.support_simple_spinner_dropdown_item, mlistYear);
-        spinnerDoanhthu.setAdapter(arrayAdapter);
-        // Set default to current year
-        int defaultPosition = mlistYear.indexOf(String.valueOf(currentYear));
-        if (defaultPosition >= 0) {
-            spinnerDoanhthu.setSelection(defaultPosition);
-        }
-        mlist = new ArrayList<>();
-        hoaDonPreSenter = new HoaDonPreSenter(this);
-        hoaDonPreSenter.HandleGetDataHDDaGiao();
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("");
-            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-        }
-        
-        // Set up back button
-        View imgBack = findViewById(R.id.img_back_chart);
-        if (imgBack != null) {
-            imgBack.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    finish();
-                }
-            });
-        }
+        BarDataSet set = new BarDataSet(entries, "Doanh thu");
+        set.setColor(ContextCompat.getColor(this, R.color.admin_primary));
+        set.setHighLightColor(ContextCompat.getColor(this, R.color.admin_secondary));
+        set.setHighLightAlpha(255);
+        set.setDrawValues(false);
+        BarData data = new BarData(set);
+        data.setBarWidth(n <= 12 ? 0.6f : 0.75f);
 
-        barEntries = new ArrayList<>();
-        ArrayList<PieEntry> pieEntries = new ArrayList<>();
-
-
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("HoaDon").get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+        XAxis x = barChart.getXAxis();
+        x.setLabelCount(Math.min(n, report.isMonthly() ? 12 : 6), false);
+        x.setValueFormatter(new ValueFormatter() {
             @Override
-            public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
-                for(QueryDocumentSnapshot q : queryDocumentSnapshots){
-                    if(q.getLong("trangthai")==1){
-                        dangxuly++;
-                    }else if(q.getLong("trangthai")==2){
-                        danggiaohang++;
-                    }else if(q.getLong("trangthai")==3){
-                        giaohangthanhcong++;
-                    }else{
-                        huyhang++;
-                    }
-                }
-                pieEntries.add(new PieEntry(dangxuly,"Đang Xử Lý"));
-                pieEntries.add(new PieEntry(danggiaohang,"Đang giao"));
-                pieEntries.add(new PieEntry(giaohangthanhcong,"Đã giao"));
-                pieEntries.add(new PieEntry(huyhang,"Đã hủy"));
-                ArrayList<Integer> arrayList = new ArrayList<>();
-
-                for(int color : ColorTemplate.MATERIAL_COLORS){
-                    arrayList.add(color);
-                }
-                for(int color : ColorTemplate.VORDIPLOM_COLORS){
-                    arrayList.add(color);
-                }
-                Legend l = pieChart.getLegend();
-
-                l.setVerticalAlignment(Legend.LegendVerticalAlignment.CENTER);
-                l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
-                l.setOrientation(Legend.LegendOrientation.VERTICAL);
-                PieDataSet pieDataSet = new PieDataSet(pieEntries,"Biểu Đồ Trạng Thái Đơn Hàng");
-                pieDataSet.setColors(arrayList);
-                PieData pieData = new PieData(pieDataSet);
-                pieData.setDrawValues(true);
-                pieData.setValueFormatter(new PercentFormatter());
-                pieData.setValueTextSize(14);
-                pieChart.setData(pieData);
-                pieChart.invalidate();
-                pieChart.setDrawEntryLabels(true);
-                pieChart.setUsePercentValues(true);
-                pieChart.setEntryLabelTextSize(12);
-                pieChart.setEntryLabelColor(Color.WHITE);
-                pieChart.animateXY(2000, 2000);
-                pieChart.setCenterText("Trạng Thái Đơn Hàng");
-
-                pieChart.getDescription().setEnabled(false);
-
+            public String getAxisLabel(float value, com.github.mikephil.charting.components.AxisBase axis) {
+                int i = Math.round(value);
+                return i >= 0 && i < n ? report.getBucketLabel(i) : "";
             }
         });
 
+        barChart.setData(data);
+        barChart.fitScreen();
+        barChart.highlightValue(report.getBestBucket(), 0, false);
+        barChart.animateY(400);
+        barChart.invalidate();
+        showBucket(report.getBestBucket());
     }
 
-    private void InitWidget() {
-        spinnerDoanhthu = findViewById(R.id.spinner_doanhthu);
-        tvDoanhThu = findViewById(R.id.tv_doanh_thu);
-        edtFromDate = findViewById(R.id.edt_bill_from_date);
-        edtToDate = findViewById(R.id.edt_bill_to_date);
-        btnTinhDoanhThu = findViewById(R.id.btn_tinh_doanh_thu);
-        btnXuatExcel = findViewById(R.id.btn_xuat_excel);
-
-        toolbar = findViewById(R.id.toolbar);
-        pieChart = findViewById(R.id.piechart);
-        barChart = findViewById(R.id.barchart);
+    private void showBucket(int i) {
+        if (i < 0 || i >= report.getBucketCount()) { showDefaultHint(); return; }
+        boolean best = i == report.getBestBucket();
+        tvChartHint.setText(report.getBucketTitle(i) + ": " + MoneyUtil.formatVnd(report.getBucketRevenue(i))
+                + (best ? " (cao nhất)" : ""));
     }
 
-    @Override
-    public void getDataHD(String id, String uid, String ghichu, String diachi, String hoten, String ngaydat, String phuongthuc, String sdt, String tongtien, Long type) {
-        mlist.add(new HoaDon(id, uid, ghichu, diachi, hoten, ngaydat, phuongthuc, sdt, tongtien, type));
+    private void showDefaultHint() {
+        tvChartHint.setText("Chạm vào cột để xem chi tiết");
     }
 
-    @Override
-    public void OnFail() {
+    // ------------------------------------------------------------------ đơn theo trạng thái
 
+    private void setupStatusRows() {
+        statusRows.add(new StatusRow("Chờ xác nhận", OrderStatus.textColor(OrderStatus.DA_DAT),
+                OrderStatus.DA_DAT, OrderStatus.DANG_XU_LY));
+        statusRows.add(new StatusRow("Đã xác nhận", OrderStatus.textColor(OrderStatus.DA_XAC_NHAN), OrderStatus.DA_XAC_NHAN));
+        statusRows.add(new StatusRow("Đang giao", OrderStatus.textColor(OrderStatus.DANG_GIAO), OrderStatus.DANG_GIAO));
+        statusRows.add(new StatusRow("Đã giao", OrderStatus.textColor(OrderStatus.DA_GIAO), OrderStatus.DA_GIAO));
+        statusRows.add(new StatusRow("Đã hủy", OrderStatus.textColor(OrderStatus.DA_HUY), OrderStatus.DA_HUY));
+
+        android.widget.LinearLayout container = findViewById(R.id.status_rows);
+        LayoutInflater inflater = LayoutInflater.from(this);
+        for (StatusRow s : statusRows) {
+            s.view = inflater.inflate(R.layout.item_admin_status_row, container, false);
+            View dot = s.view.findViewById(R.id.row_dot);
+            dot.setBackgroundTintList(android.content.res.ColorStateList.valueOf(s.color));
+            ((TextView) s.view.findViewById(R.id.row_label)).setText(s.label);
+            ((ProgressBar) s.view.findViewById(R.id.row_bar))
+                    .setProgressTintList(android.content.res.ColorStateList.valueOf(s.color));
+            ((ProgressBar) s.view.findViewById(R.id.row_bar))
+                    .setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                            ContextCompat.getColor(this, R.color.admin_outline)));
+            container.addView(s.view);
+        }
     }
 
-    @Override
-    public void OnSucess() {
+    private void renderStatusRows() {
+        int total = report.getTotalOrders();
+        ((TextView) findViewById(R.id.tv_status_title)).setText(
+                "Đơn theo trạng thái" + (total > 0 ? " · " + total + " đơn" : ""));
+        for (StatusRow s : statusRows) {
+            int count = 0;
+            for (int st : s.statuses) count += report.getOrderCount(st);
+            int percent = total == 0 ? 0 : Math.round(count * 100f / total);
+            ((TextView) s.view.findViewById(R.id.row_count)).setText(String.valueOf(count));
+            ((TextView) s.view.findViewById(R.id.row_percent)).setText(percent + "%");
+            ((ProgressBar) s.view.findViewById(R.id.row_bar)).setProgress(percent);
+        }
+    }
 
+    // ------------------------------------------------------------------ xuất Excel
+
+    private void exportExcel() {
+        if (!loaded) return;
+        List<OrderRow> delivered = new ArrayList<>();
+        for (OrderRow r : rows) {
+            if (r.status == null || r.status != OrderStatus.DA_GIAO) continue;
+            if (range.contains(com.UngDung.ThucPhamXanh.Helper.DashboardStats.parseDate(r.ngaydat))) delivered.add(r);
+        }
+        if (delivered.isEmpty()) {
+            Toast.makeText(this, "Không có đơn đã giao trong kỳ này", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        HSSFWorkbook wb = new HSSFWorkbook();
+        HSSFSheet sheet = wb.createSheet("Doanh thu");
+        String[] heads = {"STT", "Mã đơn", "Ngày đặt", "Họ tên", "SĐT", "Địa chỉ", "Tổng tiền (đ)"};
+        HSSFRow head = sheet.createRow(0);
+        for (int c = 0; c < heads.length; c++) head.createCell(c).setCellValue(heads[c]);
+
+        long sum = 0;
+        int rowIndex = 1;
+        for (OrderRow r : delivered) {
+            long money = MoneyUtil.parseVnd(r.tongtien);
+            sum += money;
+            HSSFRow row = sheet.createRow(rowIndex);
+            row.createCell(0).setCellValue(rowIndex);
+            row.createCell(1).setCellValue(r.id);
+            row.createCell(2).setCellValue(r.ngaydat);
+            row.createCell(3).setCellValue(r.hoten);
+            row.createCell(4).setCellValue(r.sdt);
+            row.createCell(5).setCellValue(r.diachi);
+            row.createCell(6).setCellValue(money); // số thật để Excel cộng được
+            rowIndex++;
+        }
+        HSSFRow total = sheet.createRow(rowIndex + 1);
+        total.createCell(5).setCellValue("TỔNG DOANH THU");
+        total.createCell(6).setCellValue(sum);
+
+        
+        String fileName = "DoanhThu-" + compact(range.from) + "-"
+                + compact(range.to) + "-"
+                + new SimpleDateFormat("HHmmss", Locale.US).format(new Date()) + ".xls";
+        saveAndShareWorkbook(wb, fileName);
     }
 
     /**
@@ -555,14 +495,14 @@ public class AdminChartBillActivity extends AppCompatActivity implements HoaDonV
      */
     private void saveAndShareWorkbook(HSSFWorkbook workbook, String fileName) {
         final String mime = "application/vnd.ms-excel";
-        android.net.Uri uri;
+        Uri uri;
         try {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                android.content.ContentValues values = new android.content.ContentValues();
-                values.put(android.provider.MediaStore.Downloads.DISPLAY_NAME, fileName);
-                values.put(android.provider.MediaStore.Downloads.MIME_TYPE, mime);
-                values.put(android.provider.MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
-                uri = getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+                values.put(MediaStore.Downloads.MIME_TYPE, mime);
+                values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+                uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
                 if (uri == null) throw new java.io.IOException("Không tạo được file trong Download");
                 try (java.io.OutputStream out = getContentResolver().openOutputStream(uri)) {
                     workbook.write(out);
@@ -573,15 +513,15 @@ public class AdminChartBillActivity extends AppCompatActivity implements HoaDonV
                 try (FileOutputStream out = new FileOutputStream(file)) {
                     workbook.write(out);
                 }
-                uri = androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+                uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
             }
         } catch (Exception e) {
-            Log.e("AdminChartBill", "Xuất Excel thất bại", e);
+            Log.e(TAG, "Xuất Excel thất bại", e);
             Toast.makeText(this, "Xuất file thất bại: " + e.getMessage(), Toast.LENGTH_LONG).show();
             return;
         }
 
-        Toast.makeText(this, android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+        Toast.makeText(this, Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
                 ? "Đã lưu " + fileName + " vào thư mục Download" : "Đã xuất " + fileName, Toast.LENGTH_LONG).show();
 
         Intent share = new Intent(Intent.ACTION_SEND);
@@ -589,5 +529,19 @@ public class AdminChartBillActivity extends AppCompatActivity implements HoaDonV
         share.putExtra(Intent.EXTRA_STREAM, uri);
         share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         startActivity(Intent.createChooser(share, "Gửi file doanh thu"));
+    }
+
+    // ------------------------------------------------------------------ định dạng ngày
+
+    private static String longDate(LocalDate d) {
+        return String.format(Locale.ROOT, "%02d/%02d/%04d", d.getDayOfMonth(), d.getMonthValue(), d.getYear());
+    }
+
+    private static String compact(LocalDate d) {
+        return String.format(Locale.ROOT, "%02d%02d%04d", d.getDayOfMonth(), d.getMonthValue(), d.getYear());
+    }
+
+    private static String shortDate(LocalDate d) {
+        return String.format(Locale.ROOT, "%02d/%02d", d.getDayOfMonth(), d.getMonthValue());
     }
 }

@@ -1,131 +1,100 @@
 package com.UngDung.ThucPhamXanh.View.Admin;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.UngDung.ThucPhamXanh.Models.User;
+import com.UngDung.ThucPhamXanh.Helper.AdminUsers;
+import com.UngDung.ThucPhamXanh.Helper.MoneyUtil;
 import com.UngDung.ThucPhamXanh.R;
-import com.UngDung.ThucPhamXanh.my_interface.IClickCTHD;
 import com.squareup.picasso.Picasso;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
+import java.util.Objects;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class AdminUsersAdapter extends RecyclerView.Adapter<AdminUsersAdapter.ViewHolder>{
+/** Danh sách khách hàng trang admin (ListAdapter/DiffUtil). Bấm thẻ → thông tin chi tiết. */
+public class AdminUsersAdapter extends ListAdapter<AdminUsers.Row, AdminUsersAdapter.ViewHolder> {
 
-    private Context context;
-    private ArrayList<User> mlistUser;
-    private IClickCTHD iClickCTHD;
+    public interface Listener {
+        void onOpen(AdminUsers.Row user);
+    }
 
-    public AdminUsersAdapter(Context context, ArrayList<User> mlistUser, IClickCTHD iClickCTHD) {
-        this.context = context;
-        this.mlistUser = mlistUser != null ? mlistUser : new ArrayList<>();
-        this.iClickCTHD = iClickCTHD;
+    private final Listener listener;
+
+    public AdminUsersAdapter(Listener listener) {
+        super(DIFF);
+        this.listener = listener;
     }
 
     @NonNull
-    @NotNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull @NotNull ViewGroup parent, int viewType) {
-        View view;
-        view = LayoutInflater.from(parent.getContext()).inflate(R.layout.dong_admin_users, parent, false);
-        return new ViewHolder(view);
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull @NotNull ViewHolder holder, int position) {
-        if (mlistUser == null || position >= mlistUser.size()) {
-            return;
-        }
-        User user = mlistUser.get(position);
-        if (user.getName().equals("")){
-            holder.tvNameUsers.setText("User");
-        } else {
-            holder.tvNameUsers.setText(user.getName());
-        }
-
-        holder.tvEmailUsers.setText(user.getEmail());
-
-        if (user.getAvatar().equals("")){
-            holder.cirUsers.setImageResource(R.drawable.ic_user);
-        } else {
-            Picasso.get().load(user.getAvatar()).into(holder.cirUsers);
-        }
-
-        holder.relativeItemUsers.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                iClickCTHD.onClickCTHD(position);
-            }
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.dong_admin_users, parent, false);
+        ViewHolder h = new ViewHolder(v);
+        v.setOnClickListener(x -> {
+            int pos = h.getAdapterPosition(); // recyclerview 1.1
+            if (pos != RecyclerView.NO_POSITION) listener.onOpen(getItem(pos));
         });
-
-//        holder.imgDeleteUsers.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                AlertDialog.Builder buidler = new AlertDialog.Builder(context);
-//                buidler.setTitle("Thông báo");
-//                buidler.setMessage("Bạn có thực sự muốn xóa tài khoản này không?");
-//                buidler.setPositiveButton("Đăng xuất", new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialog, int which) {
-//                        FirebaseFirestore db = FirebaseFirestore.getInstance();
-//                        db.collection("IDUser").whereEqualTo("iduser", user.getIduser()).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-//                            @Override
-//                            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-//                                for (QueryDocumentSnapshot q : queryDocumentSnapshots){
-//                                    db.collection("IDUser").document(q.getId()).delete();
-//                                }
-//
-//                            }
-//                        });
-//
-//                        db.collection("User").document(user.getIduser()).delete();
-//                        mlistUser.remove(position);
-//                        notifyDataSetChanged();
-//                    }
-//                });
-//                buidler.setNegativeButton("Hủy", new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialogInterface, int i) {
-//                    }
-//                });
-//                buidler.show();
-//            }
-//        });
-
-
+        return h;
     }
 
     @Override
-    public int getItemCount() {
-        return mlistUser != null ? mlistUser.size() : 0;
-    }
+    public void onBindViewHolder(@NonNull ViewHolder h, int position) {
+        AdminUsers.Row u = getItem(position);
+        h.name.setText(u.displayName());
+        h.email.setText(u.email.isEmpty() ? "(chưa có email)" : u.email);
+        h.phone.setText(u.phone.trim().isEmpty() ? "Chưa có số điện thoại" : u.phone.trim());
 
-    public class ViewHolder extends RecyclerView.ViewHolder{
+        if (u.orders > 0) {
+            h.orders.setText(u.orders + " đơn");
+            h.spent.setText(u.spent > 0 ? MoneyUtil.formatCompact(u.spent) : "chưa giao");
+        } else {
+            h.orders.setText("Chưa mua");
+            h.spent.setText("");
+        }
 
-        private CircleImageView cirUsers;
-        private TextView tvNameUsers, tvEmailUsers;
-        private ImageView imgDeleteUsers;
-        private View relativeItemUsers;
-
-        public ViewHolder(@NonNull @NotNull View itemView) {
-            super(itemView);
-
-            cirUsers = itemView.findViewById(R.id.cir_users);
-            tvNameUsers = itemView.findViewById(R.id.tv_name_users);
-            tvEmailUsers = itemView.findViewById(R.id.tv_email_users);
-//            imgDeleteUsers = itemView.findViewById(R.id.img_delete_users);
-            relativeItemUsers = itemView.findViewById(R.id.relative_item_users);
+        String avatar = u.avatar == null ? "" : u.avatar.trim();
+        if (!avatar.isEmpty() && avatar.startsWith("http")) {
+            Picasso.get().load(avatar).placeholder(R.drawable.ic_user).error(R.drawable.ic_user).into(h.avatar);
+        } else {
+            Picasso.get().cancelRequest(h.avatar);
+            h.avatar.setImageResource(R.drawable.ic_user);
         }
     }
+
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        final CircleImageView avatar;
+        final TextView name, email, phone, orders, spent;
+
+        ViewHolder(@NonNull View v) {
+            super(v);
+            avatar = v.findViewById(R.id.cir_user);
+            name = v.findViewById(R.id.tv_user_name);
+            email = v.findViewById(R.id.tv_user_email);
+            phone = v.findViewById(R.id.tv_user_phone);
+            orders = v.findViewById(R.id.tv_user_orders);
+            spent = v.findViewById(R.id.tv_user_spent);
+        }
+    }
+
+    private static final DiffUtil.ItemCallback<AdminUsers.Row> DIFF = new DiffUtil.ItemCallback<AdminUsers.Row>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull AdminUsers.Row a, @NonNull AdminUsers.Row b) {
+            return Objects.equals(a.uid, b.uid);
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull AdminUsers.Row a, @NonNull AdminUsers.Row b) {
+            return Objects.equals(a.name, b.name) && Objects.equals(a.email, b.email)
+                    && Objects.equals(a.phone, b.phone) && Objects.equals(a.avatar, b.avatar)
+                    && a.orders == b.orders && a.spent == b.spent;
+        }
+    };
 }

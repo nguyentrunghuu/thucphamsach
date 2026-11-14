@@ -47,6 +47,14 @@ public class MainActivity extends AppCompatActivity {
 
     private int mCountProduct;
 
+    private static final String STATE_NAV_ID = "nav_selected_id";
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (bottomNavigation != null) outState.putInt(STATE_NAV_ID, bottomNavigation.getSelectedItemId());
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,6 +66,17 @@ public class MainActivity extends AppCompatActivity {
         broadcastIntent(); // Check Internet
 
         setupBottomNavigation();
+        // Thông báo tin nhắn mới từ cửa hàng + xin quyền hiện thông báo (Android 13+)
+        com.UngDung.ThucPhamXanh.Helper.NotificationPermission.request(this);
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            com.UngDung.ThucPhamXanh.Helper.ChatNotifier.get(this)
+                    .start(FirebaseAuth.getInstance().getCurrentUser().getUid(), false);
+        }
+        // Activity tạo lại (vd. vừa đổi Sáng/Tối ở tab Tài khoản) → quay lại đúng tab đang mở thay vì về Trang chủ
+        int restoredNav = savedInstanceState != null ? savedInstanceState.getInt(STATE_NAV_ID, 0) : 0;
+        if (restoredNav != 0 && restoredNav != R.id.menu_home) {
+            bottomNavigation.setSelectedItemId(restoredNav);
+        }
         setProFile();
     }
 

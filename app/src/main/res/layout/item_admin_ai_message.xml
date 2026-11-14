@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Một bong bóng chat của trợ lý AI admin; Activity đặt gravity/màu nền cho tin của admin hoặc của AI -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="@dimen/admin_space_xs"
+    android:paddingBottom="@dimen/admin_space_xs">
+
+    <TextView
+        android:id="@+id/ai_msg_text"
+        style="@style/Admin.Text.Body"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_admin_badge"
+        android:lineSpacingMultiplier="1.15"
+        android:maxWidth="300dp"
+        android:padding="@dimen/admin_space_m"
+        android:textIsSelectable="true" />
+</FrameLayout>

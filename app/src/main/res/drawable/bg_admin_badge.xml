@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nền nhãn nhỏ (Admin.Badge); đổi màu bằng android:backgroundTint -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/admin_primary_soft" />
+    <corners android:radius="@dimen/admin_radius_badge" />
+</shape>

@@ -31,7 +31,7 @@
             android:fontFamily="@font/be_vietnam_pro" android:textStyle="bold"
             android:maxLines="1"
             android:text="Sản phẩm nổi bật"
-            android:textColor="#1A1A1A"
+            android:textColor="@color/ui_text"
             android:textSize="17sp" />
 
         <TextView
@@ -45,7 +45,7 @@
             android:paddingHorizontal="12dp"
             android:paddingVertical="5dp"
             android:text="Xem tất cả  ›"
-            android:textColor="#2E7D32"
+            android:textColor="@color/ui_green_text"
             android:textSize="12sp" />
     </LinearLayout>
 

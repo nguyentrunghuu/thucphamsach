@@ -105,7 +105,11 @@ public class ChatActivity extends AppCompatActivity {
         who = getIntent().getIntExtra("message", 0);
         
         // Initialize adapter once
-        userAdapter = new UserAdapter(ChatActivity.this, mUsers, true, new IClickCTHD() {
+        // Admin chat bằng ADMIN_ID (không có tài khoản Firebase Auth); khách chat bằng uid của mình
+        final String myChatId = who == 1
+                ? com.UngDung.ThucPhamXanh.Helper.AppConstants.ADMIN_ID
+                : (firebaseUser != null ? firebaseUser.getUid() : null);
+        userAdapter = new UserAdapter(ChatActivity.this, mUsers, true, myChatId, new IClickCTHD() {
             @Override
             public void onClickCTHD(int pos) {
                 if (pos >= 0 && pos < mUsers.size()) {

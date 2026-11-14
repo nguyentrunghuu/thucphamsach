@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Một dòng "nhãn + giá trị" có biểu tượng — thẻ Giao hàng của chi tiết đơn -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <FrameLayout
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="@drawable/bg_pill_green_light">
+
+        <ImageView
+            android:id="@+id/img_info_icon"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            app:tint="@color/ui_green_text"
+            tools:src="@drawable/ic_ui_location" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_info_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/be_vietnam_pro"
+            android:textColor="@color/ui_text_secondary"
+            android:textSize="12sp"
+            tools:text="Địa chỉ nhận hàng" />
+
+        <TextView
+            android:id="@+id/tv_info_value"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/be_vietnam_pro"
+            android:textColor="@color/ui_text"
+            android:textSize="15sp"
+            tools:text="4/90 Tổ 32Kp2, Đông Hưng Thuận, Hồ Chí Minh" />
+    </LinearLayout>
+</LinearLayout>

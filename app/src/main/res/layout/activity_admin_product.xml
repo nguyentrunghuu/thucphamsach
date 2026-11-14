@@ -1,196 +1,179 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Danh sách sản phẩm admin: toolbar → ô tìm kiếm → chip trạng thái + chip loại → danh sách → nút thêm -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/home_gradient_background"
+    android:background="@color/admin_beige"
+    android:orientation="vertical"
     tools:context=".View.Admin.AdminProductActivity">
 
-    <!-- App Bar -->
-    <com.google.android.material.appbar.AppBarLayout
+    <include layout="@layout/view_admin_toolbar" />
+
+    <!-- ===== Tìm kiếm + bộ lọc ===== -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        app:elevation="0dp">
+        android:background="@color/admin_surface"
+        android:orientation="vertical"
+        android:paddingTop="@dimen/admin_space_m"
+        android:paddingBottom="@dimen/admin_space_xs">
 
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_search_product"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginTop="20dp"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="6dp"
-            app:cardBackgroundColor="#FFFFFF">
+            android:layout_marginStart="@dimen/admin_screen_padding"
+            android:layout_marginEnd="@dimen/admin_screen_padding"
+            android:hint="Tìm theo tên, loại, mô tả"
+            app:endIconMode="clear_text"
+            app:hintEnabled="false"
+            app:startIconDrawable="@drawable/ic_search"
+            app:startIconTint="@color/admin_text_muted">
 
-            <LinearLayout
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edt_search_product"
+                style="@style/Admin.Text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="20dp">
+                android:hint="Tìm theo tên, loại, mô tả"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLines="1"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:textColorHint="@color/admin_text_muted" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-                <ImageView
-                    android:id="@+id/img_back_admin_product"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_back"
-                    android:tint="#2196F3"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:padding="12dp"
-                    android:contentDescription="Back" />
+        <!-- Trạng thái -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/admin_space_s"
+            android:scrollbars="none">
 
-                <LinearLayout
-                    android:layout_width="0dp"
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_group_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/admin_screen_padding"
+                android:paddingEnd="@dimen/admin_screen_padding"
+                app:chipSpacingHorizontal="@dimen/admin_space_s"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_status_all"
+                    app:checkedIconVisible="false"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="16dp">
+                    android:checked="true"
+                    android:text="Tất cả" />
 
-                    <TextView
-                        android:id="@+id/text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Sản phẩm cửa hàng"
-                        android:textColor="#2196F3"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_status_low_stock"
+                    app:checkedIconVisible="false"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sắp hết hàng" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Quản lý danh sách sản phẩm"
-                        android:textColor="#757575"
-                        android:textSize="13sp"
-                        android:layout_marginTop="4dp" />
-                </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-    </com.google.android.material.appbar.AppBarLayout>
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_status_expiry"
+                    app:checkedIconVisible="false"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hết hạn / sắp hết hạn" />
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
 
-    <androidx.core.widget.NestedScrollView
+        <!-- Loại sản phẩm (thêm bằng code từ LoaiProduct) -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_group_category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/admin_screen_padding"
+                android:paddingEnd="@dimen/admin_screen_padding"
+                app:chipSpacingHorizontal="@dimen/admin_space_s"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true" />
+        </HorizontalScrollView>
+    </LinearLayout>
+
+    <View
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:layout_height="1dp"
+        android:background="@color/admin_outline" />
 
-        <LinearLayout
+    <TextView
+        android:id="@+id/tv_product_result"
+        style="@style/Admin.Text.Caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/admin_screen_padding"
+        android:paddingTop="@dimen/admin_space_s"
+        android:paddingEnd="@dimen/admin_screen_padding"
+        tools:text="74 sản phẩm" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rcv_admin_product"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingStart="@dimen/admin_screen_padding"
+            android:paddingTop="@dimen/admin_space_s"
+            android:paddingEnd="@dimen/admin_screen_padding"
+            android:paddingBottom="96dp"
+            tools:listitem="@layout/item_admin_product" />
+
+        <include
+            layout="@layout/view_admin_empty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="16dp"
-            android:paddingBottom="100dp">
+            android:layout_marginTop="@dimen/admin_space_xl" />
 
-            <!-- Filter Card -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
+        <ProgressBar
+            android:id="@+id/progress_admin_product"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="48dp"
+            android:indeterminateTint="@color/admin_primary" />
+
+        <!-- Khung bọc để chừa chỗ cho thanh điều hướng (edge-to-edge) -->
+        <FrameLayout
+            android:id="@+id/fab_container_product"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:padding="@dimen/admin_space_l">
+
+            <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+                android:id="@+id/fab_add_product"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="4dp"
-                app:cardBackgroundColor="#FFFFFF">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Lọc theo loại"
-                        android:textColor="#2196F3"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="16dp" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Loại SP:"
-                            android:textColor="#757575"
-                            android:textSize="15sp"
-                            android:textStyle="bold"
-                            android:minWidth="80dp" />
-
-                        <Spinner
-                            android:id="@+id/spinner_loai_sp"
-                            android:layout_width="0dp"
-                            android:layout_height="56dp"
-                            android:layout_weight="1"
-                            android:layout_marginStart="12dp"
-                            android:background="@drawable/auth_input_background"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:minHeight="56dp" />
-                    </LinearLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Products List Card -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="4dp"
-                app:cardBackgroundColor="#FFFFFF">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Danh sách sản phẩm"
-                        android:textColor="#2196F3"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="16dp" />
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rcv_admin_product"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:nestedScrollingEnabled="false"
-                        android:clipToPadding="false"
-                        android:paddingBottom="8dp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-
-    <!-- FAB -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="20dp"
-        app:cardCornerRadius="28dp"
-        app:cardElevation="8dp"
-        app:cardBackgroundColor="#2196F3">
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/image_add_product"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:src="@drawable/ic_add_product_admin"
-            android:tint="#FFFFFF"
-            android:padding="16dp"
-            android:contentDescription="Add Product" />
-    </androidx.cardview.widget.CardView>
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+                android:fontFamily="@font/be_vietnam_pro"
+                android:letterSpacing="0"
+                android:text="Thêm sản phẩm"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                app:backgroundTint="@color/admin_primary"
+                app:icon="@drawable/ic_ui_add"
+                app:iconTint="@color/white" />
+        </FrameLayout>
+    </FrameLayout>
+</LinearLayout>

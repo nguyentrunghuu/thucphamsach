@@ -1,720 +1,622 @@
 package com.UngDung.ThucPhamXanh.View.Admin;
 
-import static android.view.View.GONE;
-
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatButton;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
-import android.Manifest;
-import android.app.AlertDialog;
-import android.app.DatePickerDialog;
-import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.DatePicker;
+import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.Filter;
 import android.widget.ImageView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Locale;
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.widget.NestedScrollView;
 
-import com.UngDung.ThucPhamXanh.Helper.ImageUploadHelper;
+import com.UngDung.ThucPhamXanh.BotAI.GeminiClient;
+import com.UngDung.ThucPhamXanh.Helper.AdminAiPrompts;
+import com.UngDung.ThucPhamXanh.Helper.DashboardStats;
+import com.UngDung.ThucPhamXanh.Helper.FirestoreMapper;
+import com.UngDung.ThucPhamXanh.Helper.ProductForm;
+import com.UngDung.ThucPhamXanh.Helper.ProductVisibility;
 import com.UngDung.ThucPhamXanh.Models.Product;
 import com.UngDung.ThucPhamXanh.R;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.DocumentReference;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.datepicker.CalendarConstraints;
+import com.google.android.material.datepicker.DateValidatorPointForward;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Query;
 import com.squareup.picasso.Picasso;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
-import de.hdodenhof.circleimageview.CircleImageView;
+/**
+ * Thêm / sửa sản phẩm trang admin.
+ *
+ * Mở với extra "SP" (Product) = sửa, không có = thêm mới. Kiểm tra dữ liệu ở {@link ProductForm}
+ * (lỗi hiện ngay dưới từng ô). Khi sửa chỉ cập nhật các field trên form — các field khác của
+ * document (giaGoc, monanLienQuan, soNgayHSD…) giữ nguyên. Xóa = xóa mềm (daxoa = true).
+ */
+public class AdminAddSPActivity extends BaseAdminActivity {
 
-public class AdminAddSPActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+    private static final String TAG = "AdminAddSPActivity";
+    private static final String STATE_IMAGE = "image";
+    private static final String STATE_INITIAL = "initial";
 
-    private TextView tvTaoMaQR;
-    private ImageView imgQRProduct;
-    private Button btnQRProduct, btnDownQRProduct;
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-    private CircleImageView imgAddLoaiProduct;
-    private ImageView btnAddBack, btnRefresh, btnSave;
-    private EditText edtTenSP, edtGiatienSP, edtHansudungSP, edtTrongluongSP, edtSoluongSP, edtTypeSP, edtMotaSP;
-    private ImageView imgAdd;
-    private TextView btnDanhmuc, btnDelete;
-    private AppCompatButton btnEdit;
-    private Spinner spinnerDanhMuc;
-    private TextView tvTitle;
-    private Calendar calendar;
-    private View layoutActionButtons;
-
-    private FirebaseFirestore db;
-    private List<String> list;
-    private Product product;
+    private Product product;   // null = thêm mới
+    private boolean isNew;
     private String image = "";
-    private String loaisp = "";
-    private ProgressDialog progressDialog;
-    
-    // ActivityResultLaunchers cho chọn ảnh
-    private ActivityResultLauncher<Intent> cameraLauncher;
-    private ActivityResultLauncher<String> galleryLauncher;
-    private Uri cameraImageUri;
+    private boolean uploading, saving;
+    /** Ảnh chụp nội dung form lúc vừa nạp xong, để hỏi trước khi thoát nếu đã sửa. */
+    private String initialState;
+
+    private NestedScrollView scroll;
+    private ImageView imgProduct, imgPlaceholder;
+    private View progressImage;
+    private TextView tvImageHint;
+    private MaterialButton btnPickImage, btnSave, btnDelete, btnAiDescription;
+    private TextInputLayout tilName, tilPrice, tilCategory, tilType, tilQuantity, tilWeight, tilExpiry,
+            tilOrigin, tilDescription;
+    private EditText edtName, edtPrice, edtQuantity, edtWeight, edtExpiry, edtOrigin, edtDescription;
+    private AutoCompleteTextView ddCategory, ddType;
+
+    private final List<String> categories = new ArrayList<>();
+    private ArrayAdapter<String> categoryAdapter;
+
+    private AdminImagePicker imagePicker;
+
+    public static Intent edit(Context context, Product product) {
+        return new Intent(context, AdminAddSPActivity.class).putExtra("SP", product);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_add_spactivity);
-//        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+        if (getIntent().hasExtra("SP")) product = (Product) getIntent().getSerializableExtra("SP");
+        isNew = product == null || TextUtils.isEmpty(product.getId());
+
+        setupAdminToolbar(isNew ? "Thêm sản phẩm" : "Sửa sản phẩm", isNew ? null : product.getTensp())
+                .setNavigationOnClickListener(v -> attemptClose());
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                attemptClose();
+            }
+        });
+
+        bindViews();
+        applyBottomInsets(findViewById(R.id.bottom_bar));
         initImageLaunchers();
-        InitWidget();
-        Init();
+        setupDropdowns();
+        setupEvents();
 
-//        // Test: Lấy ra id của hóa đơn từ bảng HoaDon
-//        db.collection("HoaDon").get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-//            @Override
-//            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-//                for (QueryDocumentSnapshot q: queryDocumentSnapshots){
-//                    ArrayList<String> list = new ArrayList<>();
-//                    list.add(q.getId());
-//                    Log.d("checkid", q.getId());
-//                }
-//            }
-//        });
-        Event();
-        setupSaveAndEditListeners();
-        
-        btnQRProduct.setVisibility(GONE);
-        btnDownQRProduct.setVisibility(GONE);
+        if (savedInstanceState != null) {
+            // Ô nhập tự khôi phục chữ; chỉ cần ảnh và mốc "chưa sửa"
+            image = savedInstanceState.getString(STATE_IMAGE, "");
+            initialState = savedInstanceState.getString(STATE_INITIAL);
+            showImage();
+        } else if (isNew) {
+            ddType.setText(ProductForm.typeLabel(1), false);
+            initialState = formState();
+        } else {
+            fillFrom(product);
+            initialState = formState();
+            loadLatest();
+        }
+
+        btnDelete.setVisibility(isNew ? View.GONE : View.VISIBLE);
+        btnSave.setText(isNew ? "Thêm sản phẩm" : "Lưu thay đổi");
+        updateExpiryHint();
     }
 
-    private void Event() {
-        btnAddBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-            }
-        });
-
-        imgAddLoaiProduct.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(AdminAddSPActivity.this, AdminAddLoaiSPActivity.class);
-                intent.putExtra("loaisp", loaisp);
-                startActivity(intent);
-            }
-        });
-
-        // Date picker cho hạn sử dụng
-        calendar = Calendar.getInstance();
-        edtHansudungSP.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showDatePickerDialog();
-            }
-        });
-        
-        // Chọn danh mục với dialog
-        btnDanhmuc.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showCategoryDialog();
-            }
-        });
-        spinnerDanhMuc.setOnItemSelectedListener(this);
-        imgAdd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showImageSourceDialog();
-            }
-        });
-
-        btnRefresh.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                edtHansudungSP.setText("");
-                edtTrongluongSP.setText("");
-                edtTenSP.setText("");
-                edtGiatienSP.setText("");
-                edtTypeSP.setText("");
-                edtMotaSP.setText("");
-                edtSoluongSP.setText("");
-                image = "";
-                imgAdd.setImageResource(R.drawable.pl);
-            }
-        });
-
-        // Nếu xóa bất kỳ 1 sản phẩm nào đó thì những hóa đơn có chứa sản phẩm đó cũng phải bị xóa hoặc dùng nhiều cách khác.
-        // Ở đây lựa chọn xóa luôn hóa đơn chứa sản phẩm bị xóa.
-        btnDelete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (product == null || product.getId() == null) {
-                    Toast.makeText(AdminAddSPActivity.this, "Không tìm thấy sản phẩm để xóa", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                
-                // Xác nhận trước khi xóa
-                new AlertDialog.Builder(AdminAddSPActivity.this)
-                        .setTitle("Xác nhận xóa")
-                        .setMessage("Sản phẩm sẽ bị gỡ khỏi cửa hàng. Các đơn hàng cũ có sản phẩm này vẫn được giữ nguyên.\nBạn có chắc chắn muốn xóa?")
-                        .setPositiveButton("Xóa", (dialog, which) -> {
-                            deleteProduct();
-                        })
-                        .setNegativeButton("Hủy", null)
-                        .show();
-            }
-        });
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(STATE_IMAGE, image);
+        outState.putString(STATE_INITIAL, initialState);
     }
-    
-    private void deleteProduct() {
-        if (product == null || product.getId() == null) {
+
+    @Override
+    protected void onStartListening() {
+        listen(db.collection("LoaiProduct").orderBy("tenloai", Query.Direction.ASCENDING)
+                .addSnapshotListener((snap, e) -> {
+                    if (e != null) { Log.e(TAG, "Lỗi đọc LoaiProduct", e); return; }
+                    if (snap == null) return;
+                    categories.clear();
+                    for (DocumentSnapshot d : snap.getDocuments()) {
+                        String name = d.getString("tenloai");
+                        if (name == null || name.trim().isEmpty()) continue;
+                        if (!categories.contains(name.trim())) categories.add(name.trim()); // LoaiProduct có bản ghi trùng tên
+                    }
+                    // Giữ được loại cũ của sản phẩm dù đã bị đổi tên / xóa khỏi LoaiProduct
+                    String current = ddCategory.getText().toString().trim();
+                    if (!current.isEmpty() && !categories.contains(current)) categories.add(current);
+                    categoryAdapter.notifyDataSetChanged();
+                }));
+    }
+
+    // ------------------------------------------------------------------ nạp dữ liệu
+
+    private void bindViews() {
+        scroll = findViewById(R.id.form_scroll);
+        imgProduct = findViewById(R.id.image_add);
+        imgPlaceholder = findViewById(R.id.img_image_placeholder);
+        progressImage = findViewById(R.id.progress_image);
+        tvImageHint = findViewById(R.id.tv_image_hint);
+        btnPickImage = findViewById(R.id.btn_pick_image);
+        btnSave = findViewById(R.id.btn_save);
+        btnDelete = findViewById(R.id.btn_delete);
+
+        tilName = findViewById(R.id.til_name);
+        tilPrice = findViewById(R.id.til_price);
+        tilCategory = findViewById(R.id.til_category);
+        tilType = findViewById(R.id.til_type);
+        tilQuantity = findViewById(R.id.til_quantity);
+        tilWeight = findViewById(R.id.til_weight);
+        tilExpiry = findViewById(R.id.til_expiry);
+        tilOrigin = findViewById(R.id.til_origin);
+        tilDescription = findViewById(R.id.til_description);
+
+        edtName = findViewById(R.id.edt_tensp);
+        edtPrice = findViewById(R.id.edt_giatiensp);
+        edtQuantity = findViewById(R.id.edt_soluongsp);
+        edtWeight = findViewById(R.id.edt_trongluongsp);
+        edtExpiry = findViewById(R.id.edt_hansudungsp);
+        edtOrigin = findViewById(R.id.edt_xuatxu);
+        edtDescription = findViewById(R.id.edt_motasp);
+        ddCategory = findViewById(R.id.dd_category);
+        ddType = findViewById(R.id.dd_type);
+    }
+
+    private void fillFrom(Product p) {
+        edtName.setText(p.getTensp());
+        edtPrice.setText(p.getGiatien() > 0 ? String.valueOf(p.getGiatien()) : "");
+        ddCategory.setText(p.getLoaisp(), false);
+        setType(p.getType());
+        edtQuantity.setText(String.valueOf(Math.max(0, p.getSoluong())));
+        edtWeight.setText(p.getTrongluong());
+        edtExpiry.setText(p.getHansudung());
+        edtDescription.setText(p.getMota());
+        image = p.getHinhanh() == null ? "" : p.getHinhanh();
+        showImage();
+        updateExpiryHint();
+    }
+
+    /** Đọc lại document (dữ liệu truyền qua Intent có thể cũ) và lấy thêm xuất xứ. */
+    private void loadLatest() {
+        db.collection("SanPham").document(product.getId()).get()
+                .addOnSuccessListener(doc -> {
+                    if (isFinishing() || !doc.exists()) return;
+                    if (ProductVisibility.isHidden(doc)) {
+                        Toast.makeText(this, "Sản phẩm này đã bị xóa", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
+                    if (isDirty()) return; // không ghi đè thứ admin đang gõ
+                    fillFrom(FirestoreMapper.toProduct(doc));
+                    edtOrigin.setText(FirestoreMapper.str(doc, ProductForm.F_ORIGIN));
+                    initialState = formState();
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "Lỗi đọc sản phẩm", e));
+    }
+
+    // ------------------------------------------------------------------ giao diện
+
+    private void setupDropdowns() {
+        categoryAdapter = new NoFilterAdapter(this, categories);
+        ddCategory.setAdapter(categoryAdapter);
+        ddCategory.setOnItemClickListener((parent, view, position, id) -> tilCategory.setError(null));
+
+        List<String> types = new ArrayList<>();
+        for (long t : ProductForm.TYPE_VALUES) types.add(ProductForm.typeLabel(t));
+        ddType.setAdapter(new NoFilterAdapter(this, types));
+    }
+
+    private void setType(long type) {
+        if (type <= 0) type = 1; // thiếu field → "Thường" (trước đây không hiện ở mục nào trên trang chủ)
+        String label = ProductForm.typeLabel(type);
+        @SuppressWarnings("unchecked")
+        ArrayAdapter<String> a = (ArrayAdapter<String>) ddType.getAdapter();
+        if (a.getPosition(label) < 0) a.add(label); // giá trị lạ trong dữ liệu cũ: vẫn giữ
+        ddType.setText(label, false);
+    }
+
+    private void setupEvents() {
+        View.OnClickListener pick = v -> showImageSourceDialog();
+        imgProduct.setOnClickListener(pick);
+        btnPickImage.setOnClickListener(pick);
+
+        findViewById(R.id.btn_add_category).setOnClickListener(v ->
+                startActivity(new Intent(this, AdminAddLoaiSPActivity.class)));
+
+        edtExpiry.setOnClickListener(v -> showDatePicker());
+        tilExpiry.setEndIconOnClickListener(v -> showDatePicker());
+
+        clearErrorOnEdit(edtName, tilName);
+        clearErrorOnEdit(edtPrice, tilPrice);
+        clearErrorOnEdit(edtQuantity, tilQuantity);
+        clearErrorOnEdit(edtWeight, tilWeight);
+        clearErrorOnEdit(edtDescription, tilDescription);
+
+        btnAiDescription = findViewById(R.id.btn_ai_description);
+        btnAiDescription.setOnClickListener(v -> onAiDescriptionClick());
+
+        btnSave.setOnClickListener(v -> save());
+        btnDelete.setOnClickListener(v -> confirm("Xóa sản phẩm?",
+                "\"" + edtName.getText().toString().trim() + "\" sẽ bị gỡ khỏi cửa hàng. "
+                        + "Các đơn hàng cũ có sản phẩm này vẫn được giữ nguyên.",
+                "Xóa", this::deleteProduct));
+    }
+
+    // ------------------------------------------------------------------ AI viết mô tả
+
+    private void onAiDescriptionClick() {
+        if (edtName.getText().toString().trim().isEmpty()) {
+            tilName.setError("Nhập tên sản phẩm để AI viết mô tả");
+            edtName.requestFocus();
             return;
         }
-        
+        if (edtDescription.getText().toString().trim().isEmpty()) {
+            generateDescription();
+        } else {
+            confirm("Viết lại mô tả?", "Mô tả hiện tại sẽ bị thay bằng đoạn do AI viết. Bạn vẫn có thể sửa lại sau.",
+                    "Viết lại", this::generateDescription);
+        }
+    }
+
+    private void generateDescription() {
+        btnAiDescription.setEnabled(false);
+        btnAiDescription.setText("AI đang viết…");
+        String user = AdminAiPrompts.descriptionUserMessage(edtName.getText().toString(),
+                ddCategory.getText().toString(), edtWeight.getText().toString(), edtOrigin.getText().toString());
+        GeminiClient.ask(AdminAiPrompts.descriptionSystemPrompt(), null, user, new GeminiClient.Result() {
+            @Override
+            public void onSuccess(String text) {
+                if (isFinishing() || isDestroyed()) return;
+                String desc = AdminAiPrompts.cleanDescription(text);
+                if (desc.isEmpty()) { onError("AI không trả về nội dung, hãy thử lại."); return; }
+                edtDescription.setText(desc);
+                tilDescription.setError(null);
+                btnAiDescription.setEnabled(true);
+                btnAiDescription.setText("Viết lại bằng AI");
+            }
+
+            @Override
+            public void onError(String message) {
+                if (isFinishing() || isDestroyed()) return;
+                Toast.makeText(AdminAddSPActivity.this, message, Toast.LENGTH_LONG).show();
+                btnAiDescription.setEnabled(true);
+                btnAiDescription.setText("Viết mô tả bằng AI");
+            }
+        });
+    }
+
+    private static void clearErrorOnEdit(EditText edt, TextInputLayout til) {
+        edt.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
+            @Override public void onTextChanged(CharSequence s, int a, int b, int c) { }
+            @Override public void afterTextChanged(Editable s) {
+                if (til.getError() != null) til.setError(null);
+            }
+        });
+    }
+
+    /** Thanh nút đáy: chừa chỗ cho thanh điều hướng và bàn phím (edge-to-edge trên Android 15+). */
+    private void applyBottomInsets(View bar) {
+        final int base = bar.getPaddingBottom();
+        ViewCompat.setOnApplyWindowInsetsListener(bar, (v, insets) -> {
+            Insets sys = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(),
+                    base + Math.max(sys.bottom, ime.bottom));
+            return insets;
+        });
+    }
+
+    private void showImage() {
+        boolean has = !TextUtils.isEmpty(image);
+        imgPlaceholder.setVisibility(has || uploading ? View.GONE : View.VISIBLE);
+        btnPickImage.setText(has ? "Đổi ảnh" : "Chọn ảnh");
+        if (has) {
+            Picasso.get().load(image).fit().centerCrop().into(imgProduct);
+        } else {
+            Picasso.get().cancelRequest(imgProduct);
+            imgProduct.setImageDrawable(null);
+        }
+    }
+
+    private void setImageError(String error) {
+        tvImageHint.setText(error == null ? "Ảnh vuông, rõ nét, nền sáng" : error);
+        tvImageHint.setTextColor(ContextCompat.getColor(this,
+                error == null ? R.color.admin_text_muted : R.color.admin_danger));
+    }
+
+    // ------------------------------------------------------------------ hạn sử dụng
+
+    private void showDatePicker() {
+        LocalDate today = LocalDate.now();
+        LocalDate current = DashboardStats.parseDate(edtExpiry.getText().toString());
+        LocalDate selected = current != null && !current.isBefore(today) ? current : today;
+
+        MaterialDatePicker<Long> picker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Hạn sử dụng")
+                .setSelection(selected.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli())
+                .setCalendarConstraints(new CalendarConstraints.Builder()
+                        .setValidator(DateValidatorPointForward.from(
+                                today.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()))
+                        .build())
+                .build();
+        picker.addOnPositiveButtonClickListener(millis -> {
+            LocalDate d = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate();
+            edtExpiry.setText(formatDate(d));
+            tilExpiry.setError(null);
+            updateExpiryHint();
+        });
+        picker.show(getSupportFragmentManager(), "expiry");
+    }
+
+    private static String formatDate(LocalDate d) {
+        return String.format(Locale.ROOT, "%02d/%02d/%04d", d.getDayOfMonth(), d.getMonthValue(), d.getYear());
+    }
+
+    private void updateExpiryHint() {
+        String hint = ProductForm.expiryHint(edtExpiry.getText().toString(), LocalDate.now());
+        tilExpiry.setHelperText(hint.isEmpty() ? null : hint);
+    }
+
+    // ------------------------------------------------------------------ lưu / xóa
+
+    private ProductForm.Input readInput() {
+        ProductForm.Input in = new ProductForm.Input();
+        in.image = image;
+        in.name = edtName.getText().toString();
+        in.price = edtPrice.getText().toString();
+        in.category = ddCategory.getText().toString();
+        in.quantity = edtQuantity.getText().toString();
+        in.weight = edtWeight.getText().toString();
+        in.expiry = edtExpiry.getText().toString();
+        in.description = edtDescription.getText().toString();
+        in.origin = edtOrigin.getText().toString();
+        return in;
+    }
+
+    private void save() {
+        if (saving) return;
+        if (uploading) {
+            Toast.makeText(this, "Ảnh đang được tải lên, đợi một chút", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ProductForm.Input in = readInput();
+        Map<String, String> errors = ProductForm.validate(in, LocalDate.now(), isNew);
+        showErrors(errors);
+        if (!errors.isEmpty()) return;
+
+        Long type = ProductForm.typeOf(ddType.getText().toString());
+        Map<String, Object> data = new HashMap<>();
+        data.put(ProductForm.F_NAME, in.name.trim());
+        data.put(ProductForm.F_PRICE, ProductForm.parseWholeNumber(in.price));
+        data.put(ProductForm.F_CATEGORY, in.category.trim());
+        data.put(ProductForm.F_TYPE, type == null ? 1L : type);
+        data.put(ProductForm.F_QUANTITY, ProductForm.parseWholeNumber(in.quantity));
+        data.put(ProductForm.F_WEIGHT, in.weight.trim());
+        data.put(ProductForm.F_EXPIRY, formatDate(DashboardStats.parseDate(in.expiry)));
+        data.put(ProductForm.F_DESCRIPTION, in.description.trim());
+        data.put(ProductForm.F_IMAGE, image);
+        String origin = in.origin == null ? "" : in.origin.trim();
+        if (!origin.isEmpty()) data.put(ProductForm.F_ORIGIN, origin);
+        else if (!isNew) data.put(ProductForm.F_ORIGIN, FieldValue.delete());
+
+        setSaving(true);
+        if (isNew) {
+            db.collection("SanPham").add(data)
+                    .addOnSuccessListener(ref -> done("Đã thêm sản phẩm"))
+                    .addOnFailureListener(this::saveFailed);
+        } else {
+            db.collection("SanPham").document(product.getId()).update(data)
+                    .addOnSuccessListener(unused -> done("Đã lưu thay đổi"))
+                    .addOnFailureListener(this::saveFailed);
+        }
+    }
+
+    private void showErrors(Map<String, String> errors) {
+        setImageError(errors.get(ProductForm.F_IMAGE));
+        tilName.setError(errors.get(ProductForm.F_NAME));
+        tilPrice.setError(errors.get(ProductForm.F_PRICE));
+        tilCategory.setError(errors.get(ProductForm.F_CATEGORY));
+        tilQuantity.setError(errors.get(ProductForm.F_QUANTITY));
+        tilWeight.setError(errors.get(ProductForm.F_WEIGHT));
+        tilExpiry.setError(errors.get(ProductForm.F_EXPIRY));
+        tilDescription.setError(errors.get(ProductForm.F_DESCRIPTION));
+        if (errors.isEmpty()) return;
+
+        String first = errors.keySet().iterator().next();
+        View target;
+        switch (first) {
+            case ProductForm.F_IMAGE: target = imgProduct; break;
+            case ProductForm.F_NAME: target = tilName; break;
+            case ProductForm.F_PRICE: target = tilPrice; break;
+            case ProductForm.F_CATEGORY: target = tilCategory; break;
+            case ProductForm.F_QUANTITY: target = tilQuantity; break;
+            case ProductForm.F_WEIGHT: target = tilWeight; break;
+            case ProductForm.F_EXPIRY: target = tilExpiry; break;
+            default: target = tilDescription;
+        }
+        scrollTo(target);
+        Toast.makeText(this, errors.get(first), Toast.LENGTH_SHORT).show();
+    }
+
+    /** Cuộn để view (nằm sâu trong form) hiện ra, chừa một khoảng phía trên. */
+    private void scrollTo(View v) {
+        int y = 0;
+        View cur = v;
+        while (cur != null && cur != scroll) {
+            y += cur.getTop();
+            cur = cur.getParent() instanceof View ? (View) cur.getParent() : null;
+        }
+        int margin = getResources().getDimensionPixelSize(R.dimen.admin_space_xl);
+        scroll.smoothScrollTo(0, Math.max(0, y - margin));
+    }
+
+    private void setSaving(boolean s) {
+        saving = s;
+        btnSave.setEnabled(!s);
+        btnDelete.setEnabled(!s);
+        btnSave.setText(s ? "Đang lưu…" : (isNew ? "Thêm sản phẩm" : "Lưu thay đổi"));
+    }
+
+    private void done(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        setResult(RESULT_OK);
+        finish();
+    }
+
+    private void saveFailed(Exception e) {
+        Log.e(TAG, "Lưu sản phẩm thất bại", e);
+        setSaving(false);
+        Toast.makeText(this, "Lưu thất bại: " + e.getMessage(), Toast.LENGTH_LONG).show();
+    }
+
+    private void deleteProduct() {
         // XÓA MỀM: chỉ đánh dấu daxoa = true. Sản phẩm biến mất khỏi cửa hàng và danh sách admin,
         // nhưng hóa đơn / chi tiết hóa đơn / thống kê / lịch sử mua hàng vẫn còn nguyên.
         Map<String, Object> hide = new HashMap<>();
-        hide.put(com.UngDung.ThucPhamXanh.Helper.ProductVisibility.FIELD_DELETED, true);
+        hide.put(ProductVisibility.FIELD_DELETED, true);
         hide.put("ngayxoa", System.currentTimeMillis());
-        db.collection("SanPham").document(product.getId()).update(hide).addOnSuccessListener(unused -> {
-                    Toast.makeText(AdminAddSPActivity.this, "Đã xóa sản phẩm khỏi cửa hàng", Toast.LENGTH_SHORT).show();
-                    setResult(RESULT_OK);
-                    finish();
-                }).addOnFailureListener(e -> {
-                    Toast.makeText(AdminAddSPActivity.this, "Xoá sản phẩm thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    Log.e("DeleteProduct", "Error deleting product", e);
-                });
+        setSaving(true);
+        db.collection("SanPham").document(product.getId()).update(hide)
+                .addOnSuccessListener(unused -> done("Đã xóa sản phẩm khỏi cửa hàng"))
+                .addOnFailureListener(this::saveFailed);
     }
 
-    private void setupSaveAndEditListeners() {
-        btnSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (!validate()) {
-                    return;
-                }
-                try {
-                    Product sp = new Product();
-                    sp.setGiatien(Long.parseLong(edtGiatienSP.getText().toString()));
-                    sp.setMota(edtMotaSP.getText().toString());
-                    sp.setHansudung(edtHansudungSP.getText().toString());
-                    sp.setType(Long.parseLong(edtTypeSP.getText().toString()));
-                    sp.setTensp(edtTenSP.getText().toString());
-                    sp.setSoluong(Long.parseLong(edtSoluongSP.getText().toString()));
-                    sp.setTrongluong(edtTrongluongSP.getText().toString());
-                    sp.setLoaisp(spinnerDanhMuc.getSelectedItem().toString());
-                    sp.setHinhanh(image);
+    // ------------------------------------------------------------------ thoát khi chưa lưu
 
-                    db.collection("SanPham").add(sp).addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                        @Override
-                        public void onSuccess(@NonNull DocumentReference documentReference) {
-                            Toast.makeText(AdminAddSPActivity.this, "Thêm sản phẩm thành công!!!", Toast.LENGTH_SHORT).show();
-                            setResult(RESULT_OK);
-                            finish();
-                        }
-                    }).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(AdminAddSPActivity.this, "Thêm sản phẩm thất bại!!!", Toast.LENGTH_SHORT).show();
-                            Log.e("AddProduct", "Error adding product", e);
-                        }
-                    });
-                } catch (NumberFormatException e) {
-                    Toast.makeText(AdminAddSPActivity.this, "Vui lòng nhập đúng định dạng số", Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    Toast.makeText(AdminAddSPActivity.this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        btnEdit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (product == null || product.getId() == null) {
-                    Toast.makeText(AdminAddSPActivity.this, "Không tìm thấy sản phẩm để cập nhật", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                
-                if (!validate()) {
-                    return;
-                }
-                
-                try {
-                    // Tạo Map để cập nhật các field
-                    Map<String, Object> updateData = new HashMap<>();
-                    updateData.put("tensp", edtTenSP.getText().toString());
-                    updateData.put("giatien", Long.parseLong(edtGiatienSP.getText().toString()));
-                    updateData.put("mota", edtMotaSP.getText().toString());
-                    updateData.put("hansudung", edtHansudungSP.getText().toString());
-                    updateData.put("type", Long.parseLong(edtTypeSP.getText().toString()));
-                    updateData.put("soluong", Long.parseLong(edtSoluongSP.getText().toString()));
-                    updateData.put("trongluong", edtTrongluongSP.getText().toString());
-                    updateData.put("loaisp", spinnerDanhMuc.getSelectedItem().toString());
-                    updateData.put("hinhanh", image);
-                    
-                    // Cập nhật sản phẩm trong Firestore
-                    db.collection("SanPham").document(product.getId())
-                            .update(updateData)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(@NonNull Void unused) {
-                                    Toast.makeText(AdminAddSPActivity.this, "Cập nhật sản phẩm thành công!!!", Toast.LENGTH_SHORT).show();
-                                    setResult(RESULT_OK);
-                                    finish();
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(AdminAddSPActivity.this, "Cập nhật sản phẩm thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                            Log.e("UpdateProduct", "Error updating product", e);
-                        }
-                    });
-                } catch (NumberFormatException e) {
-                    Toast.makeText(AdminAddSPActivity.this, "Vui lòng nhập đúng định dạng số", Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    Toast.makeText(AdminAddSPActivity.this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
-                }
-            }
-        });
+    private String formState() {
+        return image + '\u0001' + edtName.getText() + '\u0001' + edtPrice.getText() + '\u0001'
+                + ddCategory.getText() + '\u0001' + ddType.getText() + '\u0001' + edtQuantity.getText()
+                + '\u0001' + edtWeight.getText() + '\u0001' + edtExpiry.getText() + '\u0001'
+                + edtOrigin.getText() + '\u0001' + edtDescription.getText();
     }
 
-    private void Init() {
-        db = FirebaseFirestore.getInstance();
-        list = new ArrayList<>();
-        list.add("Chọn Danh mục");
-
-        // Nhận data từ AdminProductActivity
-        if (getIntent() != null && getIntent().hasExtra("SP")) {
-            product = (Product) getIntent().getSerializableExtra("SP");
-        }
-        if (product != null) {
-            btnQRProduct.setVisibility(View.VISIBLE);
-            imgQRProduct.setVisibility(View.VISIBLE);
-            tvTaoMaQR.setVisibility(View.VISIBLE);
-            db.collection("QRProduct").whereEqualTo("idproduct", product.getId())
-                    .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                @Override
-                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                    for (QueryDocumentSnapshot q : queryDocumentSnapshots){
-                        if (q.getString("idproduct").equals(product.getId())){
-                            btnQRProduct.setVisibility(GONE);
-                            btnDownQRProduct.setVisibility(View.VISIBLE);
-                            Picasso.get().load(q.getString("hinhanh_qr")).into(imgQRProduct);
-                            tvTaoMaQR.setText("Mã QR sản phẩm");
-                        }
-                    }
-                }
-            });
-
-            edtTrongluongSP.setText(product.getTrongluong());
-            edtMotaSP.setText(product.getMota());
-            edtHansudungSP.setText(product.getHansudung());
-            edtSoluongSP.setText(product.getSoluong() + "");
-            edtGiatienSP.setText(product.getGiatien() + "");
-            edtTenSP.setText(product.getTensp());
-            edtTypeSP.setText(product.getType()+"");
-            // Hiển thị container chứa các button Edit và Delete
-            if (layoutActionButtons != null) {
-                layoutActionButtons.setVisibility(View.VISIBLE);
-            }
-            btnEdit.setVisibility(View.VISIBLE);
-            btnDelete.setVisibility(View.VISIBLE);
-            btnSave.setVisibility(GONE);
-            tvTitle.setText("Edit sản phẩm");
-            if (!TextUtils.isEmpty(product.getHinhanh())) {
-                Picasso.get().load(product.getHinhanh()).into(imgAdd);
-                image = product.getHinhanh();
-            }
-        } else {
-            // Chế độ thêm mới - ẩn container Edit/Delete, hiển thị btnSave
-            if (layoutActionButtons != null) {
-                layoutActionButtons.setVisibility(View.GONE);
-            }
-            btnSave.setVisibility(View.VISIBLE);
-            btnEdit.setVisibility(View.GONE);
-            btnDelete.setVisibility(View.GONE);
-        }
-
-        db.collection("LoaiProduct").get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-            @Override
-            public void onSuccess(@NonNull QuerySnapshot queryDocumentSnapshots) {
-                for (QueryDocumentSnapshot q : queryDocumentSnapshots) {
-                    list.add(q.getString("tenloai"));
-                    Log.d("TAG", "onSuccess: " + q.getString("tenloai"));
-                }
-                ArrayAdapter arrayAdapter = new ArrayAdapter(AdminAddSPActivity.this, android.R.layout.simple_list_item_1, list);
-                spinnerDanhMuc.setAdapter(arrayAdapter);
-                if (list.size() > 1) {
-                    spinnerDanhMuc.setSelection(1);
-                    if (product != null) {
-                        for (int i = 0; i < list.size(); i++) {
-                            if (list.get(i).equals(product.getLoaisp())) {
-                                spinnerDanhMuc.setSelection(i);
-                                btnDanhmuc.setText(product.getLoaisp());
-                                loaisp = product.getLoaisp();
-                                break;
-                            }
-                        }
-                    } else {
-                        // Set default selection
-                        btnDanhmuc.setText(list.get(1));
-                        loaisp = list.get(1);
-                    }
-                }
-
-            }
-        });
-
+    private boolean isDirty() {
+        return initialState != null && !initialState.equals(formState());
     }
 
-    private boolean validate() {
-        if (TextUtils.isEmpty(image)) {
-            Toast.makeText(this, "Vui lòng chọn hình ảnh", Toast.LENGTH_SHORT).show();
-            return false;
+    private void attemptClose() {
+        if (saving || !isDirty()) {
+            finish();
+            return;
         }
-        if (TextUtils.isEmpty(edtGiatienSP.getText().toString())) {
-            Toast.makeText(this, "Vui lòng nhập giá tiền", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        if (TextUtils.isEmpty(edtTenSP.getText().toString())) {
-            Toast.makeText(this, "Vui lòng nhập tên sản phẩm", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        if (TextUtils.isEmpty(edtHansudungSP.getText().toString())) {
-            Toast.makeText(this, "Vui lòng nhập hạn sử dụng", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        if (TextUtils.isEmpty(edtTrongluongSP.getText().toString())) {
-            Toast.makeText(this, "Vui lòng nhập Trọng lượng", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        if (TextUtils.isEmpty(edtSoluongSP.getText().toString())) {
-            Toast.makeText(this, "Vui lòng nhập số lượng", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        if (TextUtils.isEmpty(edtTypeSP.getText().toString())) {
-            Toast.makeText(this, "Vui lòng nhập type", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        if (TextUtils.isEmpty(edtMotaSP.getText().toString())) {
-            Toast.makeText(this, "Vui lòng nhập mô tả", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-
-        return true;
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Bỏ thay đổi?")
+                .setMessage("Những gì bạn vừa nhập sẽ không được lưu.")
+                .setNegativeButton("Tiếp tục sửa", null)
+                .setPositiveButton("Bỏ thay đổi", (d, w) -> finish())
+                .show();
     }
 
-    private void InitWidget() {
-        btnDownQRProduct = findViewById(R.id.btn_down_qr_product);
-        tvTaoMaQR = findViewById(R.id.tv_taomaqr);
-        imgQRProduct = findViewById(R.id.img_qr_product);
-        btnQRProduct = findViewById(R.id.btn_qr_product);
-        tvTitle = findViewById(R.id.tv_title);
-        imgAddLoaiProduct = findViewById(R.id.img_add_loaiproduct);
-        btnAddBack = findViewById(R.id.btn_add_back);
-        btnRefresh = findViewById(R.id.btn_refresh);
-        btnSave = findViewById(R.id.btn_save);
-        edtTenSP = findViewById(R.id.edt_tensp);
-        edtGiatienSP = findViewById(R.id.edt_giatiensp);
-        edtHansudungSP = findViewById(R.id.edt_hansudungsp);
-        edtTrongluongSP = findViewById(R.id.edt_trongluongsp);
-        edtSoluongSP = findViewById(R.id.edt_soluongsp);
-        edtTypeSP = findViewById(R.id.edt_typesp);
-        edtMotaSP = findViewById(R.id.edt_motasp);
-        imgAdd = findViewById(R.id.image_add);
-        btnDanhmuc = findViewById(R.id.btn_danhmuc);
-        // Đảm bảo btnDanhmuc là TextView (từ layout mới)
-        btnDelete = findViewById(R.id.btn_delete);
-        btnEdit = findViewById(R.id.btn_edit);
-        spinnerDanhMuc = findViewById(R.id.spinner_danhmuc);
-        layoutActionButtons = findViewById(R.id.layout_action_buttons);
-    }
+    // ------------------------------------------------------------------ ảnh
 
+    /** Chọn ảnh (camera / thư viện) + tải lên Storage: dùng chung với form danh mục. */
     private void initImageLaunchers() {
-        // Camera launcher
-        cameraLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == RESULT_OK) {
-                    if (cameraImageUri != null) {
-                        uploadImageToStorage(cameraImageUri);
-                    } else if (result.getData() != null && result.getData().getExtras() != null) {
-                        // Nếu camera trả về Bitmap (fallback)
-                        android.graphics.Bitmap bitmap = (android.graphics.Bitmap) result.getData().getExtras().get("data");
-                        if (bitmap != null) {
-                            Uri imageUri = saveBitmapToTempFile(bitmap);
-                            if (imageUri != null) {
-                                uploadImageToStorage(imageUri);
-                            }
-                        }
-                    }
-                }
+        imagePicker = new AdminImagePicker(this, "products", "Ảnh sản phẩm", new AdminImagePicker.Listener() {
+            @Override
+            public void onUploadStart() {
+                setUploading(true);
             }
-        );
-        
-        // Gallery launcher
-        galleryLauncher = registerForActivityResult(
-            new ActivityResultContracts.GetContent(),
-            uri -> {
-                if (uri != null) {
-                    uploadImageToStorage(uri);
-                }
+
+            @Override
+            public void onUploaded(String imageUrl) {
+                image = imageUrl;
+                setUploading(false);
+                setImageError(null);
             }
-        );
+
+            @Override
+            public void onUploadFailed() {
+                setUploading(false); // ImageUploadHelper đã báo lỗi bằng Toast
+            }
+        });
     }
-    
-    private Uri saveBitmapToTempFile(android.graphics.Bitmap bitmap) {
-        try {
-            java.io.File tempFile = new java.io.File(getCacheDir(), "temp_camera_image_" + System.currentTimeMillis() + ".jpg");
-            java.io.FileOutputStream fos = new java.io.FileOutputStream(tempFile);
-            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, fos);
-            fos.flush();
-            fos.close();
-            // Sử dụng FileProvider để tạo URI an toàn
-            return androidx.core.content.FileProvider.getUriForFile(
-                this,
-                getPackageName() + ".fileprovider",
-                tempFile
-            );
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-    
+
     private void showImageSourceDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Chọn nguồn ảnh");
-        builder.setItems(new String[]{"Chụp ảnh", "Chọn từ thư viện"}, (dialog, which) -> {
-            if (which == 0) {
-                // Camera
-                if (checkCameraPermission()) {
-                    openCamera();
-                }
-            } else if (which == 1) {
-                // Gallery - không cần permission với GetContent() trên Android 13+
-                // Nhưng vẫn cần cho Android < 13
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    // Android 13+ không cần permission khi dùng GetContent()
-                    openGallery();
-                } else {
-                    // Android < 13 cần permission
-                    if (checkStoragePermission()) {
-                        openGallery();
-                    }
-                }
-            }
-        });
-        builder.setNegativeButton("Hủy", null);
-        builder.show();
+        if (uploading) return;
+        imagePicker.show();
     }
-    
-    private boolean checkCameraPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 100);
-            return false;
+
+    private void setUploading(boolean u) {
+        uploading = u;
+        progressImage.setVisibility(u ? View.VISIBLE : View.GONE);
+        btnPickImage.setEnabled(!u);
+        showImage();
+    }
+
+    // ------------------------------------------------------------------ adapter dropdown
+
+    /**
+     * ArrayAdapter mặc định lọc theo chữ đang có trong ô → sau khi chọn (hoặc xoay màn hình)
+     * dropdown chỉ còn đúng một mục. Adapter này luôn hiện đủ danh sách.
+     */
+    private static final class NoFilterAdapter extends ArrayAdapter<String> {
+        private final List<String> items;
+
+        NoFilterAdapter(Context context, List<String> items) {
+            super(context, android.R.layout.simple_list_item_1, items);
+            this.items = items;
         }
-        return true;
-    }
-    
-    private boolean checkStoragePermission() {
-        // Chỉ cần cho Android < 13
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 101);
-                return false;
-            }
+
+        @NonNull
+        @Override
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+            TextView tv = (TextView) super.getView(position, convertView, parent);
+            tv.setTextAppearance(R.style.Admin_Text);
+            return tv;
         }
-        return true;
-    }
-    
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 100) {
-            // Camera permission
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                openCamera();
-            } else {
-                Toast.makeText(this, "Cần quyền camera để chụp ảnh", Toast.LENGTH_SHORT).show();
-            }
-        } else if (requestCode == 101) {
-            // Storage permission
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                openGallery();
-            } else {
-                Toast.makeText(this, "Cần quyền truy cập thư viện để chọn ảnh", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-    
-    private void openCamera() {
-        try {
-            // Tạo file tạm để lưu ảnh
-            java.io.File photoFile = new java.io.File(getCacheDir(), "camera_image_" + System.currentTimeMillis() + ".jpg");
-            cameraImageUri = androidx.core.content.FileProvider.getUriForFile(
-                this,
-                getPackageName() + ".fileprovider",
-                photoFile
-            );
-            
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                cameraLauncher.launch(intent);
-            } else {
-                Toast.makeText(this, "Không thể mở camera", Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            // Fallback: không chỉ định output URI
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                cameraLauncher.launch(intent);
-            } else {
-                Toast.makeText(this, "Không thể mở camera", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-    
-    private void openGallery() {
-        galleryLauncher.launch("image/*");
-    }
-    
-    private void uploadImageToStorage(Uri imageUri) {
-        if (imageUri == null) {
-            Toast.makeText(this, "Không thể lấy ảnh", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Đang tải ảnh lên...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
-        
-        ImageUploadHelper.uploadImage(
-            this,
-            imageUri,
-            "products", // Folder trong Storage
-            progressDialog,
-            new ImageUploadHelper.UploadCallback() {
+
+        @NonNull
+        @Override
+        public Filter getFilter() {
+            return new Filter() {
                 @Override
-                public void onSuccess(String imageUrl) {
-                    image = imageUrl;
-                    Picasso.get()
-                            .load(imageUrl)
-                            .placeholder(R.drawable.logo_new)
-                            .error(R.drawable.logo_new)
-                            .into(imgAdd);
-                    Toast.makeText(AdminAddSPActivity.this, "Tải ảnh lên thành công", Toast.LENGTH_SHORT).show();
+                protected FilterResults performFiltering(CharSequence constraint) {
+                    FilterResults r = new FilterResults();
+                    r.values = items;
+                    r.count = items.size();
+                    return r;
                 }
-                
+
                 @Override
-                public void onFailure(Exception e) {
-                    Toast.makeText(AdminAddSPActivity.this, "Lỗi tải ảnh: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                protected void publishResults(CharSequence constraint, FilterResults results) {
+                    notifyDataSetChanged();
                 }
-            }
-        );
-    }
-
-    private void showDatePickerDialog() {
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH);
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-        
-        DatePickerDialog datePickerDialog = new DatePickerDialog(
-            this,
-            new DatePickerDialog.OnDateSetListener() {
-                @Override
-                public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                    calendar.set(year, month, dayOfMonth);
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-                    edtHansudungSP.setText(sdf.format(calendar.getTime()));
-                }
-            },
-            year, month, day
-        );
-        
-        // Set minimum date to today
-        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
-        datePickerDialog.show();
-    }
-    
-    private void showCategoryDialog() {
-        if (list == null || list.size() <= 1) {
-            Toast.makeText(this, "Chưa có danh mục nào. Vui lòng thêm danh mục trước!", Toast.LENGTH_SHORT).show();
-            return;
+            };
         }
-        
-        // Tạo danh sách danh mục (bỏ "Chọn Danh mục")
-        List<String> categories = new ArrayList<>();
-        for (int i = 1; i < list.size(); i++) {
-            categories.add(list.get(i));
-        }
-        
-        String[] categoryArray = categories.toArray(new String[0]);
-        
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Chọn danh mục");
-        builder.setItems(categoryArray, (dialog, which) -> {
-            String selectedCategory = categoryArray[which];
-            btnDanhmuc.setText(selectedCategory);
-            loaisp = selectedCategory;
-            
-            // Cập nhật spinner để đồng bộ
-            for (int i = 0; i < list.size(); i++) {
-                if (list.get(i).equals(selectedCategory)) {
-                    spinnerDanhMuc.setSelection(i);
-                    break;
-                }
-            }
-        });
-        builder.setNegativeButton("Hủy", null);
-        builder.show();
-    }
-
-    @Override
-    public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
-        if (position > 0) {
-            btnDanhmuc.setText(spinnerDanhMuc.getSelectedItem().toString());
-            String s = list.get(position);
-            loaisp = s;
-        }
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> adapterView) {
-
     }
 }

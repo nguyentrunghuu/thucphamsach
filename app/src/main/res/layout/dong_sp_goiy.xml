@@ -11,7 +11,7 @@
     android:id="@+id/layout_product"
     app:cardCornerRadius="20dp"
     app:cardElevation="6dp"
-    app:cardBackgroundColor="#FFFFFF">
+    app:cardBackgroundColor="@color/ui_surface">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -26,7 +26,7 @@
             android:layout_height="100dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="#F5F5F5">
+            app:cardBackgroundColor="@color/ui_surface_alt">
 
             <ImageView
                 android:id="@+id/img_product"
@@ -64,9 +64,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Rau củ"
-                android:textColor="#757575"
+                android:textColor="@color/ui_text_secondary"
                 android:textSize="12sp"
-                android:background="#F5F5F5"
+                android:background="@color/ui_surface_alt"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
                 android:paddingTop="4dp"
@@ -87,7 +87,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="255.555"
-                    android:textColor="#212121"
+                    android:textColor="@color/ui_text"
                     android:textStyle="bold"
                     android:textSize="16sp" />
 

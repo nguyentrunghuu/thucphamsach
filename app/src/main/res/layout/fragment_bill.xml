@@ -1,108 +1,229 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- "Đơn hàng của tôi" (tab Đơn hàng của khách) — BillFragment -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F1F8E9"
+    android:background="@color/ui_bg"
     tools:context=".MainActivity">
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipe_bill"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
+        <!-- Đầu trang: tiêu đề + ô tìm kiếm -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_home_header"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingTop="40dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="20dp">
 
-            <!-- Modern Header -->
-            <com.google.android.material.appbar.AppBarLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                app:elevation="0dp">
+                android:fontFamily="@font/be_vietnam_pro"
+                android:text="Đơn hàng của tôi"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp"
-                    android:paddingTop="24dp"
-                    android:paddingBottom="16dp">
-
-                    <!-- Header with Icon -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginBottom="8dp">
-
-                        <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:src="@drawable/ic_bill"
-                            android:tint="#2196F3"
-                            android:layout_marginEnd="12dp" />
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Đơn hàng của bạn"
-                            android:textColor="#2196F3"
-                            android:textSize="28sp"
-                            android:textStyle="bold"
-                            android:letterSpacing="0.02" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Theo dõi trạng thái đơn hàng của bạn"
-                        android:textColor="#757575"
-                        android:textSize="14sp"
-                        android:layout_marginStart="44dp" />
-                </LinearLayout>
-            </com.google.android.material.appbar.AppBarLayout>
-
-            <!-- Tab Layout with Card Style -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/tv_bill_subtitle"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="12dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="#FFFFFF">
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/be_vietnam_pro"
+                android:text="Theo dõi và quản lý đơn hàng của bạn"
+                android:textColor="#CCFFFFFF"
+                android:textSize="13sp" />
 
-                <com.UngDung.ThucPhamXanh.Adapter.CustomTabLayout
-                    android:id="@+id/tab_Layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="4dp"
-                    android:background="@android:color/transparent"
-                    app:tabSelectedTextColor="#2196F3"
-                    app:tabTextColor="#9E9E9E"
-                    app:tabIndicatorColor="#2196F3"
-                    app:tabIndicatorHeight="3dp"
-                    app:tabIndicatorFullWidth="false"
-                    app:tabMode="scrollable"
-                    app:tabTextAppearance="@style/CustomTabTextAppearance"
-                    app:tabRippleColor="@android:color/transparent" />
-            </androidx.cardview.widget.CardView>
-
-            <!-- ViewPager -->
-            <androidx.viewpager.widget.ViewPager
-                android:id="@+id/view_Pager"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="48dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_search_box"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingEnd="6dp">
 
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/ui_green_text" />
+
+                <EditText
+                    android:id="@+id/edt_search_bill"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:fontFamily="@font/be_vietnam_pro"
+                    android:hint="Tìm mã đơn, tên sản phẩm"
+                    android:imeOptions="actionSearch"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="@color/ui_text"
+                    android:textColorHint="@color/ui_text_hint"
+                    android:textSize="14sp" />
+
+                <ImageView
+                    android:id="@+id/btn_clear_search"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Xóa tìm kiếm"
+                    android:padding="11dp"
+                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                    android:visibility="gone"
+                    app:tint="@color/ui_text_secondary" />
+            </LinearLayout>
         </LinearLayout>
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+        <!-- Chip trạng thái -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:paddingTop="12dp"
+            android:paddingBottom="8dp"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_group_bill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:chipSpacingHorizontal="8dp"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_bill_all"
+                    style="@style/SearchChip"
+                    android:checked="true"
+                    android:text="Tất cả" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_bill_processing"
+                    style="@style/SearchChip"
+                    android:text="Đang xử lý" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_bill_shipping"
+                    style="@style/SearchChip"
+                    android:text="Đang giao" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_bill_done"
+                    style="@style/SearchChip"
+                    android:text="Đã giao" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_bill_cancelled"
+                    style="@style/SearchChip"
+                    android:text="Đã hủy" />
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/swipe_bill"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rcv_bill"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="130dp" />
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+            <ProgressBar
+                android:id="@+id/progress_bill"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center"
+                android:indeterminateTint="#2E7D32" />
+
+            <!-- Trạng thái rỗng / lỗi -->
+            <LinearLayout
+                android:id="@+id/box_bill_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingStart="32dp"
+                android:paddingEnd="32dp"
+                android:paddingBottom="80dp"
+                android:visibility="gone">
+
+                <FrameLayout
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:background="@drawable/bg_pill_green_light">
+
+                    <ImageView
+                        android:id="@+id/img_bill_empty"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_admin_order"
+                        app:tint="@color/ui_green_text" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/tv_bill_empty_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="@font/be_vietnam_pro"
+                    android:textColor="@color/ui_text"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    tools:text="Chưa có đơn hàng nào" />
+
+                <TextView
+                    android:id="@+id/tv_bill_empty_desc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:fontFamily="@font/be_vietnam_pro"
+                    android:gravity="center"
+                    android:textColor="@color/ui_text_secondary"
+                    android:textSize="14sp"
+                    tools:text="Hãy chọn vài món tươi ngon nhé!" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_bill_empty"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="18dp"
+                    android:text="Mua sắm ngay"
+                    android:textColor="#FFFFFF"
+                    app:backgroundTint="#2E7D32"
+                    app:cornerRadius="14dp" />
+            </LinearLayout>
+        </FrameLayout>
+    </LinearLayout>
+</FrameLayout>

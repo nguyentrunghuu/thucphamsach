@@ -19,7 +19,7 @@
         android:layout_marginBottom="32dp"
         app:cardCornerRadius="24dp"
         app:cardElevation="8dp"
-        app:cardBackgroundColor="#FFFFFF"
+        app:cardBackgroundColor="@color/ui_surface"
         android:visibility="visible">
 
         <LinearLayout
@@ -33,7 +33,7 @@
                 android:layout_width="120dp"
                 android:layout_height="120dp"
                 android:src="@drawable/ic_cart4"
-                android:tint="#BDBDBD"
+                android:tint="@color/ui_text_hint"
                 android:contentDescription="Empty Cart Icon"
                 android:scaleType="fitCenter" />
 
@@ -44,7 +44,7 @@
                 android:layout_marginTop="24dp"
                 android:text="Giỏ hàng của bạn đang trống"
                 android:textSize="18sp"
-                android:textColor="#757575"
+                android:textColor="@color/ui_text_secondary"
                 android:textStyle="bold"
                 android:gravity="center"
                 android:maxLines="2"
@@ -76,7 +76,7 @@
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="8dp"
-                app:cardBackgroundColor="#FFFFFF">
+                app:cardBackgroundColor="@color/ui_surface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -108,7 +108,7 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="8dp"
-                app:cardBackgroundColor="#FFFFFF">
+                app:cardBackgroundColor="@color/ui_surface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -138,7 +138,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Đơn giá:"
-                            android:textColor="#757575"
+                            android:textColor="@color/ui_text_secondary"
                             android:textSize="16sp"
                             android:minWidth="100dp" />
 
@@ -183,7 +183,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Phí vận chuyển:"
-                            android:textColor="#757575"
+                            android:textColor="@color/ui_text_secondary"
                             android:textSize="16sp"
                             android:minWidth="100dp" />
 
@@ -198,7 +198,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="0"
-                                android:textColor="#212121"
+                                android:textColor="@color/ui_text"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:minWidth="80dp"
@@ -219,7 +219,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="#E0E0E0"
+                        android:background="@color/ui_divider"
                         android:layout_marginTop="8dp"
                         android:layout_marginBottom="16dp" />
 
@@ -235,7 +235,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Tổng tiền:"
-                            android:textColor="#212121"
+                            android:textColor="@color/ui_text"
                             android:textSize="22sp"
                             android:textStyle="bold" />
 
@@ -283,7 +283,7 @@
         android:layout_marginBottom="16dp"
         app:cardCornerRadius="28dp"
         app:cardElevation="8dp"
-        app:cardBackgroundColor="#FFFFFF"
+        app:cardBackgroundColor="@color/ui_surface"
         android:visibility="gone">
 
         <TextView

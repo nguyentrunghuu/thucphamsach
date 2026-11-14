@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Một đơn trong danh sách đơn admin — AdminOrderAdapter -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/admin_space_s"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="@dimen/admin_radius_field">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/admin_space_l"
+        android:paddingTop="@dimen/admin_space_m"
+        android:paddingEnd="@dimen/admin_space_l"
+        android:paddingBottom="@dimen/admin_space_m">
+
+        <!-- Mã đơn + trạng thái -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_order_code"
+                style="@style/Admin.Text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/admin_text_muted"
+                android:textSize="13sp"
+                tools:text="TPS0512250010TM" />
+
+            <TextView
+                android:id="@+id/tv_order_status"
+                style="@style/Admin.Badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/admin_space_s"
+                tools:text="Đã xác nhận" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_order_name"
+            style="@style/Admin.Text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="Hữu Tình" />
+
+        <TextView
+            android:id="@+id/tv_order_sub"
+            style="@style/Admin.Text.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textSize="13sp"
+            tools:text="0349132622 · 05/12/2025 · Thanh toán khi nhận hàng" />
+
+        <TextView
+            android:id="@+id/tv_order_address"
+            style="@style/Admin.Text.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textSize="13sp"
+            tools:text="Khu nhà ở thái bình, Đường Tân Hiệp 17, Tân Uyên, Bình Dương" />
+
+        <!-- Tổng tiền + nút đổi trạng thái -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/admin_space_s"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_order_total"
+                style="@style/Admin.Text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:maxLines="1"
+                android:textColor="@color/admin_accent_text"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="370.000 đ" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_order_update"
+                style="@style/Admin.Button.Outlined"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="40dp"
+                android:paddingStart="@dimen/admin_space_m"
+                android:paddingEnd="@dimen/admin_space_m"
+                android:text="Cập nhật"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

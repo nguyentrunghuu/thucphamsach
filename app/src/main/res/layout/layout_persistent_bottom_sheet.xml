@@ -20,7 +20,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="10dp"
             android:background="@drawable/drag_handle_background"
-            android:backgroundTint="#D5DBD5" />
+            android:backgroundTint="@color/ui_divider" />
 
         <!-- Sản phẩm -->
         <LinearLayout
@@ -33,7 +33,7 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="88dp"
                 android:layout_height="88dp"
-                app:cardBackgroundColor="#F4F7F4"
+                app:cardBackgroundColor="@color/ui_surface_alt"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp">
 
@@ -62,7 +62,7 @@
                     android:lineSpacingMultiplier="1.15"
                     android:maxLines="2"
                     android:text="Tên sản phẩm"
-                    android:textColor="#1A1A1A"
+                    android:textColor="@color/ui_text"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -78,7 +78,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/be_vietnam_pro"
                         android:text="40.000"
-                        android:textColor="#E65100"
+                        android:textColor="@color/ui_price"
                         android:textSize="20sp"
                         android:textStyle="bold" />
 
@@ -87,7 +87,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/be_vietnam_pro"
                         android:text=" đ"
-                        android:textColor="#E65100"
+                        android:textColor="@color/ui_price"
                         android:textSize="15sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -98,7 +98,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginVertical="18dp"
-            android:background="#EEF2EE" />
+            android:background="@color/ui_divider" />
 
         <!-- Chọn số lượng -->
         <LinearLayout
@@ -113,7 +113,7 @@
                 android:layout_weight="1"
                 android:fontFamily="@font/be_vietnam_pro"
                 android:text="Số lượng"
-                android:textColor="#1A1A1A"
+                android:textColor="@color/ui_text"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -136,7 +136,7 @@
                     android:foreground="?attr/selectableItemBackgroundBorderless"
                     android:padding="9dp"
                     android:src="@drawable/ic_ui_remove"
-                    app:tint="#2E7D32" />
+                    app:tint="@color/ui_green_text" />
 
                 <TextView
                     android:id="@+id/tv_soluong_bottom"
@@ -145,7 +145,7 @@
                     android:fontFamily="@font/be_vietnam_pro"
                     android:gravity="center"
                     android:text="1"
-                    android:textColor="#1A1A1A"
+                    android:textColor="@color/ui_text"
                     android:textSize="18sp"
                     android:textStyle="bold" />
 

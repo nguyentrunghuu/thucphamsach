@@ -21,7 +21,7 @@
             android:layout_marginTop="16dp"
             app:cardCornerRadius="20dp"
             app:cardElevation="4dp"
-            app:cardBackgroundColor="#FFFFFF">
+            app:cardBackgroundColor="@color/ui_surface">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -62,7 +62,7 @@
             android:layout_marginTop="12dp"
             app:cardCornerRadius="20dp"
             app:cardElevation="4dp"
-            app:cardBackgroundColor="#FFFFFF">
+            app:cardBackgroundColor="@color/ui_surface">
 
             <EditText
                 android:id="@+id/edt_search"
@@ -76,7 +76,7 @@
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:textSize="15sp"
-                android:textColorHint="#9E9E9E"
+                android:textColorHint="@color/ui_text_hint"
                 android:imeOptions="actionSearch" />
         </androidx.cardview.widget.CardView>
     </com.google.android.material.appbar.AppBarLayout>
@@ -100,7 +100,7 @@
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="#FFFFFF">
+                app:cardBackgroundColor="@color/ui_surface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -113,7 +113,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Sản phẩm:"
-                        android:textColor="#757575"
+                        android:textColor="@color/ui_text_secondary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -135,7 +135,7 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="8dp"
-                app:cardBackgroundColor="#FFFFFF">
+                app:cardBackgroundColor="@color/ui_surface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
