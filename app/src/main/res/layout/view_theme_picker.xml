@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Khung chọn giao diện Sáng / Tối / Theo hệ thống (dùng ở Tài khoản và trang admin) — gắn bằng View/ThemePicker.bind() -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card_theme_picker"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="@color/ui_surface"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/ui_stroke"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/be_vietnam_pro"
+            android:text="Giao diện"
+            android:textColor="@color/ui_text"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/be_vietnam_pro"
+            android:text="Chọn chế độ hiển thị của ứng dụng"
+            android:textColor="@color/ui_text_secondary"
+            android:textSize="13sp" />
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggle_theme"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_theme_light"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="Sáng"
+                android:textColor="@color/theme_toggle_text"
+                app:backgroundTint="@color/theme_toggle_bg"
+                app:strokeColor="@color/ui_stroke" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_theme_dark"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="Tối"
+                android:textColor="@color/theme_toggle_text"
+                app:backgroundTint="@color/theme_toggle_bg"
+                app:strokeColor="@color/ui_stroke" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_theme_system"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1.4"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="Hệ thống"
+                android:textColor="@color/theme_toggle_text"
+                app:backgroundTint="@color/theme_toggle_bg"
+                app:strokeColor="@color/ui_stroke" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -249,7 +249,7 @@
                             style="@style/Admin.Text.Section"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/admin_primary_dark"
+                            android:textColor="@color/admin_accent_text"
                             tools:text="370.000 đ" />
                     </LinearLayout>
                 </LinearLayout>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bản TỐI của values/colors_ui.xml + các màu ngữ nghĩa cũ (text_*, background_*, admin_*) -->
+<resources>
+    <color name="ui_bg">#0F1410</color>
+    <color name="ui_surface">#1A211C</color>
+    <color name="ui_surface_alt">#242C26</color>
+    <color name="ui_text">#ECF1EC</color>
+    <color name="ui_text_secondary">#A9B3AA</color>
+    <color name="ui_text_hint">#7B867D</color>
+    <color name="ui_divider">#2A332C</color>
+    <color name="ui_stroke">#343E36</color>
+    <color name="ui_green_text">#7BCB80</color>
+    <color name="ui_green_soft">#1E3624</color>
+    <color name="ui_price">#FF9E57</color>
+    <color name="ui_danger">#EF7B7B</color>
+    <color name="ui_overlay_light">#33FFFFFF</color>
+    <color name="ui_danger_soft">#3A1E22</color>
+    <color name="ui_orange_soft">#3A2E15</color>
+
+    <color name="admin_accent_text">#8FD694</color>
+    <color name="nav_item_active">#7BCB80</color>
+    <color name="nav_item_inactive">#8A948C</color>
+
+    <!-- Màu ngữ nghĩa cũ (đã dùng khắp layout) -->
+    <color name="text_primary">#ECF1EC</color>
+    <color name="text_secondary">#A9B3AA</color>
+    <color name="text_hint">#7B867D</color>
+    <color name="background_light">#0F1410</color>
+    <color name="background_white">#1A211C</color>
+    <color name="background_gradient_start">#14231A</color>
+    <color name="background_gradient_end">#0F1410</color>
+    <color name="divider">#2A332C</color>
+    <color name="border_light">#343E36</color>
+    <color name="bottom_nav_inactive">#8A948C</color>
+    <color name="bottom_nav_transparent_bg">#E01A211C</color>
+    <color name="bottom_nav_active_green">#7BCB80</color>
+    <color name="colorGray">#242C26</color>
+
+    <!-- Trang admin -->
+    <color name="admin_primary">#3A8F40</color>
+    <color name="admin_primary_soft">#1E3624</color>
+    <color name="admin_secondary_soft">#2E2822</color>
+    <color name="admin_beige">#111611</color>
+    <color name="admin_surface">#1A211C</color>
+    <color name="admin_outline">#343E36</color>
+    <color name="admin_text">#E8EEE8</color>
+    <color name="admin_text_muted">#A3ADA4</color>
+    <color name="admin_warning_soft">#3A2E15</color>
+    <color name="admin_warning_text">#F2C068</color>
+    <color name="admin_danger_soft">#3A1E1E</color>
+    <color name="admin_info_soft">#1B2A38</color>
+</resources>

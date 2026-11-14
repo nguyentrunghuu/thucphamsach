@@ -53,7 +53,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Danh sách sản phẩm bạn đã yêu thích"
-                android:textColor="#757575"
+                android:textColor="@color/ui_text_secondary"
                 android:textSize="14sp"
                 android:layout_marginStart="44dp" />
         </LinearLayout>
@@ -90,7 +90,7 @@
                 android:visibility="gone"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="#FFFFFF">
+                app:cardBackgroundColor="@color/ui_surface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -112,7 +112,7 @@
                         android:layout_height="wrap_content"
                         android:text="Bạn chưa có sản phẩm yêu thích nào"
                         android:textSize="18sp"
-                        android:textColor="#757575"
+                        android:textColor="@color/ui_text_secondary"
                         android:textStyle="bold"
                         android:gravity="center"
                         android:layout_marginBottom="8dp" />
@@ -122,7 +122,7 @@
                         android:layout_height="wrap_content"
                         android:text="Hãy khám phá và thêm sản phẩm vào danh sách yêu thích của bạn"
                         android:textSize="14sp"
-                        android:textColor="#9E9E9E"
+                        android:textColor="@color/ui_text_hint"
                         android:gravity="center"
                         android:maxLines="2" />
                 </LinearLayout>

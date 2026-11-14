@@ -3,13 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F6F8F5">
+    android:background="@color/ui_bg">
 
     <!-- THANH TÌM KIẾM + BỘ LỌC -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#F6F8F5"
+        android:background="@color/ui_bg"
         app:elevation="0dp">
 
         <LinearLayout
@@ -30,7 +30,7 @@
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 android:padding="10dp"
                 android:src="@drawable/ic_ui_back"
-                app:tint="#1A1A1A" />
+                app:tint="@color/ui_text" />
 
             <!-- Ô tìm kiếm -->
             <LinearLayout
@@ -62,7 +62,7 @@
                     android:contentDescription="Tìm bằng giọng nói"
                     android:padding="8dp"
                     android:src="@drawable/ic_mic"
-                    app:tint="#2E7D32" />
+                    app:tint="@color/ui_green_text" />
             </LinearLayout>
 
             <ImageView
@@ -76,7 +76,7 @@
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 android:padding="10dp"
                 android:src="@drawable/ic_qr"
-                app:tint="#2E7D32" />
+                app:tint="@color/ui_green_text" />
         </LinearLayout>
 
         <!-- Sắp xếp / Bộ lọc / số kết quả -->
@@ -112,7 +112,7 @@
                 android:layout_weight="1"
                 android:gravity="end"
                 android:text=""
-                android:textColor="#7A847A"
+                android:textColor="@color/ui_text_secondary"
                 android:textSize="12sp" />
         </LinearLayout>
 
@@ -191,7 +191,7 @@
                         android:layout_marginBottom="8dp"
                         android:fontFamily="@font/be_vietnam_pro"
                         android:text="Tìm kiếm gần đây"
-                        android:textColor="#1A1A1A"
+                        android:textColor="@color/ui_text"
                         android:textSize="15sp"
                         android:textStyle="bold" />
 
@@ -225,7 +225,7 @@
                         android:background="@drawable/bg_empty_circle"
                         android:gravity="center"
                         android:text="🔍"
-                        android:textColor="#FF000000"
+                        android:textColor="@color/ui_text"
                         android:textSize="40sp" />
 
                     <TextView
@@ -234,7 +234,7 @@
                         android:layout_marginTop="16dp"
                         android:fontFamily="@font/be_vietnam_pro"
                         android:text="Không tìm thấy sản phẩm phù hợp"
-                        android:textColor="#1A1A1A"
+                        android:textColor="@color/ui_text"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -249,7 +249,7 @@
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="8dp"
                         android:text="Xóa bộ lọc"
-                        android:textColor="#2E7D32"
+                        android:textColor="@color/ui_green_text"
                         android:textFontWeight="600"
                         android:textSize="13sp" />
                 </LinearLayout>

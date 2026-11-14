@@ -8,11 +8,11 @@
     android:layout_margin="6dp"
     android:clickable="true"
     android:focusable="true"
-    app:cardBackgroundColor="#FFFFFF"
+    app:cardBackgroundColor="@color/ui_surface"
     app:cardCornerRadius="18dp"
     app:cardElevation="0dp"
     app:rippleColor="#1A2E7D32"
-    app:strokeColor="#EDF2ED"
+    app:strokeColor="@color/ui_stroke"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -26,7 +26,7 @@
             android:id="@+id/card_image"
             android:layout_width="match_parent"
             android:layout_height="130dp"
-            app:cardBackgroundColor="#F4F7F4"
+            app:cardBackgroundColor="@color/ui_surface_alt"
             app:cardCornerRadius="14dp"
             app:cardElevation="0dp">
 
@@ -53,7 +53,7 @@
             android:paddingHorizontal="8dp"
             android:paddingVertical="2dp"
             android:text="Rau củ"
-            android:textColor="#2E7D32"
+            android:textColor="@color/ui_green_text"
             android:textSize="11sp"
             android:visibility="gone" />
 
@@ -69,7 +69,7 @@
             android:lines="2"
             android:lineSpacingMultiplier="1.1"
             android:text="Tên sản phẩm"
-            android:textColor="#1A1A1A"
+            android:textColor="@color/ui_text"
             android:textSize="14sp" />
 
         <!-- Giá + nút thêm -->
@@ -87,7 +87,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/be_vietnam_pro" android:textStyle="bold"
                 android:text="25.000"
-                android:textColor="#E65100"
+                android:textColor="@color/ui_price"
                 android:textSize="16sp" />
 
             <TextView
@@ -97,7 +97,7 @@
                 android:layout_weight="1"
                 android:fontFamily="@font/be_vietnam_pro" android:textStyle="bold"
                 android:text=" đ"
-                android:textColor="#E65100"
+                android:textColor="@color/ui_price"
                 android:textSize="13sp" />
 
             <!-- Chỉ là biểu tượng; bấm vào sẽ mở chi tiết như cả thẻ -->

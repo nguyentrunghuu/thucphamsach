@@ -22,5 +22,5 @@
         style="@style/Admin.Text.Caption"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/admin_primary_soft" />
+        android:textColor="@color/admin_on_header_soft" />
 </LinearLayout>

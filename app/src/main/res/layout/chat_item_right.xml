@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="6dp"
         android:text="Đã xem"
-        android:textColor="#9AA39A"
+        android:textColor="@color/ui_text_hint"
         android:textSize="10sp"
         android:visibility="gone" />
 

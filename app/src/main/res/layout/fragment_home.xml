@@ -5,7 +5,7 @@
     android:id="@+id/swipe_home"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F6F8F5"
+    android:background="@color/ui_bg"
     tools:context=".fragment.HomeFragment">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -134,14 +134,14 @@
                                 android:clickable="true"
                                 android:drawableStart="@drawable/ic_search"
                                 android:drawablePadding="12dp"
-                                android:drawableTint="#2E7D32"
+                                android:drawableTint="@color/ui_green_text"
                                 android:focusable="false"
                                 android:hint="Tìm rau củ, trái cây tươi..."
                                 android:importantForAutofill="no"
                                 android:inputType="none"
                                 android:paddingHorizontal="16dp"
                                 android:textColor="@color/text_primary"
-                                android:textColorHint="#9AA39A"
+                                android:textColorHint="@color/ui_text_hint"
                                 android:textSize="14sp" />
                         </com.google.android.material.card.MaterialCardView>
                     </LinearLayout>
@@ -157,7 +157,7 @@
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        app:cardBackgroundColor="#E8F5E9"
+                        app:cardBackgroundColor="@color/ui_green_soft"
                         app:cardCornerRadius="20dp"
                         app:cardElevation="0dp">
 
@@ -221,7 +221,7 @@
                         android:layout_marginStart="8dp"
                         android:fontFamily="@font/be_vietnam_pro" android:textStyle="bold"
                         android:text="Xem  ›"
-                        android:textColor="#E65100"
+                        android:textColor="@color/ui_price"
                         android:textSize="12sp" />
                 </LinearLayout>
 

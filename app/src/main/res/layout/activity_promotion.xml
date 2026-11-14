@@ -21,7 +21,7 @@
             android:layout_marginTop="16dp"
             app:cardCornerRadius="20dp"
             app:cardElevation="4dp"
-            app:cardBackgroundColor="#FFFFFF">
+            app:cardBackgroundColor="@color/ui_surface">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -74,7 +74,7 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="8dp"
-                app:cardBackgroundColor="#FFFFFF">
+                app:cardBackgroundColor="@color/ui_surface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -96,14 +96,14 @@
                             android:layout_width="120dp"
                             android:layout_height="120dp"
                             android:src="@drawable/ic_cart4"
-                            android:tint="#BDBDBD"
+                            android:tint="@color/ui_text_hint"
                             android:layout_marginBottom="16dp" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Không có khuyến mãi nào"
-                            android:textColor="#757575"
+                            android:textColor="@color/ui_text_secondary"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -111,7 +111,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Vui lòng thử lại sau"
-                            android:textColor="#9E9E9E"
+                            android:textColor="@color/ui_text_hint"
                             android:textSize="14sp"
                             android:layout_marginTop="8dp" />
                     </LinearLayout>

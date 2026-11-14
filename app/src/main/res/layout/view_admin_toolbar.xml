@@ -18,5 +18,5 @@
         android:paddingBottom="@dimen/admin_space_xs"
         app:navigationIcon="@drawable/ic_ui_back"
         app:navigationIconTint="@color/white"
-        app:subtitleTextColor="@color/admin_primary_soft" />
+        app:subtitleTextColor="@color/admin_on_header_soft" />
 </LinearLayout>

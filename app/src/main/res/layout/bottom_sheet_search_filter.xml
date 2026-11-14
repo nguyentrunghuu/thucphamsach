@@ -19,7 +19,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="10dp"
             android:background="@drawable/drag_handle_background"
-            android:backgroundTint="#D5DBD5" />
+            android:backgroundTint="@color/ui_divider" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -27,7 +27,7 @@
             android:layout_marginTop="14dp"
             android:fontFamily="@font/be_vietnam_pro"
             android:text="Bộ lọc"
-            android:textColor="#1A1A1A"
+            android:textColor="@color/ui_text"
             android:textSize="19sp"
             android:textStyle="bold" />
 
@@ -83,7 +83,7 @@
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="10dp"
                 android:text="–"
-                android:textColor="#7A847A" />
+                android:textColor="@color/ui_text_secondary" />
 
             <EditText
                 android:id="@+id/edt_price_max"
@@ -101,7 +101,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Chỉ hiện sản phẩm còn hàng"
-            android:textColor="#1A1A1A"
+            android:textColor="@color/ui_text"
             android:textSize="14sp"
             app:thumbTint="@color/switch_thumb"
             app:trackTint="@color/switch_track" />
@@ -124,7 +124,7 @@
                 android:stateListAnimator="@null"
                 android:text="Đặt lại"
                 android:textAllCaps="false"
-                android:textColor="#2E7D32"
+                android:textColor="@color/ui_green_text"
                 android:textSize="15sp"
                 android:textStyle="bold"
                 app:backgroundTint="@null" />

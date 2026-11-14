@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Màu theo NGỮ NGHĨA (nền, chữ, viền…) dùng cho cả chế độ sáng và tối.
+     Bản tối nằm ở values-night/colors_ui.xml. Layout/drawable mới dùng các màu này, đừng viết cứng #FFFFFF / #1A1A1A.
+     Màu thương hiệu (xanh lá làm nền nút có chữ trắng) giữ nguyên ở cả hai chế độ. -->
+<resources>
+    <color name="ui_bg">#F6F8F5</color>               <!-- nền màn hình -->
+    <color name="ui_surface">#FFFFFF</color>          <!-- nền thẻ, ô nhập, hộp thoại -->
+    <color name="ui_surface_alt">#F4F7F3</color>      <!-- nền ô phụ (ảnh nhỏ, tile, ô tìm kiếm) -->
+    <color name="ui_text">#1A1A1A</color>             <!-- chữ chính -->
+    <color name="ui_text_secondary">#757575</color>   <!-- chữ phụ -->
+    <color name="ui_text_hint">#9E9E9E</color>        <!-- gợi ý, chữ mờ -->
+    <color name="ui_divider">#EEF2EE</color>          <!-- đường kẻ -->
+    <color name="ui_stroke">#E3E8E3</color>           <!-- viền thẻ / ô nhập -->
+    <color name="ui_green_text">#2E7D32</color>       <!-- chữ / viền / icon xanh lá trên nền thường -->
+    <color name="ui_green_soft">#E8F5E9</color>       <!-- nền xanh nhạt (chip, icon box) -->
+    <color name="ui_price">#E65100</color>            <!-- giá tiền -->
+    <color name="ui_danger">#C62828</color>           <!-- chữ / viền hủy, xóa, lỗi -->
+    <color name="ui_overlay_light">#33FFFFFF</color>  <!-- nút mờ đặt trên nền xanh (đầu trang) -->
+    <color name="ui_danger_soft">#FFEBEE</color>      <!-- nền đỏ nhạt (nút đăng xuất, cảnh báo) -->
+    <color name="ui_orange_soft">#FFF3E0</color>      <!-- nền cam nhạt -->
+
+    <!-- Chữ nhấn trang admin (xanh đậm ở nền sáng, xanh nhạt ở nền tối) -->
+    <color name="admin_accent_text">#1B5E20</color>
+    <!-- Chữ nhạt đặt trên nền xanh đầu trang (không đổi theo chế độ) -->
+    <color name="admin_on_header_soft">#E8F5E9</color>
+    <color name="nav_item_active">#1B5E20</color>
+    <color name="nav_item_inactive">#1B5E20</color>
+</resources>

@@ -61,7 +61,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:maxLines="1"
-                android:textColor="@color/admin_primary_dark"
+                android:textColor="@color/admin_accent_text"
                 android:textSize="15sp"
                 android:textStyle="bold"
                 tools:text="35.000 đ" />

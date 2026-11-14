@@ -19,7 +19,7 @@
         android:background="@drawable/bg_category_icon"
         android:gravity="center"
         android:text="🥬"
-        android:textColor="#FF000000"
+        android:textColor="@color/ui_text"
         android:textSize="26sp" />
 
     <TextView
@@ -32,6 +32,6 @@
         android:gravity="center"
         android:maxLines="2"
         android:text="Rau củ"
-        android:textColor="#1A1A1A"
+        android:textColor="@color/ui_text"
         android:textSize="12sp" />
 </LinearLayout>

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F4F9F4"
+    android:background="@color/ui_surface_alt"
     tools:context=".MainActivity">
 
     <!-- Main Content Frame -->
@@ -12,7 +12,7 @@
         android:id="@+id/frame"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="#F4F9F4"
+        android:background="@color/ui_surface_alt"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/bottom_nav_card"
@@ -28,7 +28,7 @@
         android:layout_marginBottom="16dp"
         app:cardCornerRadius="28dp"
         app:cardElevation="8dp"
-        app:cardBackgroundColor="#FFFFFF"
+        app:cardBackgroundColor="@color/ui_surface"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -46,8 +46,8 @@
             app:backgroundTint="@android:color/transparent"
             app:elevation="0dp"
             app:paddingBottomSystemWindowInsets="false"
-            app:itemIconTint="@color/primary_green"
-            app:itemTextColor="@color/primary_green"
+            app:itemIconTint="@color/bottom_nav_item"
+            app:itemTextColor="@color/bottom_nav_item"
             app:itemRippleColor="#1A1B5E20"
             app:itemIconSize="26dp"
             app:itemTextAppearanceActive="@style/BottomNavigationView.Active"

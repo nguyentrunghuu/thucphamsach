@@ -94,7 +94,7 @@ public class AdminProductAdapter extends ListAdapter<Product, AdminProductAdapte
             badge(h.stockBadge, "Kho " + p.getSoluong(), R.color.admin_warning_soft, R.color.admin_warning_text);
         } else {
             badge(h.stockBadge, "Kho " + MoneyUtil.formatNumber(p.getSoluong()),
-                    R.color.admin_primary_soft, R.color.admin_primary_dark);
+                    R.color.admin_primary_soft, R.color.admin_accent_text);
         }
 
         // Hạn dùng: chỉ hiện khi đã / sắp hết hạn
