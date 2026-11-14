@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.UngDung.ThucPhamXanh.Helper.ChatFirestoreHelper;
+import com.UngDung.ThucPhamXanh.Helper.ChatPreview;
 import com.UngDung.ThucPhamXanh.Models.User;
 import com.UngDung.ThucPhamXanh.R;
 import com.UngDung.ThucPhamXanh.my_interface.IClickCTHD;
@@ -30,7 +31,12 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder>{
 
     String theLastMessage;
 
-    public UserAdapter(Context context, List<User> mListUser, boolean ischat, IClickCTHD iClickCTHD) {
+    /** Mã của người đang xem danh sách (admin: ADMIN_ID; khách: uid), dùng để dựng "Bạn: ..." và truy vấn tin cuối. */
+    private final String myId;
+    private final java.util.Map<String, String> previewCache = new java.util.HashMap<>();
+
+    public UserAdapter(Context context, List<User> mListUser, boolean ischat, String myId, IClickCTHD iClickCTHD) {
+        this.myId = myId;
         this.context = context;
         this.mListUser = mListUser;
         this.ischat = ischat;
@@ -116,23 +122,18 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder>{
         }
     }
 
-    // Check for last message từ Firestore
-    private void lastMessage(String userid, TextView last_msg){
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            last_msg.setText("No Message");
+    /** Tin cuối của cuộc trò chuyện với userid. Có bộ nhớ đệm để không nhấp nháy khi danh sách vẽ lại. */
+    private void lastMessage(String userid, TextView last_msg) {
+        last_msg.setTag(userid); // dòng có thể được tái sử dụng cho người khác trước khi truy vấn xong
+        String cached = previewCache.get(userid);
+        last_msg.setText(cached != null ? cached : "");
+        if (myId == null || myId.isEmpty() || userid == null) {
+            last_msg.setText(ChatPreview.EMPTY);
             return;
         }
-        
-        String myId = currentUser.getUid();
-        ChatFirestoreHelper chatHelper = new ChatFirestoreHelper();
-        
-        chatHelper.getLastMessage(myId, userid, lastMessage -> {
-            if (lastMessage != null && !lastMessage.equals("No Message") && !lastMessage.isEmpty()) {
-                last_msg.setText(lastMessage);
-            } else {
-                last_msg.setText("No Message");
-            }
+        new ChatFirestoreHelper().getLastMessagePreview(myId, userid, preview -> {
+            previewCache.put(userid, preview);
+            if (userid.equals(last_msg.getTag())) last_msg.setText(preview);
         });
     }
 }

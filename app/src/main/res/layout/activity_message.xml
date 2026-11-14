@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/message_root"
     android:background="@drawable/chat_gradient_background"
+    android:orientation="vertical"
     tools:context=".View.MessageActivity">
 
     <!-- Header Toolbar -->
-    <com.google.android.material.appbar.AppBarLayout
+    <FrameLayout
         android:id="@+id/bar_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        app:elevation="0dp">
+        android:background="@android:color/transparent">
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -24,7 +25,7 @@
             android:layout_marginBottom="8dp"
             app:cardCornerRadius="24dp"
             app:cardElevation="8dp"
-            app:cardBackgroundColor="#FFFFFF">
+            app:cardBackgroundColor="@color/ui_surface">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar_message"
@@ -89,18 +90,18 @@
                 </LinearLayout>
             </androidx.appcompat.widget.Toolbar>
         </androidx.cardview.widget.CardView>
-    </com.google.android.material.appbar.AppBarLayout>
+    </FrameLayout>
 
     <!-- Messages RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rcv_message"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:paddingStart="12dp"
         android:paddingEnd="12dp"
         android:paddingTop="8dp"
-        android:paddingBottom="200dp"
+        android:paddingBottom="8dp"
         android:clipToPadding="false"
         android:scrollbars="none"
         android:fadeScrollbars="true" />
@@ -110,13 +111,12 @@
         android:id="@+id/card_quick_replies"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
         android:layout_marginStart="12dp"
         android:layout_marginEnd="12dp"
-        android:layout_marginBottom="88dp"
+        android:layout_marginBottom="8dp"
         app:cardCornerRadius="20dp"
         app:cardElevation="6dp"
-        app:cardBackgroundColor="#FFFFFF"
+        app:cardBackgroundColor="@color/ui_surface"
         android:visibility="visible"
         android:alpha="1.0">
 
@@ -145,18 +145,22 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Bottom Input Card -->
+    <!-- Ô nhập: nằm dưới cùng, đẩy lên theo bàn phím (inset xử lý trong MessageActivity) -->
+    <FrameLayout
+        android:id="@+id/bottom_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="12dp">
+
     <androidx.cardview.widget.CardView
         android:id="@+id/bottom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
         android:layout_marginStart="12dp"
         android:layout_marginEnd="12dp"
-        android:layout_marginBottom="12dp"
         app:cardCornerRadius="32dp"
         app:cardElevation="12dp"
-        app:cardBackgroundColor="#FFFFFF">
+        app:cardBackgroundColor="@color/ui_surface">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -188,8 +192,8 @@
                     android:paddingTop="14dp"
                     android:paddingBottom="14dp"
                     android:textSize="16sp"
-                    android:textColor="#212121"
-                    android:textColorHint="#9E9E9E"
+                    android:textColor="@color/ui_text"
+                    android:textColorHint="@color/ui_text_hint"
                     android:gravity="center_vertical|start"
                     android:scrollbars="vertical"
                     android:imeOptions="actionSend"
@@ -221,5 +225,6 @@
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
+    </FrameLayout>
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</LinearLayout>

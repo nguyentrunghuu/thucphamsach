@@ -99,6 +99,7 @@ public class ProfileFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_profile, container, false);
+        com.UngDung.ThucPhamXanh.View.ThemePicker.bind(view);
         InitWidget();
         Init();
         initMapLocationLauncher();
@@ -585,6 +586,8 @@ public class ProfileFragment extends Fragment {
         builder.setPositiveButton("Đăng xuất", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                // Ngừng báo tin nhắn của tài khoản này
+                com.UngDung.ThucPhamXanh.Helper.ChatNotifier.get(requireContext()).stop();
                 // Đăng xuất khỏi Firebase
                 FirebaseAuth.getInstance().signOut();
                 
