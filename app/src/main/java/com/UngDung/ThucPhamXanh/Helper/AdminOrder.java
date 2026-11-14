@@ -24,6 +24,7 @@ public class AdminOrder implements Serializable {
     public long total;                // tongtien đã đọc thành số
     public long shippingFee;          // phivanchuyen
     public long status;               // trangthai
+    public String shipperId = "";     // username shipper đã nhận đơn; rỗng = chưa có
     public String shipperName = "";
     public String deliverySlot = "";  // khung_gio_giao
     public String deliveryDate = "";  // ngay_giao

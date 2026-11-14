@@ -60,6 +60,7 @@ public final class FirestoreMapper {
         o.total = MoneyUtil.parseVnd(doc.get("tongtien"));
         o.shippingFee = MoneyUtil.parseVnd(doc.get("phivanchuyen"));
         o.status = num(doc, "trangthai");
+        o.shipperId = str(doc, "shipperId");
         o.shipperName = str(doc, "shipperName");
         o.deliverySlot = str(doc, "khung_gio_giao");
         o.deliveryDate = str(doc, "ngay_giao");

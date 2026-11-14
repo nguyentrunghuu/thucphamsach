@@ -1,116 +1,154 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Một đơn trong danh sách shipper — ShipperOrderAdapter -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/card_shipper_order"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="16dp"
-    android:layout_marginEnd="16dp"
-    android:layout_marginTop="8dp"
-    android:layout_marginBottom="8dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="4dp"
-    app:cardBackgroundColor="#FFFFFF">
+    android:layout_marginBottom="@dimen/admin_card_gap"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="@dimen/admin_radius_card">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="@dimen/admin_card_padding">
 
-        <!-- Header with Order ID and Status -->
+        <!-- Mã đơn + trạng thái -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="12dp">
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/tv_order_id"
+                style="@style/Admin.Text.Caption"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Mã đơn: #12345"
-                android:textColor="#2196F3"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:ellipsize="end"
+                android:maxLines="1"
+                tools:text="TPS0512250010TM" />
 
             <TextView
                 android:id="@+id/tv_status"
+                style="@style/Admin.Badge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Đang xử lý"
-                android:textColor="#FF9800"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:background="#FFF3E0"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp" />
+                android:layout_marginStart="@dimen/admin_space_s"
+                tools:text="Đã xác nhận" />
         </LinearLayout>
 
-        <!-- Customer Info -->
-        <TextView
-            android:id="@+id/tv_customer_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Người nhận: Nguyễn Văn A"
-            android:textColor="#212121"
-            android:textSize="15sp"
-            android:layout_marginBottom="8dp" />
-
-        <TextView
-            android:id="@+id/tv_address"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Địa chỉ: 123 Đường ABC"
-            android:textColor="#757575"
-            android:textSize="14sp"
-            android:layout_marginBottom="8dp" />
-
-        <TextView
-            android:id="@+id/tv_phone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="SĐT: 0901234567"
-            android:textColor="#757575"
-            android:textSize="14sp"
-            android:layout_marginBottom="12dp" />
-
-        <!-- Divider -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#E0E0E0"
-            android:layout_marginBottom="12dp" />
-
-        <!-- Footer -->
+        <!-- Người nhận + nút gọi -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_marginTop="@dimen/admin_space_xs"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tv_date"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="20/11/2024"
-                android:textColor="#757575"
-                android:textSize="13sp" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_customer_name"
+                    style="@style/Admin.Text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    tools:text="Hữu Tình" />
+
+                <TextView
+                    android:id="@+id/tv_phone"
+                    style="@style/Admin.Text.Caption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    tools:text="0349132622" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/btn_call"
+                android:layout_width="@dimen/admin_touch_min"
+                android:layout_height="@dimen/admin_touch_min"
+                android:background="@drawable/bg_admin_icon_box"
+                android:backgroundTint="@color/admin_primary_soft"
+                android:contentDescription="Gọi khách"
+                android:src="@drawable/ic_ui_call"
+                app:tint="@color/admin_primary" />
+        </LinearLayout>
+
+        <!-- Địa chỉ -->
+        <TextView
+            android:id="@+id/tv_address"
+            style="@style/Admin.Text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/admin_space_s"
+            android:drawableStart="@drawable/ic_ui_location"
+            android:drawablePadding="@dimen/admin_space_s"
+            android:drawableTint="@color/admin_text_muted"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textSize="14sp"
+            tools:text="Khu nhà ở thái bình, Đường Tân Hiệp 17, Tân Uyên, Bình Dương" />
+
+        <TextView
+            android:id="@+id/tv_slot"
+            style="@style/Admin.Text.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/admin_space_xs"
+            android:visibility="gone"
+            tools:text="Giao: 15/11/2026 · 9h-11h" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="@dimen/admin_space_m"
+            android:layout_marginBottom="@dimen/admin_space_m"
+            android:background="@color/admin_outline" />
+
+        <!-- Thanh toán / số tiền thu -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/tv_total"
+                android:id="@+id/tv_payment"
+                style="@style/Admin.Text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:autoSizeMaxTextSize="18sp"
+                android:autoSizeMinTextSize="12sp"
+                android:autoSizeTextType="uniform"
+                android:maxLines="1"
+                android:paddingEnd="@dimen/admin_space_s"
+                android:textStyle="bold"
+                tools:text="Thu hộ 370.000 đ" />
+
+            <TextView
+                android:id="@+id/tv_action_hint"
+                style="@style/Admin.Text.Caption"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="500.000 VNĐ"
-                android:textColor="#2196F3"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:drawableEnd="@drawable/ic_ui_chevron_right"
+                android:drawableTint="@color/admin_text_muted"
+                android:gravity="center_vertical"
+                tools:text="Xem chi tiết" />
         </LinearLayout>
     </LinearLayout>
-</androidx.cardview.widget.CardView>
-
+</com.google.android.material.card.MaterialCardView>

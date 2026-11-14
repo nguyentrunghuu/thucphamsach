@@ -41,8 +41,8 @@ public final class AdminOrderStatusSheet {
     private AdminOrderStatusSheet() { }
 
     public static void show(Context context, AdminOrder order, OnChanged onChanged) {
-        int[] options = AdminOrderFlow.nextStatuses(order.status);
-        if (options.length == 0) {
+        final java.util.List<Integer> options = buildOptions(order);
+        if (options.isEmpty()) {
             Toast.makeText(context, "Đơn " + OrderStatus.label(order.status).toLowerCase()
                     + " — không đổi trạng thái được nữa", Toast.LENGTH_SHORT).show();
             return;
@@ -65,7 +65,7 @@ public final class AdminOrderStatusSheet {
         bindStatusBadge(tvCurrent, order.status);
 
         final int[] selected = {0};
-        for (int status : options) {
+        for (int status : options) { // Integer → int
             RadioButton rb = new RadioButton(context);
             rb.setId(View.generateViewId());
             rb.setTag(status);
@@ -90,7 +90,13 @@ public final class AdminOrderStatusSheet {
             tvHint.setText(hint);
             boolean ready = s != 0 && (!cancel || edtReason.getText().toString().trim().length() >= 3);
             btnApply.setEnabled(ready);
-            btnApply.setText(s == 0 ? "Chọn trạng thái" : (cancel ? "Hủy đơn" : "Chuyển: " + OrderStatus.label(s)));
+            String applyText;
+            if (s == 0) applyText = "Chọn trạng thái";
+            else if (cancel) applyText = "Hủy đơn";
+            else if (s == OrderStatus.DANG_GIAO) applyText = "Chọn shipper và giao";
+            else if (s == ASSIGN_SHIPPER) applyText = "Chọn shipper";
+            else applyText = "Chuyển: " + OrderStatus.label(s);
+            btnApply.setText(applyText);
             btnApply.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(context,
                     !ready ? R.color.admin_outline : (cancel ? R.color.admin_danger : R.color.admin_primary))));
         };
@@ -105,31 +111,20 @@ public final class AdminOrderStatusSheet {
             @Override public void afterTextChanged(Editable s) { refresh.run(); }
         });
         // Chỉ có một bước tiếp theo hợp lệ (ngoài hủy) thì chọn sẵn
-        if (options.length >= 1 && options[0] != OrderStatus.DA_HUY) group.check(group.getChildAt(0).getId());
+        if (!options.isEmpty() && options.get(0) != OrderStatus.DA_HUY) group.check(group.getChildAt(0).getId());
         refresh.run();
 
         btnApply.setOnClickListener(x -> {
             int to = selected[0];
             if (to == 0) return;
-            btnApply.setEnabled(false);
-            btnApply.setText("Đang lưu…");
-            dialog.setCancelable(false);
-            OrderActions.adminChangeStatus(order.id, to, edtReason.getText().toString(), new OrderActions.Callback() {
-                @Override
-                public void onSuccess(int newStatus) {
-                    dialog.dismiss();
-                    Toast.makeText(context, "Đã chuyển đơn sang \"" + OrderStatus.label(newStatus) + "\""
-                            + (newStatus == OrderStatus.DA_HUY ? ", đã trả hàng về kho" : ""), Toast.LENGTH_SHORT).show();
-                    if (onChanged != null) onChanged.onChanged(newStatus);
-                }
 
-                @Override
-                public void onError(String message) {
-                    dialog.setCancelable(true);
-                    refresh.run();
-                    Toast.makeText(context, message, Toast.LENGTH_LONG).show();
-                }
-            });
+            // "Đang giao" và "Gán shipper" cần biết shipper nào — hỏi trước, rồi mới ghi
+            if (to == OrderStatus.DANG_GIAO || to == ASSIGN_SHIPPER) {
+                pickShipper(context, order, (username, name) ->
+                        apply(context, dialog, btnApply, refresh, onChanged, order, to, username, name, ""));
+                return;
+            }
+            apply(context, dialog, btnApply, refresh, onChanged, order, to, null, null, edtReason.getText().toString());
         });
 
         dialog.setOnShowListener(d -> {
@@ -139,11 +134,93 @@ public final class AdminOrderStatusSheet {
         dialog.show();
     }
 
+    /** Lựa chọn giả (không phải trạng thái): gán / đổi shipper cho đơn đang giao, không đổi trạng thái. */
+    static final int ASSIGN_SHIPPER = 100;
+
+    private interface ShipperPicked {
+        void onPicked(String username, String name);
+    }
+
+    /** Các lựa chọn trong sheet: bước tiếp theo theo AdminOrderFlow, thêm "Gán shipper" cho đơn đang giao. */
+    private static java.util.List<Integer> buildOptions(AdminOrder order) {
+        java.util.List<Integer> list = new java.util.ArrayList<>();
+        boolean hasShipper = order.shipperId != null && !order.shipperId.trim().isEmpty();
+        // Đơn đang giao mà chưa có shipper (dữ liệu cũ): đưa "Gán shipper" lên đầu để được chọn sẵn
+        if (AdminOrderFlow.canAssignShipper(order.status) && !hasShipper) list.add(ASSIGN_SHIPPER);
+        for (int s : AdminOrderFlow.nextStatuses(order.status)) list.add(s);
+        if (AdminOrderFlow.canAssignShipper(order.status) && hasShipper) list.add(ASSIGN_SHIPPER);
+        return list;
+    }
+
+    /** Ghi thay đổi qua OrderActions; chỉ đóng sheet khi ghi thành công. */
+    private static void apply(Context context, BottomSheetDialog dialog, MaterialButton btnApply, Runnable refresh,
+                              OnChanged onChanged, AdminOrder order, int to, String shipperUsername,
+                              String shipperName, String reason) {
+        btnApply.setEnabled(false);
+        btnApply.setText("Đang lưu…");
+        dialog.setCancelable(false);
+        OrderActions.Callback cb = new OrderActions.Callback() {
+            @Override
+            public void onSuccess(int newStatus) {
+                dialog.dismiss();
+                String msg;
+                if (to == ASSIGN_SHIPPER) msg = "Đã gán đơn cho " + shipperName;
+                else if (to == OrderStatus.DANG_GIAO) msg = "Đã giao đơn cho " + shipperName;
+                else msg = "Đã chuyển đơn sang \"" + OrderStatus.label(newStatus) + "\""
+                        + (newStatus == OrderStatus.DA_HUY ? ", đã trả hàng về kho" : "");
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+                if (onChanged != null) onChanged.onChanged(newStatus);
+            }
+
+            @Override
+            public void onError(String message) {
+                dialog.setCancelable(true);
+                refresh.run();
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+            }
+        };
+        if (to == OrderStatus.DANG_GIAO) OrderActions.adminShip(order.id, shipperUsername, shipperName, cb);
+        else if (to == ASSIGN_SHIPPER) OrderActions.adminAssignShipper(order.id, shipperUsername, shipperName, cb);
+        else OrderActions.adminChangeStatus(order.id, to, reason, cb);
+    }
+
+    /** Hộp chọn shipper (đọc collection Shipper một lần). Không có shipper nào thì báo cách thêm. */
+    private static void pickShipper(Context context, AdminOrder order, ShipperPicked picked) {
+        com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("Shipper").get()
+                .addOnSuccessListener(snap -> {
+                    java.util.List<String> usernames = new java.util.ArrayList<>();
+                    java.util.List<String> names = new java.util.ArrayList<>();
+                    java.util.List<String> labels = new java.util.ArrayList<>();
+                    for (com.google.firebase.firestore.DocumentSnapshot d : snap) {
+                        String username = com.UngDung.ThucPhamXanh.Helper.FirestoreMapper.str(d, "username");
+                        if (username.isEmpty()) continue;
+                        String name = com.UngDung.ThucPhamXanh.Helper.FirestoreMapper.str(d, "name");
+                        usernames.add(username);
+                        names.add(name.isEmpty() ? username : name);
+                        labels.add((name.isEmpty() ? username : name + " (" + username + ")")
+                                + (username.equals(order.shipperId) ? " — đang được gán" : ""));
+                    }
+                    if (usernames.isEmpty()) {
+                        Toast.makeText(context, "Chưa có shipper nào. Hãy thêm shipper ở mục Shipper.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(context)
+                            .setTitle("Chọn shipper giao đơn")
+                            .setItems(labels.toArray(new String[0]), (d, which) ->
+                                    picked.onPicked(usernames.get(which), names.get(which)))
+                            .setNegativeButton("Hủy", null)
+                            .show();
+                })
+                .addOnFailureListener(e -> Toast.makeText(context,
+                        "Không tải được danh sách shipper. Kiểm tra kết nối mạng.", Toast.LENGTH_LONG).show());
+    }
+
     private static String optionLabel(int status) {
         switch (status) {
+            case ASSIGN_SHIPPER: return "Gán shipper — chọn shipper nhận giao đơn này";
             case OrderStatus.DANG_XU_LY: return "Đang xử lý — đã tiếp nhận, đang chuẩn bị";
             case OrderStatus.DA_XAC_NHAN: return "Đã xác nhận — shipper có thể nhận đơn";
-            case OrderStatus.DANG_GIAO: return "Đang giao — đã giao cho shipper";
+            case OrderStatus.DANG_GIAO: return "Đang giao — chọn shipper giao đơn";
             case OrderStatus.DA_GIAO: return "Đã giao — khách đã nhận hàng";
             case OrderStatus.DA_HUY: return "Hủy đơn";
             default: return OrderStatus.label(status);
@@ -152,7 +229,8 @@ public final class AdminOrderStatusSheet {
 
     private static String hintFor(int status) {
         switch (status) {
-            case OrderStatus.DANG_GIAO: return "Từ bước này khách và admin không hủy đơn được nữa.";
+            case OrderStatus.DANG_GIAO: return "Bạn sẽ chọn shipper ở bước tiếp theo. Từ bước này khách và admin không hủy đơn được nữa.";
+            case ASSIGN_SHIPPER: return "Chỉ gán shipper, không đổi trạng thái đơn. Shipper được chọn sẽ thấy đơn trong tab \"Đang giao\".";
             case OrderStatus.DA_GIAO: return "Trạng thái cuối, không đổi lại được. Doanh thu được tính từ đơn đã giao.";
             case OrderStatus.DA_HUY: return "Số lượng sản phẩm trong đơn sẽ được cộng lại vào kho.";
             default: return null;

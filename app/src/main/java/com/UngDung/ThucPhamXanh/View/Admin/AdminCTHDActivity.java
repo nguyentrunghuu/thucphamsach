@@ -146,7 +146,8 @@ public class AdminCTHDActivity extends BaseAdminActivity {
         boxDelivery.removeAllViews();
         String when = (order.deliveryDate + " " + order.deliverySlot).trim();
         addRow(boxDelivery, "Ngày giao", when);
-        addRow(boxDelivery, "Shipper", order.shipperName);
+        addRow(boxDelivery, "Shipper", !order.shipperName.trim().isEmpty() ? order.shipperName
+                : (order.status == com.UngDung.ThucPhamXanh.Models.OrderStatus.DANG_GIAO ? "Chưa gán shipper" : ""));
         cardDelivery.setVisibility(boxDelivery.getChildCount() == 0 ? View.GONE : View.VISIBLE);
 
         btnUpdate.setVisibility(AdminOrderFlow.nextStatuses(order.status).length > 0 ? View.VISIBLE : View.GONE);

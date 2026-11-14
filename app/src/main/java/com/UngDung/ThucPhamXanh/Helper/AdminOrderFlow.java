@@ -44,6 +44,16 @@ public final class AdminOrderFlow {
         return false;
     }
 
+    /** Admin giao đơn cho shipper (kèm chọn shipper) được khi đơn "Đã xác nhận". */
+    public static boolean canShip(long current) {
+        return current == OrderStatus.DA_XAC_NHAN;
+    }
+
+    /** Admin gán / đổi shipper được khi đơn đang "Đang giao" (đơn cũ có thể chưa có shipper). */
+    public static boolean canAssignShipper(long current) {
+        return current == OrderStatus.DANG_GIAO;
+    }
+
     /** Admin được hủy đơn khi đơn chưa giao cho shipper. */
     public static boolean adminCanCancel(long current) {
         return canTransition(current, OrderStatus.DA_HUY);

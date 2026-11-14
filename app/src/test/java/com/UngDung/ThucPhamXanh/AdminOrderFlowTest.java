@@ -80,4 +80,17 @@ public class AdminOrderFlowTest {
         assertFalse(AdminOrderFlow.isPending(OrderStatus.DA_XAC_NHAN));
         assertFalse(AdminOrderFlow.isPending(OrderStatus.DA_HUY));
     }
+
+    @Test
+    public void giaoChoShipper_chiKhiDaXacNhan_vaGanShipper_chiKhiDangGiao() {
+        assertTrue(AdminOrderFlow.canShip(OrderStatus.DA_XAC_NHAN));
+        assertFalse(AdminOrderFlow.canShip(OrderStatus.DA_DAT));
+        assertFalse(AdminOrderFlow.canShip(OrderStatus.DANG_GIAO));
+        assertFalse(AdminOrderFlow.canShip(OrderStatus.DA_HUY));
+
+        assertTrue(AdminOrderFlow.canAssignShipper(OrderStatus.DANG_GIAO));
+        assertFalse(AdminOrderFlow.canAssignShipper(OrderStatus.DA_XAC_NHAN));
+        assertFalse(AdminOrderFlow.canAssignShipper(OrderStatus.DA_GIAO));
+        assertFalse(AdminOrderFlow.canAssignShipper(OrderStatus.DA_HUY));
+    }
 }

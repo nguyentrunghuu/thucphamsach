@@ -61,8 +61,12 @@
         <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminLoaiSPActivity"
             android:exported="false"
             android:theme="@style/Theme.ThucPhamXanh.Admin" />
-        <activity android:name="com.UngDung.ThucPhamXanh.View.Shipper.ShipperHomeActivity" />
-        <activity android:name="com.UngDung.ThucPhamXanh.View.Shipper.ShipperUpdateOrderActivity" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Shipper.ShipperHomeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Shipper.ShipperUpdateOrderActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
         <activity android:name="com.UngDung.ThucPhamXanh.View.SearchActivity" />
         
         <!-- VNPay Payment Activity với deep link -->

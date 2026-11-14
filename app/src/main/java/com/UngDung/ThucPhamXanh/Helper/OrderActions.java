@@ -41,9 +41,62 @@ public final class OrderActions {
         RuleException(String message) { super(message); }
     }
 
-    /** Admin đổi trạng thái theo {@link AdminOrderFlow}. reason chỉ dùng khi hủy (có thể rỗng). */
+    /**
+     * Admin đổi trạng thái theo {@link AdminOrderFlow}. reason chỉ dùng khi hủy (có thể rỗng).
+     * Riêng "Đang giao" phải đi qua {@link #adminShip} vì cần biết shipper nào giao (nếu không, đơn sẽ
+     * không hiện ra ở shipper nào cả).
+     */
     public static void adminChangeStatus(String orderId, int to, String reason, Callback cb) {
+        if (to == OrderStatus.DANG_GIAO) {
+            cb.onError("Hãy chọn shipper để chuyển đơn sang \"Đang giao\"");
+            return;
+        }
         change(orderId, to, BY_ADMIN, reason, cb);
+    }
+
+    /** Admin giao đơn cho một shipper: "Đã xác nhận" → "Đang giao" + shipperId/shipperName/assignedAt, cùng một lần ghi. */
+    public static void adminShip(String orderId, String shipperUsername, String shipperName, Callback cb) {
+        assign(orderId, shipperUsername, shipperName, true, cb);
+    }
+
+    /** Admin gán / đổi shipper cho đơn đang "Đang giao" (không đổi trạng thái). Dùng cho đơn cũ chưa có shipper. */
+    public static void adminAssignShipper(String orderId, String shipperUsername, String shipperName, Callback cb) {
+        assign(orderId, shipperUsername, shipperName, false, cb);
+    }
+
+    private static void assign(String orderId, String shipperUsername, String shipperName, boolean ship, Callback cb) {
+        if (shipperUsername == null || shipperUsername.trim().isEmpty()) {
+            cb.onError("Chưa chọn shipper");
+            return;
+        }
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference ref = db.collection("HoaDon").document(orderId);
+        final String name = shipperName == null || shipperName.trim().isEmpty() ? shipperUsername : shipperName.trim();
+
+        db.runTransaction(tx -> {
+            DocumentSnapshot doc = tx.get(ref);
+            if (!doc.exists()) throw new RuleException("Không tìm thấy đơn hàng");
+            long current = FirestoreMapper.num(doc, "trangthai");
+            if (ship && !AdminOrderFlow.canShip(current)) {
+                throw new RuleException("Đơn đang \"" + OrderStatus.label(current)
+                        + "\", không giao cho shipper được. Danh sách sẽ tự cập nhật.");
+            }
+            if (!ship && !AdminOrderFlow.canAssignShipper(current)) {
+                throw new RuleException("Chỉ gán shipper được cho đơn đang \"Đang giao\" (đơn đang \""
+                        + OrderStatus.label(current) + "\").");
+            }
+            Map<String, Object> update = new HashMap<>();
+            if (ship) update.put("trangthai", OrderStatus.DANG_GIAO);
+            update.put("shipperId", shipperUsername.trim());
+            update.put("shipperName", name);
+            update.put("assignedAt", FieldValue.serverTimestamp());
+            tx.update(ref, update);
+            return null;
+        }).addOnSuccessListener(unused -> cb.onSuccess(OrderStatus.DANG_GIAO))
+          .addOnFailureListener(e -> {
+              Log.e(TAG, "Gán shipper cho đơn " + orderId + " thất bại", e);
+              cb.onError(messageOf(e));
+          });
     }
 
     /** Khách tự hủy đơn (chỉ khi {@link OrderStatus#customerCanCancel}). */
@@ -117,8 +170,21 @@ public final class OrderActions {
                         if (productId == null || productId.isEmpty() || qty <= 0) continue;
                         // update riêng từng dòng: sản phẩm đã bị xóa hẳn thì chỉ dòng đó lỗi
                         // (không dùng set/merge vì sẽ tạo ra document "sản phẩm ma" chỉ có soluong)
-                        db.collection("SanPham").document(productId)
-                                .update("soluong", FieldValue.increment(qty), "daban", FieldValue.increment(-qty))
+                        // transaction: "daban" không bao giờ xuống dưới 0 (kể cả khi sản phẩm chưa có trường này)
+                        DocumentReference ref = db.collection("SanPham").document(productId);
+                        db.runTransaction(tx -> {
+                            DocumentSnapshot p = tx.get(ref);
+                            if (!p.exists()) {
+                                throw new FirebaseFirestoreException("Sản phẩm không tồn tại",
+                                        FirebaseFirestoreException.Code.NOT_FOUND);
+                            }
+                            long sold = FirestoreMapper.num(p, "daban");
+                            Map<String, Object> upd = new HashMap<>();
+                            upd.put("soluong", FieldValue.increment(qty));
+                            upd.put("daban", Math.max(0, sold - qty));
+                            tx.update(ref, upd);
+                            return null;
+                        })
                                 .addOnSuccessListener(v -> Log.d(TAG, "Cộng lại " + qty + " vào kho " + productId))
                                 .addOnFailureListener(e -> Log.e(TAG, "Cộng lại kho thất bại: " + productId, e));
                     }
