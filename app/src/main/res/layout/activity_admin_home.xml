@@ -53,7 +53,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:textColor="@color/admin_primary_soft"
+                        android:textColor="@color/admin_on_header_soft"
                         android:textSize="13sp" />
                 </LinearLayout>
 
@@ -186,6 +186,16 @@
                     <include android:id="@+id/menu_chat" layout="@layout/item_admin_menu"
                         android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
                 </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <include android:id="@+id/menu_ai" layout="@layout/item_admin_menu"
+                        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
+                    <Space android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="3" />
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -250,5 +260,15 @@
                     android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <!-- ===== Giao diện sáng / tối ===== -->
+        <include
+            layout="@layout/view_theme_picker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/admin_screen_padding"
+            android:layout_marginTop="@dimen/admin_space_l"
+            android:layout_marginEnd="@dimen/admin_screen_padding"
+            android:layout_marginBottom="@dimen/admin_space_l" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

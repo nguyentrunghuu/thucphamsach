@@ -65,6 +65,7 @@ public class AdminHomeActivity extends BaseAdminActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_home);
+        com.UngDung.ThucPhamXanh.View.ThemePicker.bind(findViewById(android.R.id.content));
 
         applySystemBarInsets(findViewById(R.id.home_header), findViewById(R.id.home_content));
 
@@ -76,6 +77,11 @@ public class AdminHomeActivity extends BaseAdminActivity {
 
         tvDate.setText(DashboardStats.formatLongDate(LocalDate.now()));
         findViewById(R.id.btn_sign_out).setOnClickListener(v -> confirmSignOut());
+
+        // Báo tin nhắn mới từ khách (admin không có tài khoản Firebase Auth → nghe theo ADMIN_ID)
+        com.UngDung.ThucPhamXanh.Helper.NotificationPermission.request(this);
+        com.UngDung.ThucPhamXanh.Helper.ChatNotifier.get(this)
+                .start(com.UngDung.ThucPhamXanh.Helper.AppConstants.ADMIN_ID, true);
 
         setupStats();
         setupMenu();
@@ -221,6 +227,7 @@ public class AdminHomeActivity extends BaseAdminActivity {
 
     private void confirmSignOut() {
         confirm("Đăng xuất", "Bạn muốn thoát khỏi trang quản trị?", "Đăng xuất", () -> {
+            com.UngDung.ThucPhamXanh.Helper.ChatNotifier.get(this).stop();
             Intent i = new Intent(this, SignInActivity.class);
             // Xóa toàn bộ màn admin khỏi back stack: bấm Back ở màn đăng nhập không quay lại được
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -252,6 +259,8 @@ public class AdminHomeActivity extends BaseAdminActivity {
                     i.putExtra("message", 1);
                     startActivity(i);
                 });
+        bindMenu(R.id.menu_ai, R.drawable.ic_admin_ai, "Trợ lý AI",
+                R.color.admin_primary_soft, R.color.admin_primary, v -> open(AdminAiChatActivity.class));
     }
 
     private void bindMenu(int includeId, @DrawableRes int icon, String label,
