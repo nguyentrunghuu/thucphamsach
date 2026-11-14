@@ -99,6 +99,10 @@
         <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminProductActivity"
             android:exported="false"
             android:theme="@style/Theme.ThucPhamXanh.Admin" />
+        <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminAiChatActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false"
+            android:theme="@style/Theme.ThucPhamXanh.Admin" />
         <activity android:name="com.UngDung.ThucPhamXanh.View.Admin.AdminChartBillActivity"
             android:exported="false"
             android:theme="@style/Theme.ThucPhamXanh.Admin" />

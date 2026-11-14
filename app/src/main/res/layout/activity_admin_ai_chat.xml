@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Trợ lý AI cho admin: toolbar → gợi ý câu hỏi → khung chat → ô nhập -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/admin_beige"
+    android:orientation="vertical"
+    tools:context=".View.Admin.AdminAiChatActivity">
+
+    <include layout="@layout/view_admin_toolbar" />
+
+    <ScrollView
+        android:id="@+id/ai_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingStart="@dimen/admin_screen_padding"
+        android:paddingTop="@dimen/admin_space_m"
+        android:paddingEnd="@dimen/admin_screen_padding"
+        android:paddingBottom="@dimen/admin_space_m">
+
+        <LinearLayout
+            android:id="@+id/ai_messages"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <!-- Gợi ý câu hỏi nhanh -->
+    <HorizontalScrollView
+        android:id="@+id/ai_suggestions_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/ai_suggestions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="@dimen/admin_screen_padding"
+            android:paddingEnd="@dimen/admin_screen_padding"
+            app:chipSpacingHorizontal="@dimen/admin_space_s"
+            app:singleLine="true" />
+    </HorizontalScrollView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="@dimen/admin_space_s"
+        android:background="@color/admin_outline" />
+
+    <LinearLayout
+        android:id="@+id/ai_input_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/admin_surface"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="@dimen/admin_space_s">
+
+        <EditText
+            android:id="@+id/edt_ai_question"
+            style="@style/Admin.Text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/admin_space_s"
+            android:layout_weight="1"
+            android:background="@null"
+            android:hint="Hỏi về đơn hàng, doanh thu, tồn kho…"
+            android:imeOptions="actionSend"
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLines="4"
+            android:minHeight="@dimen/admin_touch_min"
+            android:textColorHint="@color/admin_text_muted" />
+
+        <ImageButton
+            android:id="@+id/btn_ai_send"
+            android:layout_width="@dimen/admin_touch_min"
+            android:layout_height="@dimen/admin_touch_min"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Gửi"
+            android:src="@drawable/ic_ui_send"
+            app:tint="@color/admin_primary" />
+    </LinearLayout>
+</LinearLayout>

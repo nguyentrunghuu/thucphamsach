@@ -18,6 +18,8 @@ import androidx.annotation.IdRes;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
+import com.UngDung.ThucPhamXanh.BotAI.GeminiClient;
+import com.UngDung.ThucPhamXanh.Helper.AdminAiPrompts;
 import com.UngDung.ThucPhamXanh.Helper.FirestoreMapper;
 import com.UngDung.ThucPhamXanh.Helper.MoneyUtil;
 import com.UngDung.ThucPhamXanh.Helper.RevenueReport;
@@ -88,6 +90,8 @@ public class AdminChartBillActivity extends BaseAdminActivity {
     private BarChart barChart;
     private TextView tvRange, tvRevenue, tvDelta, tvChartTitle, tvChartHint, tvChartEmpty, tvUnfinished;
     private View miniDelivered, miniAverage, miniCancelled;
+    private com.google.android.material.button.MaterialButton btnAiInsight;
+    private TextView tvAiInsight;
     private final List<StatusRow> statusRows = new ArrayList<>();
 
     /** Dòng trạng thái: các status gộp (vd. 1+2 = "Chờ xác nhận"), nhãn và màu chấm. */
@@ -134,7 +138,51 @@ public class AdminChartBillActivity extends BaseAdminActivity {
         setupStatusRows();
         setupPeriodChips();
         findViewById(R.id.btn_export).setOnClickListener(v -> exportExcel());
+        btnAiInsight = findViewById(R.id.btn_ai_insight);
+        tvAiInsight = findViewById(R.id.tv_ai_insight);
+        btnAiInsight.setOnClickListener(v -> askAiInsight());
         render();
+    }
+
+    // ------------------------------------------------------------------ nhận xét AI
+
+    private Range aiRange;
+
+    /** Nhận xét AI chỉ đúng cho kỳ đã phân tích: đổi kỳ thì xóa để khỏi gây hiểu nhầm. */
+    private void resetAiInsightIfRangeChanged() {
+        if (tvAiInsight == null || aiRange == null || aiRange == range) return;
+        aiRange = null;
+        tvAiInsight.setTextColor(ContextCompat.getColor(this, R.color.admin_text_muted));
+        tvAiInsight.setText("Bấm nút bên dưới để AI đọc số liệu của kỳ này và gợi ý việc nên làm.");
+        btnAiInsight.setText("Phân tích kỳ này");
+    }
+
+    private void askAiInsight() {
+        if (!loaded) return;
+        final RevenueReport snapshot = report;
+        aiRange = range;
+        btnAiInsight.setEnabled(false);
+        btnAiInsight.setText("AI đang phân tích…");
+        GeminiClient.ask(AdminAiPrompts.insightSystemPrompt(), null,
+                AdminAiPrompts.insightUserMessage(snapshot), new GeminiClient.Result() {
+                    @Override
+                    public void onSuccess(String text) {
+                        if (isFinishing() || isDestroyed()) return;
+                        tvAiInsight.setTextColor(ContextCompat.getColor(AdminChartBillActivity.this, R.color.admin_text));
+                        tvAiInsight.setText(AdminAiPrompts.stripMarkdown(text));
+                        btnAiInsight.setEnabled(true);
+                        btnAiInsight.setText("Phân tích lại");
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        if (isFinishing() || isDestroyed()) return;
+                        tvAiInsight.setTextColor(ContextCompat.getColor(AdminChartBillActivity.this, R.color.admin_danger));
+                        tvAiInsight.setText(message);
+                        btnAiInsight.setEnabled(true);
+                        btnAiInsight.setText("Thử lại");
+                    }
+                });
     }
 
     @Override
@@ -210,6 +258,7 @@ public class AdminChartBillActivity extends BaseAdminActivity {
     // ------------------------------------------------------------------ vẽ màn hình
 
     private void render() {
+        resetAiInsightIfRangeChanged();
         report = new RevenueReport(range);
         for (OrderRow r : rows) report.addOrder(r.status, r.ngaydat, r.tongtien);
 

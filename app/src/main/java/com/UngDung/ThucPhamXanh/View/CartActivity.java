@@ -275,6 +275,10 @@ public class CartActivity extends AppCompatActivity implements GioHangView {
         View btnShopNow = findViewById(R.id.btn_shop_now);
         if (btnShopNow != null) btnShopNow.setOnClickListener(v -> finish());
 
+        // AI gợi ý món ăn từ các sản phẩm đang có trong giỏ
+        View btnAiDishes = findViewById(R.id.btn_ai_dishes);
+        if (btnAiDishes != null) btnAiDishes.setOnClickListener(v -> AiDishesSheet.show(this, listGiohang));
+
         imgBackCart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

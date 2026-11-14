@@ -118,7 +118,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Doanh thu (đơn đã giao)"
-                        android:textColor="@color/admin_primary_soft" />
+                        android:textColor="@color/admin_on_header_soft" />
 
                     <TextView
                         android:id="@+id/tv_revenue"
@@ -139,7 +139,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/admin_space_xs"
-                        android:textColor="@color/admin_primary_soft" />
+                        android:textColor="@color/admin_on_header_soft" />
 
                     <View
                         android:layout_width="match_parent"
@@ -251,6 +251,46 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/admin_space_s"
                         android:orientation="vertical" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Nhận xét AI -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Admin.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/admin_card_gap">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/admin_card_padding">
+
+                    <TextView
+                        style="@style/Admin.Text.Section"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Nhận xét của AI" />
+
+                    <TextView
+                        android:id="@+id/tv_ai_insight"
+                        style="@style/Admin.Text.Body"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/admin_space_s"
+                        android:lineSpacingMultiplier="1.15"
+                        android:text="Bấm nút bên dưới để AI đọc số liệu của kỳ này và gợi ý việc nên làm."
+                        android:textColor="@color/admin_text_muted"
+                        android:textIsSelectable="true" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_ai_insight"
+                        style="@style/Admin.Button"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/admin_space_m"
+                        android:text="Phân tích kỳ này" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

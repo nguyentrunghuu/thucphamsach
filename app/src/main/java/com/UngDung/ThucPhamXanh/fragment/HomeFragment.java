@@ -516,6 +516,27 @@ public class HomeFragment extends Fragment {
         updateOtherAdapters();
     }
 
+    // ===== AI "Gợi ý cho bạn" =====
+    private final List<Product> aiPicks = new ArrayList<>();
+    private boolean aiPicksRequested;
+
+    /** Gọi AI một lần cho mỗi lần mở trang chủ (kết quả còn được lưu cả ngày, xem HomeAiPicks). */
+    private void requestAiPicks(List<Product> allProducts) {
+        if (aiPicksRequested || allProducts.isEmpty() || getContext() == null) return;
+        aiPicksRequested = true;
+        // Danh mục đang bán, không trùng (cùng sản phẩm có thể nằm trong nhiều danh sách theo type)
+        java.util.LinkedHashMap<String, Product> unique = new java.util.LinkedHashMap<>();
+        for (Product p : allProducts) {
+            if (p.getId() != null && p.getSoluong() > 0) unique.putIfAbsent(p.getId(), p);
+        }
+        com.UngDung.ThucPhamXanh.Helper.HomeAiPicks.load(getContext(), new ArrayList<>(unique.values()), picks -> {
+            if (!isAdded()) return;
+            aiPicks.clear();
+            aiPicks.addAll(picks);
+            updateTimelineAdapter();
+        });
+    }
+
     private void updateTimelineAdapter() {
         if (rcvTimelineCategories == null) {
             return;
@@ -584,6 +605,13 @@ public class HomeFragment extends Fragment {
             }
         }
         
+        // Mục "Gợi ý cho bạn" (AI) nằm trên cùng khi đã có kết quả
+        if (!aiPicks.isEmpty()) {
+            sections.add(0, new CategoryTimelineAdapter.CategorySection(
+                    CategoryTimelineAdapter.AI_SECTION_TITLE, new ArrayList<>(aiPicks), 2));
+        }
+        requestAiPicks(allProducts);
+
         // Cập nhật adapter
         if (categoryTimelineAdapter != null) {
             categoryTimelineAdapter.setData(sections);

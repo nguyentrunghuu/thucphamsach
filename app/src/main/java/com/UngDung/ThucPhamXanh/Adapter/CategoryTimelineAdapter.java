@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CategoryTimelineAdapter extends RecyclerView.Adapter<CategoryTimelineAdapter.ViewHolder> {
+
+    /** Tên mục AI gợi ý ở trang chủ: không có trang "Xem tất cả" vì không phải một loại sản phẩm. */
+    public static final String AI_SECTION_TITLE = "Gợi ý cho bạn";
     
     public interface OnProductClickListener {
         void onProductClick(Product product);
@@ -97,6 +100,9 @@ public class CategoryTimelineAdapter extends RecyclerView.Adapter<CategoryTimeli
         holder.rcvCategoryProducts.setLayoutManager(gridLayoutManager);
         holder.rcvCategoryProducts.setAdapter(productAdapter);
         
+        boolean isAiSection = AI_SECTION_TITLE.equals(section.getCategoryName());
+        holder.tvViewAll.setVisibility(isAiSection ? View.GONE : View.VISIBLE);
+
         // Set click listener for "View All"
         holder.tvViewAll.setOnClickListener(new View.OnClickListener() {
             @Override

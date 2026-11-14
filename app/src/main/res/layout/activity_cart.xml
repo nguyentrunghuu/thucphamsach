@@ -4,14 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F6F8F5"
+    android:background="@color/ui_bg"
     tools:context=".View.CartActivity">
 
     <!-- THANH TIÊU ĐỀ -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#F6F8F5"
+        android:background="@color/ui_bg"
         app:elevation="0dp">
 
         <LinearLayout
@@ -31,7 +31,7 @@
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 android:padding="10dp"
                 android:src="@drawable/ic_ui_back"
-                app:tint="#1A1A1A" />
+                app:tint="@color/ui_text" />
 
             <TextView
                 android:layout_width="0dp"
@@ -40,7 +40,7 @@
                 android:layout_weight="1"
                 android:fontFamily="@font/be_vietnam_pro"
                 android:text="Giỏ hàng"
-                android:textColor="#1A1A1A"
+                android:textColor="@color/ui_text"
                 android:textSize="20sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -63,7 +63,7 @@
             android:background="@drawable/bg_empty_circle"
             android:gravity="center"
             android:text="🛒"
-            android:textColor="#FF000000"
+            android:textColor="@color/ui_text"
             android:textSize="52sp" />
 
         <TextView
@@ -74,7 +74,7 @@
             android:fontFamily="@font/be_vietnam_pro"
             android:gravity="center"
             android:text="Giỏ hàng đang trống"
-            android:textColor="#1A1A1A"
+            android:textColor="@color/ui_text"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -84,7 +84,7 @@
             android:layout_marginTop="6dp"
             android:gravity="center"
             android:text="Hãy chọn vài món tươi ngon\nđể bắt đầu nhé!"
-            android:textColor="#7A847A"
+            android:textColor="@color/ui_text_secondary"
             android:textSize="14sp" />
 
         <TextView
@@ -127,7 +127,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:text="Vuốt ngang một sản phẩm để xóa"
-                android:textColor="#9AA39A"
+                android:textColor="@color/ui_text_hint"
                 android:textSize="12sp" />
 
             <androidx.recyclerview.widget.RecyclerView
@@ -135,6 +135,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false" />
+
+            <TextView
+                android:id="@+id/btn_ai_dishes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_pill_green_light"
+                android:fontFamily="@font/be_vietnam_pro"
+                android:gravity="center"
+                android:minHeight="48dp"
+                android:text="Gợi ý món ăn từ giỏ hàng"
+                android:textColor="@color/primary_green"
+                android:textSize="14sp"
+                android:textStyle="bold" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
@@ -162,7 +176,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Tạm tính"
-                android:textColor="#7A847A"
+                android:textColor="@color/ui_text_secondary"
                 android:textSize="14sp" />
 
             <TextView
@@ -171,7 +185,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/be_vietnam_pro"
                 android:text="0"
-                android:textColor="#1A1A1A"
+                android:textColor="@color/ui_text"
                 android:textFontWeight="600"
                 android:textSize="14sp" />
 
@@ -179,7 +193,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=" đ"
-                android:textColor="#1A1A1A"
+                android:textColor="@color/ui_text"
                 android:textSize="14sp" />
         </LinearLayout>
 
@@ -195,10 +209,10 @@
                 android:layout_weight="1"
                 android:drawableStart="@drawable/ic_ui_truck"
                 android:drawablePadding="6dp"
-                android:drawableTint="#7A847A"
+                android:drawableTint="@color/ui_text_secondary"
                 android:gravity="center_vertical"
                 android:text="Phí vận chuyển (ước tính)"
-                android:textColor="#7A847A"
+                android:textColor="@color/ui_text_secondary"
                 android:textSize="14sp" />
 
             <TextView
@@ -207,7 +221,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/be_vietnam_pro"
                 android:text="0"
-                android:textColor="#1A1A1A"
+                android:textColor="@color/ui_text"
                 android:textFontWeight="600"
                 android:textSize="14sp" />
 
@@ -215,7 +229,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=" đ"
-                android:textColor="#1A1A1A"
+                android:textColor="@color/ui_text"
                 android:textSize="14sp" />
         </LinearLayout>
 
@@ -223,7 +237,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginVertical="12dp"
-            android:background="#EEF2EE" />
+            android:background="@color/ui_divider" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -241,7 +255,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Tổng cộng"
-                    android:textColor="#7A847A"
+                    android:textColor="@color/ui_text_secondary"
                     android:textSize="12sp" />
 
                 <LinearLayout
@@ -255,7 +269,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/be_vietnam_pro"
                         android:text="0"
-                        android:textColor="#E65100"
+                        android:textColor="@color/ui_price"
                         android:textSize="22sp"
                         android:textStyle="bold" />
 
@@ -264,7 +278,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/be_vietnam_pro"
                         android:text=" đ"
-                        android:textColor="#E65100"
+                        android:textColor="@color/ui_price"
                         android:textSize="16sp"
                         android:textStyle="bold" />
                 </LinearLayout>

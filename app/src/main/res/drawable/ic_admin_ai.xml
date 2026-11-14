@@ -1,0 +1,9 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <!-- Ngôi sao lấp lánh lớn + hai ngôi nhỏ -->
+    <path android:fillColor="@android:color/white" android:pathData="M10,2l1.9,5.6L17.5,9.5l-5.6,1.9L10,17l-1.9,-5.6L2.5,9.5l5.6,-1.9z"/>
+    <path android:fillColor="@android:color/white" android:pathData="M18.5,12l1,2.5l2.5,1l-2.5,1l-1,2.5l-1,-2.5l-2.5,-1l2.5,-1z"/>
+    <path android:fillColor="@android:color/white" android:pathData="M18,2.5l0.7,1.8l1.8,0.7l-1.8,0.7l-0.7,1.8l-0.7,-1.8l-1.8,-0.7l1.8,-0.7z"/>
+</vector>
